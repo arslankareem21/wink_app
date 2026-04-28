@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "621841020665",
+    "project_id": "winkapp7",
+    "storage_bucket": "winkapp7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:621841020665:android:171c819c4d23e56749d428",
+        "android_client_info": {
+          "package_name": "com.example.wink_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCd8GVdSFmlpwDIbv_YtzmEuQrqYRru38U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
