@@ -1,0 +1,128 @@
+```gitignore id="private-team-flutter"
+# ==========================================
+# Flutter Team Project .gitignore (Private Repo)
+# Includes Firebase config files for teammates
+# ==========================================
+
+# -----------------
+# OS Files
+# -----------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# -----------------
+# Editors / IDE
+# -----------------
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# -----------------
+# Logs
+# -----------------
+*.log
+
+# -----------------
+# Flutter / Dart
+# -----------------
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub/
+.pub-cache/
+build/
+coverage/
+doc/api/
+
+# Flutter generated
+**/ios/Flutter/.last_build_id
+
+# -----------------
+# Android Generated Builds
+# -----------------
+/android/app/debug
+/android/app/profile
+/android/app/release
+/android/.gradle/
+/android/captures/
+/android/local.properties
+
+# Keep Gradle wrapper files
+!/android/gradlew
+!/android/gradlew.bat
+!/android/gradle/wrapper/gradle-wrapper.properties
+!/android/gradle/wrapper/gradle-wrapper.jar
+
+# -----------------
+# iOS Generated
+# -----------------
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/ephemeral/
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+
+# -----------------
+# macOS Generated
+# -----------------
+macos/Pods/
+macos/Flutter/ephemeral/
+
+# -----------------
+# Linux / Windows Generated
+# -----------------
+linux/flutter/ephemeral/
+windows/flutter/ephemeral/
+
+# -----------------
+# Temporary / Backup
+# -----------------
+*.tmp
+*.temp
+*.bak
+*.swp
+.history/
+
+# -----------------
+# Secrets (DO NOT COMMIT)
+# -----------------
+.env
+*.env
+key.properties
+android/key.properties
+*.jks
+*.keystore
+*.p12
+*.mobileprovision
+*.cer
+
+# -----------------
+# Crashlytics temp
+# -----------------
+crashlytics-build.properties
+
+# -----------------
+# Fastlane temp
+# -----------------
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+
+# -----------------
+# Node (if used for web tooling)
+# -----------------
+node_modules/
+
+# ==========================================
+# IMPORTANT:
+# Firebase files are INCLUDED for teammates
+# These are NOT ignored:
+#
+# android/app/google-services.json
+# ios/Runner/GoogleService-Info.plist
+# ==========================================
+```
