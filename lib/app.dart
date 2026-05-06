@@ -18,7 +18,7 @@ class App extends ConsumerWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
-      home: const LoginScreen(),
+      home: const SplashScreen(),
     );
   }
 }
