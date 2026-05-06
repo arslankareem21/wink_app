@@ -92,11 +92,11 @@ class AppColors {
   /// ICON COLORS
   /// ==========================================================
 
-  static const Color iconLight = secondary;
-  static const Color iconDark = white;
+  static const Color iconDark = secondary;
+  static const Color iconLight = white;
 
-  static const Color iconSelectedLight = secondary;
-  static const Color iconSelectedDark = white;
+  static const Color iconSelectedDark = secondary;
+  static const Color iconSelectedLight = white;
 
   static const Color iconAccent = primaryYellow;
 

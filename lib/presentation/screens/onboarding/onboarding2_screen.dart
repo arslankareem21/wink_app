@@ -6,9 +6,10 @@ import 'package:wink_app/presentation/components/onboarding/onboarding_indicator
 import 'package:wink_app/presentation/widgets/elevated_button.dart';
 import 'package:wink_app/presentation/widgets/toogle_theme_button.dart';
 
-class Onboarding1Screen extends StatelessWidget {
+class Onboarding2Screen extends StatelessWidget {
   final VoidCallback onNext;
-  const Onboarding1Screen({super.key, required this.onNext});
+  final VoidCallback onBack;
+  const Onboarding2Screen({super.key, required this.onNext, required this.onBack});
 
   @override
   Widget build(BuildContext context) {
@@ -34,35 +35,57 @@ class Onboarding1Screen extends StatelessWidget {
                           width: 342,
                           "assets/image/onboarding1_bg.png",
                         ),
-                        SizedBox(height: 26.h),
-                        Image.asset(
-                          alignment: Alignment.bottomCenter,
-                          "assets/image/onboarding1_record.png",
-                          height: 340,
-                          width: 342,
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            width: 342,
+                            height: 342,
+                            color: Colors.grey[300], // Placeholder color),
+                          ), // adjust radius
+                        ),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(16), // adjust radius
+                          child: Image.asset(
+                            'assets/image/onboarding2_boy.png',
+                            width: 300,
+                            height: 300,
+                            fit: BoxFit.cover, // keeps it nicely cropped
+                          ),
                         ),
                       ],
                     ),
                   ),
+                  AppSpacing.vxl,
                   Text(
                     textAlign: TextAlign.center,
-                    "Share your moments",
+                    "Create Shorts",
                     style: AppTextStyles.authHeadline,
                   ),
-                  SizedBox(height: 16.h),
                   Text(
                     textAlign: TextAlign.center,
-                    "Connect with friends and share your best \n moments through short videos and photos.",
+                    "Express yourself through short-form \n video content and fun filters.",
                     style: AppTextStyles.bodyRegular.copyWith(
                       fontSize: 14.sp,
                     ),
                   ),
                   AppSpacing.hlg,
-                  OnboardingDots(currentIndex: 0),
+                  OnboardingDots(currentIndex: 1),
                   SizedBox(height: 50.h),
-                  AppButton(
-                    text: 'Next',
-                    onPressed: onNext, // FIXED: use callback
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      AppButton(
+                        width: 132.w,
+                        isGhost: true,
+                        text: 'Back',
+                        onPressed: onBack, // FIXED: use callback
+                      ),
+                      AppButton(
+                        width: 193.w,
+                        text: 'Next',
+                        onPressed: onNext, // FIXED: use callback
+                      ),
+                    ],
                   ),
                 ],
               ),
