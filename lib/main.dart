@@ -15,9 +15,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-    if (!kIsWeb && Platform.isAndroid) {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  } // <-- add this line
+ 
   runApp(const ProviderScope(child: MyAppRoot()));
 }
 
@@ -25,7 +23,7 @@ class MyAppRoot extends StatelessWidget {
   const MyAppRoot({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) { 
     return ScreenUtilInit(
       designSize: const Size(390, 884),
       minTextAdapt: true,

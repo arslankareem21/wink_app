@@ -92,13 +92,17 @@ class AppColors {
   /// ICON COLORS
   /// ==========================================================
 
-  static const Color iconDark = secondary;
-  static const Color iconLight = white;
+  static const Color iconLight = black;
+static const Color iconSelectedLight = black;
+static const Color iconUnselectedLight = greyText;
 
-  static const Color iconSelectedDark = secondary;
-  static const Color iconSelectedLight = white;
+// Dark Theme
+static const Color iconDark = white;
+static const Color iconSelectedDark = white;
+static const Color iconUnselectedDark = greyDark;
 
-  static const Color iconAccent = primaryYellow;
+// Accent
+static const Color iconAccent = primaryYellow;
 
   /// ==========================================================
   /// BOTTOM NAVIGATION BAR

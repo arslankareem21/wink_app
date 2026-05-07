@@ -5,6 +5,8 @@ import 'package:wink_app/core/config/theme/app_colors.dart';
 import 'package:wink_app/core/config/theme/app_spacing.dart';
 import 'package:wink_app/core/config/theme/app_text_style.dart';
 import 'package:wink_app/core/utils/validators.dart';
+import 'package:wink_app/presentation/screens/home/home.dart';
+import 'package:wink_app/presentation/widgets/bottom_navbar.dart';
 import 'package:wink_app/presentation/widgets/elevated_button.dart';
 import 'package:wink_app/presentation/widgets/text_button.dart';
 import 'package:wink_app/presentation/widgets/textformfield.dart';
@@ -80,7 +82,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                         fontWeight: FontWeight.w900,
                       ),
                       onPressed: () {
-                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const BottomNavScreen()));
                                         }),
                     ),
                 ],
