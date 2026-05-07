@@ -6,6 +6,9 @@
 
 # -----------------
 # OS Files
+# Flutter generated files
+**/Flutter/GeneratedPluginRegistrant.swift
+**/flutter/generated_*
 # -----------------
 .DS_Store
 Thumbs.db
