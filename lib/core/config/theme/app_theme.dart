@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'app_colors.dart';
 
 class AppTheme {
-  AppTheme._();
+
 
   /// ==========================================================
   /// LIGHT THEME
@@ -34,13 +35,27 @@ class AppTheme {
       iconTheme: IconThemeData(
         color: AppColors.iconLight,
       ),
+      systemOverlayStyle: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        systemNavigationBarColor: AppColors.primary, // same as scaffoldBackgroundColor
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
     ),
 
     iconTheme: const IconThemeData(
       color: AppColors.iconLight,
     ),
 
-    
+     cardTheme: CardThemeData(
+  color: AppColors.cardLight,
+  elevation: 0,
+  margin: EdgeInsets.zero,
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(16),
+  ),
+),
+
 
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
@@ -115,10 +130,13 @@ class AppTheme {
       ),
     ),
 
-    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: AppColors.navBgLight,
-      selectedItemColor: AppColors.navSelectedIconLight,
-      unselectedItemColor: AppColors.navUnselectedLight,
+    bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      backgroundColor: AppColors.primary,
+      selectedIconTheme: const IconThemeData(size: 32, color: AppColors.navSelectedIconLight),
+      unselectedIconTheme: const IconThemeData(size: 24, color: AppColors.navUnselectedLight),
+      selectedItemColor: AppColors.primaryYellow,
+      unselectedItemColor: AppColors.iconLight,
+      elevation: 5,
       type: BottomNavigationBarType.fixed,
     ),
   );
@@ -153,6 +171,12 @@ class AppTheme {
       iconTheme: IconThemeData(
         color: AppColors.iconDark,
       ),
+      systemOverlayStyle: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: AppColors.secondary, // same as scaffoldBackgroundColor
+        systemNavigationBarIconBrightness: Brightness.light,
+      ),
     ),
 
     iconTheme: const IconThemeData(
@@ -164,7 +188,7 @@ class AppTheme {
   elevation: 0,
   margin: EdgeInsets.zero,
   shape: RoundedRectangleBorder(
-    borderRadius: BorderRadius.circular(16),
+    borderRadius: BorderRadius.circular(32),
   ),
 ),
 
@@ -241,10 +265,13 @@ class AppTheme {
       ),
     ),
 
-    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: AppColors.navBgDark,
-      selectedItemColor: AppColors.navSelectedIconDark,
-      unselectedItemColor: AppColors.navUnselectedDark,
+    bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      backgroundColor: AppColors.subtitleLight,
+      selectedIconTheme: const IconThemeData(size: 32, color: AppColors.white),
+      unselectedIconTheme: const IconThemeData(size: 24, color: AppColors.greyDark),
+      selectedItemColor: AppColors.primaryYellow,
+      unselectedItemColor: AppColors.secondary,
+      elevation: 10,
       type: BottomNavigationBarType.fixed,
     ),
   );
