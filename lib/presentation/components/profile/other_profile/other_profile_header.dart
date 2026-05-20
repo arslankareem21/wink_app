@@ -23,28 +23,6 @@ class OtherUserProfileHeader extends StatelessWidget {
       children: [
         // Profile Picture
         AppProfileAvatar(),
-        // Container(
-        //   width: 88.w,
-        //   height: 88.h,
-        //   decoration: BoxDecoration(
-        //     shape: BoxShape.circle,
-        //     border: Border.all(
-        //       color: AppColors.primaryYellow,
-        //       width: 2.w,
-        //     ),
-        //   ),
-        //   child: profileImageUrl != null
-        //       ? ClipOval(
-        //           child: Image.network(
-        //             profileImageUrl!,
-        //             fit: BoxFit.cover,
-        //             errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
-        //           ),
-        //         )
-        //       : _buildPlaceholder(),
-        // ),
-
-       // AppSpacing.vlg,
          OtherUserProfileStats(postsCount: 20, followersCount: 150.toString(), followingCount: 100)
 
       ],

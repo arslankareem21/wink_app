@@ -34,12 +34,6 @@ class SettingsRow extends StatelessWidget {
           ),
 
           AppSpacing.hxl,
-
-          // Title and Subtitle
-        //  Expanded(
-            // child: Column(
-            //   crossAxisAlignment: CrossAxisAlignment.start,
-            //   children: [
                 Text(
                   text,
                   

@@ -25,27 +25,6 @@ class ProfilePhotoSection extends StatelessWidget {
         Stack(
           children: [
             AppProfileAvatar(size: 100.r,),
-            // // Camera Icon Overlay
-            // Positioned(
-            //   right: 0.w,
-            //   bottom: 0.h,
-            //   child: GestureDetector(
-            //     onTap: onChangePhoto,
-            //     child: Container(
-            //       width: 36.w,
-            //       height: 36.h,
-            //       decoration: const BoxDecoration(
-            //         shape: BoxShape.circle,
-            //         color: AppColors.primaryYellow,
-            //       ),
-            //       child: Icon(
-            //         Icons.camera_alt_rounded,
-            //         size: 18.sp,
-            //         color: AppColors.secondary,
-            //       ),
-            //     ),
-            //   ),
-            // ),
           ],
         ),
 

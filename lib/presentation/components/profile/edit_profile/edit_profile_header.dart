@@ -53,25 +53,6 @@ class EditProfileHeader extends StatelessWidget {
             ),
           ),
 
-          // Save Button (✓)
-          
-          // GestureDetector(
-          //   onTap: onSave,
-          //   child: Container(
-          //     width: 36.w,
-          //     height: 36.h,
-          //     decoration: const BoxDecoration(
-          //       shape: BoxShape.circle,
-          //       color: AppColors.primaryYellow,
-          //     ),
-          //     child: Icon(
-          //       Icons.check_rounded,
-          //       size: 20.sp,
-          //       color: AppColors.secondary,
-          //     ),
-          //   ),
-          // ),
-          // 
         ],
       ),
     );

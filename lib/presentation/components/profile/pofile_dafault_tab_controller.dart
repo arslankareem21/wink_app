@@ -91,47 +91,4 @@ class _ProfileTabsViewState extends State<ProfileTabsView> {
     );
   }
 
-  // 🟡 Helper Widget for Grid
-  // Widget _buildGrid({required bool isVideo}) {
-  //   // Sample Data
-  //   final List<String> images = List.generate(
-  //     9,
-  //     (index) => 'https://picsum.photos/300/300?random=${index + 1}',
-  //   );
-
-  //   return GridView.builder(
-  //     padding: EdgeInsets.all(2.w),
-  //     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-  //       crossAxisCount: 3,
-  //       crossAxisSpacing: 2.w,
-  //       mainAxisSpacing: 2.h,
-  //     ),
-  //     itemCount: images.length,
-  //     itemBuilder: (context, index) {
-  //       return Stack(
-  //         fit: StackFit.expand,
-  //         children: [
-  //           // Image
-  //           ClipRRect(
-  //             borderRadius: BorderRadius.circular(4.r),
-  //             child: Image.network(
-  //               images[index],
-  //               fit: BoxFit.cover,
-  //               loadingBuilder: (context, child, loadingProgress) {
-  //                 if (loadingProgress == null) return child;
-  //                 return Container(
-  //                   color: AppColors.grey.withOpacity(0.1),
-  //                   child: const Center(
-  //                     child: CircularProgressIndicator(strokeWidth: 2),
-  //                   ),
-  //                 );
-  //               },
-  //             ),
-  //           ),
-
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
 }

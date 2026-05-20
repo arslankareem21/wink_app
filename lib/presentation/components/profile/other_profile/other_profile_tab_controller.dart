@@ -7,14 +7,9 @@ import 'package:wink_app/core/config/theme/app_text_style.dart';
 import 'package:wink_app/presentation/components/profile/profile_grid.dart';
 
 class OtherUserProfileTabController extends StatelessWidget {
-  // final List<String> imageUrls;
-  // final Function(String)? onImageTap;
 
   const OtherUserProfileTabController({
     super.key,
-    // required this.imageUrls,
-    // this.onImageTap,
-    //required bool isOtherProfile,
   });
 
   @override
@@ -85,46 +80,5 @@ class OtherUserProfileTabController extends StatelessWidget {
         ],
       ),
     );
-
-    //   GridView.builder(
-    //     shrinkWrap: true,
-    //     physics: const NeverScrollableScrollPhysics(),
-    //     padding: EdgeInsets.all(2.w),
-    //     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-    //       crossAxisCount: 3,
-    //       crossAxisSpacing: 2.w,
-    //       mainAxisSpacing: 2.h,
-    //     ),
-    //     itemCount: imageUrls.length,
-    //     itemBuilder: (context, index) {
-    //       return GestureDetector(
-    //         onTap: () => onImageTap?.call(imageUrls[index]),
-    //         child: ClipRRect(
-    //           borderRadius: BorderRadius.circular(4.r),
-    //           child: Stack(
-    //             fit: StackFit.expand,
-    //             children: [
-    //               Image.network(
-    //                 imageUrls[index],
-    //                 fit: BoxFit.cover,
-    //                 loadingBuilder: (context, child, loadingProgress) {
-    //                   if (loadingProgress == null) return child;
-    //                   return Container(
-    //                     color: AppColors.grey.withOpacity(0.1),
-    //                     child: const Center(
-    //                       child: CircularProgressIndicator(strokeWidth: 2),
-    //                     ),
-    //                   );
-    //                 },
-    //                 errorBuilder: (context, error, stackTrace) {
-    //                   return Container(color: AppColors.grey);
-    //                 },
-    //               ),
-    //             ],
-    //           ),
-    //         ),
-    //       );
-    //     },
-    //   );
   }
 }

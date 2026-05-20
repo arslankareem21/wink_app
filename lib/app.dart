@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wink_app/core/config/theme/app_theme.dart';
+import 'package:wink_app/presentation/screens/auth/signup-screen.dart';
 import 'package:wink_app/presentation/screens/profile/edit_profile.dart';
 import 'package:wink_app/presentation/screens/profile/profile_screen.dart';
 import 'package:wink_app/presentation/screens/setting/setting_screen.dart';
@@ -20,7 +21,8 @@ class App extends ConsumerWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
       home: const
-      ProfileScreen()
+      SignUpScreen()
+     // ProfileScreen()
       // EditProfileScreen()
       //SettingsScreen()
      // SettingsScreen(),

@@ -33,14 +33,12 @@ class SettingsScreen extends ConsumerWidget {
     return Scaffold(
       // Custom Header
       appBar: AppBar(
-
-        title:
-         Text(
+        title: Text(
           'Settings',
-          style: AppTextStyles.appBarTitle
-        //   TextStyle(fontWeight: FontWeight.bold, fontSize: 20.sp),
-        // ),
-         ),
+          style: AppTextStyles.appBarTitle,
+          //   TextStyle(fontWeight: FontWeight.bold, fontSize: 20.sp),
+          // ),
+        ),
         leading: Padding(
           padding: AppSpacing.buttonPadding,
           child: IconButton(
@@ -52,7 +50,7 @@ class SettingsScreen extends ConsumerWidget {
         actions: [
           Padding(
             padding: AppSpacing.buttonPadding.copyWith(right: 0),
-            child:ThemeToggleButton(),
+            child: ThemeToggleButton(),
           ),
         ],
       ),
@@ -64,30 +62,18 @@ class SettingsScreen extends ConsumerWidget {
             AppSpacing.vlg,
 
             // Profile Section
-            AppProfileAvatar(
-              size: 150.r,
-              borderColor: AppColors.primaryYellow,
-            ),
+            AppProfileAvatar(size: 150.r, borderColor: AppColors.primaryYellow),
 
             AppSpacing.vxxl,
-
-            // PERSONAL SETTINGS Section
-            // SettingsListItem(
-            //   icon: Icons.person_outline_rounded,
-            //   iconColor: Colors.orange,
-            //   onTap: () {
-            //     Navigator.push(context, MaterialPageRoute(builder: (context)=> LoginScreen()));
-            //     // Navigate to account settings
-            //   },
-            // ),
             Center(
-              child:
-               Column(crossAxisAlignment: CrossAxisAlignment.start,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text("PERSONAL SETTINGS", style: AppTextStyles.bodyRegular),
                   AppSpacing.vxs,
                   Container(
-                    height: 215.h, width: 300.w,
+                    height: 215.h,
+                    width: 300.w,
                     decoration: BoxDecoration(
                       color: AppColors.appBarTextDark,
                       borderRadius: BorderRadius.circular(20.r),
@@ -95,37 +81,93 @@ class SettingsScreen extends ConsumerWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                         AppSpacing.vsm,
-                         SettingsRow(Icons.person_outlined, 'Account', AppColors.primaryYellow, (){Navigator.push(context,MaterialPageRoute(builder: (context) => LoginScreen(), ),);}),
-                        Divider(color: AppColors.border,),
-                         SettingsRow(Icons.lock_outlined, 'Privacy', AppColors.info, (){Navigator.push(context,MaterialPageRoute(builder: (context) => SignUpScreen(), ),);}),
-                        Divider(color: AppColors.border,),
+                        AppSpacing.vsm,
+                        SettingsRow(
+                          Icons.person_outlined,
+                          'Account',
+                          AppColors.primaryYellow,
+                          () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => LoginScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        Divider(color: AppColors.border),
+                        SettingsRow(
+                          Icons.lock_outlined,
+                          'Privacy',
+                          AppColors.info,
+                          () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SignUpScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        Divider(color: AppColors.border),
 
-                         SettingsRow(Icons.notifications_outlined, 'Notifications', Colors.orange, (){Navigator.push(context,MaterialPageRoute(builder: (context) => ForgetPasswordScreen(), ),);}),
-  
-                        //SettingsRow(  Icons.person, 'Account', () {Navigator.push(context,MaterialPageRoute( builder: (context) => LoginScreen(),),);}),
-                        //SettingsRow(Icons.person, 'Account', () {Navigator.push(context,MaterialPageRoute(builder: (context) => LoginScreen(),), );}),
-                       
-                       ], //SettingsRow(Icons.person, 'Account', () {Navigator.push(context,MaterialPageRoute(builder: (context) => LoginScreen(), ),);}),    ],
+                        SettingsRow(
+                          Icons.notifications_outlined,
+                          'Notifications',
+                          Colors.orange,
+                          () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ForgetPasswordScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ),
                   ),
-                              AppSpacing.vxxl,
+                  AppSpacing.vxxl,
 
                   Text("SUPPORT", style: AppTextStyles.bodyRegular),
                   Container(
-                    height: 140.h,width: 300.w,
+                    height: 140.h,
+                    width: 300.w,
                     decoration: BoxDecoration(
                       color: AppColors.white,
                       borderRadius: BorderRadius.circular(20.r),
                     ),
-                    child: Column(mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        
-                         SettingsRow(Icons.help_center_outlined, 'Help Center',  Colors.green, (){Navigator.push(context,MaterialPageRoute(builder: (context) => HomeScreen(), ),);}),
-                     Divider(color: AppColors.border,),
-                         SettingsRow(Icons.info_outline, 'About', Colors.purple, (){Navigator.push(context,MaterialPageRoute(builder: (context) => ProfileScreen(), ),);}),
- 
-                           ],
+                        SettingsRow(
+                          Icons.help_center_outlined,
+                          'Help Center',
+                          Colors.green,
+                          () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => HomeScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        Divider(color: AppColors.border),
+                        SettingsRow(
+                          Icons.info_outline,
+                          'About',
+                          Colors.purple,
+                          () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ProfileScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -154,7 +196,6 @@ class SettingsScreen extends ConsumerWidget {
               isGhost: true,
             ),
             AppSpacing.vxxl,
-
           ],
         ),
       ),

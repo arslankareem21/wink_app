@@ -79,12 +79,6 @@ class _OtherProfileScreenState extends ConsumerState<OtherProfileScreen> {
 
                   AppSpacing.vxl,
 
-                  // Profile Stats
-                  // OtherUserProfileStats(
-                  //   postsCount: _postsCount,
-                  //   followersCount: _followersCount,
-                  //   followingCount: _followingCount,
-                  // ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 15.0),
                     child: OtherUserProfileBio(
@@ -118,24 +112,10 @@ class _OtherProfileScreenState extends ConsumerState<OtherProfileScreen> {
                   ),
 
                   AppSpacing.vxl,
-
-                  // Tabs
-                  //  const OtherUserProfileTabs(),
-
-                  // Posts Grid
                   SizedBox(
                     height: 500.h,
                     child: OtherUserProfileTabController
-                    (
-                      //imageUrls: _postsImages,
-                    // isOtherProfile: true,
-                    ),
-                    // : ProfileTabsView(
-                    //   imageUrls: _postsImages,
-                    //   onImageTap: (imageUrl) {
-                    //     // Open image viewer
-                    //   },
-                    // ),
+                    (),
                   ),
                 ],
               ),
@@ -143,8 +123,6 @@ class _OtherProfileScreenState extends ConsumerState<OtherProfileScreen> {
           ),
         ],
       ),
-
-      // Bottom Navigation
     );
   }
 }
