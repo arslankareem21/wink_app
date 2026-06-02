@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wink_app/core/config/theme/app_theme.dart';
+import 'package:wink_app/presentation/screens/auth/google_sign_in_screen.dart';
 import 'package:wink_app/presentation/screens/auth/signup-screen.dart';
-import 'package:wink_app/presentation/screens/profile/edit_profile.dart';
-import 'package:wink_app/presentation/screens/profile/profile_screen.dart';
-import 'package:wink_app/presentation/screens/setting/setting_screen.dart';
-import 'package:wink_app/presentation/screens/splash/splash_screen.dart';
 import 'package:wink_app/viewmodels/theme_viewmodel.dart';
 
 class App extends ConsumerWidget {
@@ -21,6 +18,8 @@ class App extends ConsumerWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
       home: const
+      
+    //  GoogleSignInScreen()
       SignUpScreen()
      // ProfileScreen()
       // EditProfileScreen()

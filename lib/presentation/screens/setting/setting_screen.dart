@@ -6,9 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:wink_app/core/config/theme/app_colors.dart';
 import 'package:wink_app/core/config/theme/app_spacing.dart';
 import 'package:wink_app/core/config/theme/app_text_style.dart';
-import 'package:wink_app/presentation/components/settings/setting_header.dart';
 import 'package:wink_app/presentation/components/settings/setting_list_item.dart';
-import 'package:wink_app/presentation/components/settings/setting_profile_section.dart';
 import 'package:wink_app/presentation/components/settings/premium_banner.dart';
 import 'package:wink_app/presentation/screens/auth/forget_password_screen.dart';
 import 'package:wink_app/presentation/screens/auth/login_screen.dart';
@@ -17,7 +15,6 @@ import 'package:wink_app/presentation/screens/home/home_screen.dart';
 import 'package:wink_app/presentation/screens/profile/profile_screen.dart';
 import 'package:wink_app/presentation/widgets/circle_avatar.dart';
 import 'package:wink_app/presentation/widgets/elevated_button.dart';
-import 'package:wink_app/presentation/widgets/text_button.dart';
 import 'package:wink_app/presentation/widgets/toogle_theme_button.dart';
 
 class SettingsScreen extends ConsumerWidget {

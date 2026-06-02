@@ -492,4 +492,8 @@ static const TextStyle bodyRegular = TextStyle(
     fontSize: 13,
     fontWeight: FontWeight.w400,
   );
+
+  static get bodyMedium => null;
+
+  static get headlineLarge => null;
 }

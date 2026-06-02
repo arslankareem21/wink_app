@@ -90,7 +90,7 @@ class Onboarding3Screen extends StatelessWidget {
                           onPressed: () {
                             Navigator.pushReplacement(
                               context,
-                              MaterialPageRoute(builder: (_) => const LoginScreen()), // change this
+                              MaterialPageRoute(builder: (_) =>  LoginScreen()), // change this
                             );
                           },
                         ),

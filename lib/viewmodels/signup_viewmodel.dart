@@ -1,51 +1,15 @@
-import 'dart:async';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:wink_app/service/signup_auth_service.dart';
-
-final sigUpAuthViewModelProvider = AsyncNotifierProvider<SignUpAuthViewModel, void>(() {
-      return SignUpAuthViewModel();
-    });
-
-class SignUpAuthViewModel extends AsyncNotifier<void> {
-  late final AuthService _authService;
-
-  @override
-  Future<void> build() async {
-    _authService = ref.read(authServiceProvider);
-  }
 
 
 
-  Future<void> executeFirebaseSignUp({
-    required String email,
-    required String password,
-    required String username,
-    required String fullName,
-    required Function() onSuccess,
-    required Function(String errorMessage) onError,
-  }) async {
-    // Turn on the visual loading spinner indicator state
-    state = const AsyncLoading();
 
-    // Guard the async transaction from throwing runtime system application crashes
-    state = await AsyncValue.guard(() async {
-      await _authService.firebaseSignUp(
-        email: email,
-        password: password,
-        username: username,
-        fullName: fullName,
-      );
-    });
 
-    // Handle reporting back the UI execution result safely
-    if (state.hasError) {
-      // Strips away instance headers to isolate the plain readable string error message
-      onError(state.error.toString().replaceAll('Exception: ', ''));
-    } else {
-      onSuccess();
-    }
-  }
-}
+
+
+
+
+
+
+
 
 
 
@@ -56,61 +20,209 @@ class SignUpAuthViewModel extends AsyncNotifier<void> {
 
 
 // import 'dart:async';
-// import 'package:firebase_auth/firebase_auth.dart'; // FirebaseAuth exceptions handle karne ke liye
+// import 'package:firebase_auth/firebase_auth.dart';
 // import 'package:hooks_riverpod/hooks_riverpod.dart';
-// import 'package:wink_app/service/login_auth_service.dart';
-// import 'package:wink_app/service/signup_auth_service.dart';
+// import 'package:wink_app/service/signup_auth_service.dart'; // Apni service ka sahi path dein
 
-// // 1. Provider configuration jo UI se connect hogi
-// final sigUpAuthViewModelProvider = AsyncNotifierProvider<SignUpAuthViewModel, void>(() {
-//   return SignUpAuthViewModel();
+// // 1. Service Provider Configuration
+// // Agar aapne pehle se nahi banaya, toh service ko access karne ke liye yeh provider chahiye
+// final firebaseAuthServiceProvider = Provider<FirebaseAuthService>((ref) {
+//   return FirebaseAuthService();
 // });
 
-// class SignUpAuthViewModel extends AsyncNotifier<void> {
-//   late final AuthService _authService;
+// // 2. ViewModel Provider Configuration (UI isko read/watch karegi)
+// final signUpViewModelProvider = AsyncNotifierProvider<SignUpViewModel, User?>(() {
+//   return SignUpViewModel();
+// });
+
+// // 3. ViewModel Class
+// // Note: Hum yahan 'User?' return kar rahe hain kyunki aapki service signup ke baad 'User?' deti hai.
+// class SignUpViewModel extends AsyncNotifier<User?> {
+//   late final FirebaseAuthService _authService;
 
 //   @override
-//   Future<void> build() async {
-//     // FIX 1: 'ref.read' ki jagah 'ref.watch' use karein, yeh Riverpod ka rule hai build ke andar
-//     _authService = ref.watch(authServiceProvider);
+//   FutureOr<User?> build() async {
+//     // Service ka instance read/watch karna
+//     _authService = ref.watch(firebaseAuthServiceProvider);
+//     return _authService.currentUser; // Initial state user ka current status hogi
 //   }
 
-//   Future<void> executeFirebaseSignUp({
+//   /// UI se data lekar signup process chalane wala function
+//   Future<void> executeSignUp({
 //     required String email,
 //     required String password,
-//     required String username,
-//     required String fullName,
-//     required Function() onSuccess,
+//     required String name,
+//     required Function(User user) onSuccess,
 //     required Function(String errorMessage) onError,
 //   }) async {
-//     // 1. UI ko loading state par bhej diya (Spinner ghoomne lagega)
+//     // 1. UI par loading spinner show karne ke liye state badli
 //     state = const AsyncLoading();
 
-//     // 2. Service ko call kiya aur safe guard lagaya taaki app crash na ho
+//     // 2. Service ko call kiya aur AsyncValue.guard se crash-safe banaya
 //     state = await AsyncValue.guard(() async {
-//       await _authService.firebaseSignUp(
-//         email: email,
-//         password: password,
-//         username: username,
-//         fullName: fullName,
-//       );
+//       final user = await _authService.signUpWithEmailAndPassword(email, password, name);
+      
+//       if (user == null) {
+//         // Agar service ne bina crash kiye null return kiya (jo aapke catch block mein hai)
+//         throw Exception('Sign up failed. Please check your credentials.');
+//       }
+      
+//       return user;
 //     });
 
-//     // 3. UI ko result wapas bhejna
+//     // 3. Result ke mutabiq UI ko callbacks (Signals) bhejna
 //     if (state.hasError) {
 //       final error = state.error;
-//       String userFriendlyMessage = "An unknown error occurred.";
+//       String userFriendlyMessage = "An unexpected error occurred.";
 
-//       // FIX 2: Agar error Firebase ki taraf se hai, toh sirf aasan English wala message nikalna
 //       if (error is FirebaseAuthException) {
 //         userFriendlyMessage = error.message ?? userFriendlyMessage;
 //       } else {
+//         // 'Exception: ' ka tag hatane ke liye
 //         userFriendlyMessage = error.toString().replaceAll('Exception: ', '');
 //       }
 
-//       onError(userFriendlyMessage); // UI ko error bhej diya
+//       onError(userFriendlyMessage); // UI ko error message bhej diya
 //     } else {
-//       onSuccess(); // UI ko success bhej diya
+//       // Agar state mein error nahi hai, toh data mein 'User' mil chuka hai
+//       final registeredUser = state.value;
+//       if (registeredUser != null) {
+//         onSuccess(registeredUser); // UI ko success data bhej diya
+//       }
 //     }
 //   }
-//}
+// }
+
+
+
+
+
+
+
+// //import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+// // 🔹 Auth State Class (UI ko dikhane ke liye)
+// class AuthState {
+//   final bool isLoading;
+//   final User? user;
+//   final String? errorMessage;
+//   final bool isAuthenticated;
+
+//   AuthState({
+//     this.isLoading = false,
+//     this.user,
+//     this.errorMessage,
+//     this.isAuthenticated = false,
+//   });
+
+//   AuthState copyWith({
+//     bool? isLoading,
+//     User? user,
+//     String? errorMessage,
+//     bool? isAuthenticated,
+//   }) {
+//     return AuthState(
+//       isLoading: isLoading ?? this.isLoading,
+//       user: user ?? this.user,
+//       errorMessage: errorMessage ?? this.errorMessage,
+//       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
+//     );
+//   }
+// }
+
+// //https://gemini.google.com/app/9af93b1c02ebb253
+
+// // 🔹 Auth ViewModel (AsyncNotifier)
+// class AuthViewModel extends AsyncNotifier<AuthState> {
+//   late final FirebaseAuthService _authService;
+
+//   @override
+//   Future<AuthState> build() async {
+//     _authService = FirebaseAuthService();
+    
+//     // Initial state: Check if user already logged in
+//     final currentUser = _authService.currentUser;
+//     return AuthState(
+//       user: currentUser,
+//       isAuthenticated: currentUser != null,
+//     );
+//   }
+
+//   // 🔹 Sign Up
+//   Future<bool> signUp(String email, String password, String name) async {
+//     state = const AsyncValue.loading();
+    
+//     try {
+//       final user = await _authService.signUpWithEmailAndPassword(
+//         email, password, name,
+//       );
+      
+//       if (user != null) {
+//         state = AsyncValue.data(
+//           AuthState(
+//             user: user,
+//             isAuthenticated: true,
+//             isLoading: false,
+//           ),
+//         );
+//         return true;
+//       }
+//       state = AsyncValue.data(
+//         AuthState(isLoading: false, errorMessage: 'Sign up failed'),
+//       );
+//       return false;
+//     } catch (e) {
+//       state = AsyncValue.data(
+//         AuthState(
+//           isLoading: false,
+//           errorMessage: e.toString().replaceAll('Exception: ', ''),
+//         ),
+//       );
+//       return false;
+//     }
+//   }
+
+//   // 🔹 Sign In
+//   Future<bool> signIn(String email, String password) async {
+//     state = const AsyncValue.loading();
+    
+//     try {
+//       final user = await _authService.signInWithEmailAndPassword(
+//         email, password,
+//       );
+      
+//       if (user != null) {
+//         state = AsyncValue.data(
+//           AuthState(
+//             user: user,
+//             isAuthenticated: true,
+//             isLoading: false,
+//           ),
+//         );
+//         return true;
+//       }
+//       state = AsyncValue.data(
+//         AuthState(isLoading: false, errorMessage: 'Sign in failed'),
+//       );
+//       return false;
+//     } catch (e) {
+//       state = AsyncValue.data(
+//         AuthState(
+//           isLoading: false,
+//           errorMessage: e.toString().replaceAll('Exception: ', ''),
+//         ),
+//       );
+//       return false;
+//     }
+//   }
+// }
+ 
+//   // 🔹 Password Reset
+
+
+
+
+
+
+
+
