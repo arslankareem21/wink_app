@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:wink_app/core/config/theme/app_colors.dart';
 import 'package:wink_app/core/config/theme/app_spacing.dart';
 import 'package:wink_app/presentation/components/onboarding/onboarding_wrapper.dart';
 import 'package:wink_app/presentation/components/splash/splash_loading_indicator.dart';
 import 'package:wink_app/presentation/components/splash/splash_logo.dart';
+<<<<<<< HEAD
 import 'package:wink_app/presentation/screens/onboarding/onboarding1_screen.dart';
+=======
+>>>>>>> 695c57d403544df1debce3b0f216e0e23b4738b1
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

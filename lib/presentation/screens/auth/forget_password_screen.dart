@@ -6,7 +6,10 @@ import 'package:wink_app/core/config/theme/app_spacing.dart';
 import 'package:wink_app/core/config/theme/app_text_style.dart';
 import 'package:wink_app/core/utils/validators.dart';
 import 'package:wink_app/presentation/screens/home/home.dart';
+<<<<<<< HEAD
 import 'package:wink_app/presentation/widgets/bottom_navbar.dart';
+=======
+>>>>>>> 695c57d403544df1debce3b0f216e0e23b4738b1
 import 'package:wink_app/presentation/widgets/elevated_button.dart';
 import 'package:wink_app/presentation/widgets/text_button.dart';
 import 'package:wink_app/presentation/widgets/textformfield.dart';

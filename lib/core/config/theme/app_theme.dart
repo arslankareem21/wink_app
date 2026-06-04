@@ -3,7 +3,11 @@ import 'package:flutter/services.dart';
 import 'app_colors.dart';
 
 class AppTheme {
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> 695c57d403544df1debce3b0f216e0e23b4738b1
 
   /// ==========================================================
   /// LIGHT THEME
@@ -55,7 +59,11 @@ class AppTheme {
     borderRadius: BorderRadius.circular(16),
   ),
 ),
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 695c57d403544df1debce3b0f216e0e23b4738b1
 
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(

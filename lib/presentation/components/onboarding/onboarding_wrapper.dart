@@ -2,10 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:wink_app/presentation/screens/onboarding/onboarding1_screen.dart' show Onboarding1Screen;
 import 'package:wink_app/presentation/screens/onboarding/onboarding2_screen.dart' show Onboarding2Screen;
 import 'package:wink_app/presentation/screens/onboarding/onboarding3_screen.dart';
+<<<<<<< HEAD
 import 'package:flutter/material.dart';
 import 'package:wink_app/presentation/screens/onboarding/onboarding1_screen.dart';
 import 'package:wink_app/presentation/screens/onboarding/onboarding2_screen.dart';
 import 'package:wink_app/presentation/screens/onboarding/onboarding3_screen.dart';
+=======
+import 'package:wink_app/presentation/screens/onboarding/onboarding1_screen.dart';
+import 'package:wink_app/presentation/screens/onboarding/onboarding2_screen.dart';
+>>>>>>> 695c57d403544df1debce3b0f216e0e23b4738b1
 
 class OnboardingWrapper extends StatefulWidget {
   const OnboardingWrapper({super.key});

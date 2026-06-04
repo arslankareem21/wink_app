@@ -4,8 +4,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:wink_app/presentation/provider/navbar_provider.dart';
 
 import '../../../../core/config/theme/app_colors.dart';
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> 695c57d403544df1debce3b0f216e0e23b4738b1
 class BottomNavItem extends ConsumerWidget {
   final IconData icon;
   final String label;

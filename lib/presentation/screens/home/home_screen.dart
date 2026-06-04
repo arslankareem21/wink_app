@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:wink_app/core/config/theme/app_colors.dart';
+<<<<<<< HEAD
 import 'package:wink_app/core/config/theme/app_spacing.dart';
+=======
+>>>>>>> 695c57d403544df1debce3b0f216e0e23b4738b1
 import 'package:wink_app/models/post_model.dart';
 import 'package:wink_app/presentation/components/post/post_card.dart';
 import 'package:wink_app/presentation/widgets/toogle_theme_button.dart';

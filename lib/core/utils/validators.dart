@@ -13,6 +13,40 @@ class Validators {
     return null;
   }
 
+<<<<<<< HEAD
+=======
+
+
+
+  // Your existing email, password, and name validators...
+
+  static String? username(String? value,  ) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Username is required';
+    }
+    
+    final trimmedValue = value.trim();
+
+    if (trimmedValue.length < 3) {
+      return 'Username must be at least 3 characters long';
+    }
+    
+    if (trimmedValue.length > 20) {
+      return 'Username cannot exceed 20 characters';
+    }
+
+    // Regular Expression: Allows only letters, numbers, underscores, and dots.
+    // It prevents spaces and special characters like !, @, #, $, %, etc.
+    final usernameRegex = RegExp(r'^[a-zA-Z0-9._]+$');
+    if (!usernameRegex.hasMatch(trimmedValue)) {
+      return 'Only letters, numbers, underscores (_), or dots (.) allowed';
+    }
+
+    return null; // Passes validation perfectly
+  }
+
+
+>>>>>>> 695c57d403544df1debce3b0f216e0e23b4738b1
   /// Password validation - min 8 chars, 1 uppercase, 1 number
   static String? password(String? value) {
     if (value == null || value.isEmpty) {

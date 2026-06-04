@@ -2,12 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:wink_app/core/config/theme/app_colors.dart';
+<<<<<<< HEAD
+=======
+import 'package:wink_app/core/config/theme/app_spacing.dart';
+>>>>>>> 695c57d403544df1debce3b0f216e0e23b4738b1
 import 'package:wink_app/core/config/theme/app_text_style.dart';
 
 class AppTextField extends StatefulWidget {
   final TextEditingController? controller;
   final String? hintText;
+<<<<<<< HEAD
   final String? labelText;
+=======
+>>>>>>> 695c57d403544df1debce3b0f216e0e23b4738b1
   final Widget? prefixIcon;
   final Widget? suffixIcon;
   final bool obscureText;
@@ -26,13 +33,21 @@ class AppTextField extends StatefulWidget {
   final FocusNode? focusNode;
   final double? width;
   final double? height;
+<<<<<<< HEAD
+=======
+    final int? maxLength;
+
+>>>>>>> 695c57d403544df1debce3b0f216e0e23b4738b1
   final EdgeInsetsGeometry? contentPadding;
 
   const AppTextField({
     super.key,
     this.controller,
     this.hintText,
+<<<<<<< HEAD
     this.labelText,
+=======
+>>>>>>> 695c57d403544df1debce3b0f216e0e23b4738b1
     this.prefixIcon,
     this.suffixIcon,
     this.obscureText = false,
@@ -51,7 +66,13 @@ class AppTextField extends StatefulWidget {
     this.focusNode,
     this.width,
     this.height,
+<<<<<<< HEAD
     this.contentPadding,
+=======
+    this.contentPadding, 
+    this.maxLength,
+    // required String label,
+>>>>>>> 695c57d403544df1debce3b0f216e0e23b4738b1
   });
 
   @override
@@ -121,6 +142,10 @@ class _AppTextFieldState extends State<AppTextField> {
       inputFormatters: widget.inputFormatters,
       maxLines: widget.isPassword ? 1 : widget.maxLines,
       minLines: widget.minLines,
+<<<<<<< HEAD
+=======
+     // maxLength: maxLength ,
+>>>>>>> 695c57d403544df1debce3b0f216e0e23b4738b1
       enabled: widget.enabled,
       readOnly: widget.readOnly,
       onTap: widget.onTap,
@@ -131,7 +156,11 @@ class _AppTextFieldState extends State<AppTextField> {
       ),
       decoration: InputDecoration(
         hintText: widget.hintText,
+<<<<<<< HEAD
         labelText: widget.labelText,
+=======
+        // labelText: widget.labelText,
+>>>>>>> 695c57d403544df1debce3b0f216e0e23b4738b1
         prefixIcon: widget.prefixIcon,
         suffixIcon: _buildSuffixIcon(), // Fixed here
         contentPadding: widget.contentPadding ?? 
@@ -147,6 +176,50 @@ class _AppTextFieldState extends State<AppTextField> {
       ),
     );
 
+<<<<<<< HEAD
+=======
+    // if (maxLength != null && currentLength != null) ...[
+    //       Align(
+    //         alignment: Alignment.centerRight,
+    //         child: Padding(
+    //           padding: EdgeInsets.only(
+    //             top: AppSpacing.xs.h,
+    //             right: AppSpacing.sm.w,
+    //           ),
+    //           child: Text(
+    //             '$currentLength / $maxLength',
+    //             style: AppTextStyles.bodyRegular.copyWith(
+    //               fontSize: 11.sp,
+    //               color: AppColors.greyText,
+    //             ),
+    //           ),
+    //         ),
+    //       ),
+    //     ],
+
+
+
+
+    
+
+        // Error Text
+        // if (errorText != null) ...[
+        //   AppSpacing.vxs,
+        //   Padding(
+        //     padding: EdgeInsets.only(left: AppSpacing.sm.w),
+        //     child: Text(
+        //       errorText!,
+        //       style: AppTextStyles.bodyRegular.copyWith(
+        //         fontSize: 11.sp,
+        //         color: Colors.red,
+        //       ),
+        //     ),
+        //   ),
+        // ],
+
+
+
+>>>>>>> 695c57d403544df1debce3b0f216e0e23b4738b1
     if (widget.width != null || widget.height != null) {
       return SizedBox(
         width: widget.width,

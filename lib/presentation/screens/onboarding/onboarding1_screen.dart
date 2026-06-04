@@ -22,6 +22,7 @@ class Onboarding1Screen extends StatelessWidget {
               child: ThemeToggleButton(),
             ),
             Expanded(
+<<<<<<< HEAD
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -65,6 +66,54 @@ class Onboarding1Screen extends StatelessWidget {
                     onPressed: onNext, // FIXED: use callback
                   ),
                 ],
+=======
+              child: SingleChildScrollView(
+                scrollDirection: Axis.vertical,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Image.asset(
+                            height: 342,
+                            width: 342,
+                            "assets/image/onboarding1_bg.png",
+                          ),
+                          SizedBox(height: 26.h),
+                          Image.asset(
+                            alignment: Alignment.bottomCenter,
+                            "assets/image/onboarding1_record.png",
+                            height: 340,
+                            width: 342,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      textAlign: TextAlign.center,
+                      "Share your moments",
+                      style: AppTextStyles.authHeadline,
+                    ),
+                    SizedBox(height: 16.h),
+                    Text(
+                      textAlign: TextAlign.center,
+                      "Connect with friends and share your best \n moments through short videos and photos.",
+                      style: AppTextStyles.bodyRegular.copyWith(
+                        fontSize: 14.sp,
+                      ),
+                    ),
+                    AppSpacing.hlg,
+                    OnboardingDots(currentIndex: 0),
+                    SizedBox(height: 50.h),
+                    AppButton(
+                      text: 'Next',
+                      onPressed: onNext, // FIXED: use callback
+                    ),
+                  ],
+                ),
+>>>>>>> 695c57d403544df1debce3b0f216e0e23b4738b1
               ),
             ),
           ],

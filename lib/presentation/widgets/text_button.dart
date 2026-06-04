@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+<<<<<<< HEAD
 import 'package:wink_app/core/config/theme/app_text_style.dart';
+=======
+>>>>>>> 695c57d403544df1debce3b0f216e0e23b4738b1
 
 class AppTextButton extends StatelessWidget {
   final String text;

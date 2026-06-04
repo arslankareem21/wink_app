@@ -216,7 +216,11 @@ class AppTextStyles {
 
   /// General body / paragraph text.
   /// Used on: Reset Password description, any supporting body copy.
+<<<<<<< HEAD
   static const TextStyle bodyRegular = TextStyle(
+=======
+static const TextStyle bodyRegular = TextStyle(
+>>>>>>> 695c57d403544df1debce3b0f216e0e23b4738b1
     fontFamily: 'Lexend',
     fontSize: 14,
     fontWeight: FontWeight.w400,
@@ -492,4 +496,11 @@ class AppTextStyles {
     fontSize: 13,
     fontWeight: FontWeight.w400,
   );
+<<<<<<< HEAD
+=======
+
+  static get bodyMedium => null;
+
+  static get headlineLarge => null;
+>>>>>>> 695c57d403544df1debce3b0f216e0e23b4738b1
 }
