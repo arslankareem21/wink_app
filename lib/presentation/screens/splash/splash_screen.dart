@@ -9,7 +9,7 @@ import 'package:wink_app/core/config/routes/route_names.dart';
 import 'package:wink_app/core/config/theme/app_spacing.dart';
 import 'package:wink_app/presentation/components/splash/splash_loading_indicator.dart';
 import 'package:wink_app/presentation/components/splash/splash_logo.dart';
-import 'package:wink_app/presentation/screens/auth/auth_gaurd.dart';
+
 import 'package:wink_app/service/auth_service.dart';
 
 
