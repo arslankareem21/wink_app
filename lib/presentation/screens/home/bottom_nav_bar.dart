@@ -6,9 +6,10 @@ import 'package:wink_app/presentation/screens/create/create_bottom_sheet.dart';
 import 'package:wink_app/presentation/screens/home/home_screen.dart';
 import 'package:wink_app/presentation/screens/notification/notification_screen.dart';
 import 'package:wink_app/presentation/screens/profile/profile_screen.dart';
-import 'package:wink_app/presentation/screens/shorts/short_feed_screen.dart';
+import 'package:wink_app/presentation/screens/create/shorts/short_feed_screen.dart';
 import 'package:wink_app/presentation/widgets/bottom_nav_item.dart';
 import 'package:wink_app/presentation/widgets/toogle_theme_button.dart';
+
 
 import '../../../../core/config/theme/app_colors.dart';
 
@@ -22,7 +23,7 @@ class BottomNavScreen extends ConsumerWidget {
 
     final screens = [
       const HomeScreen(),
-      const ShortsScreen(),
+      const ShortsFeedScreen(),
       const SizedBox(),
       const NotificationScreen(),
       const ProfileScreen(),
@@ -33,7 +34,7 @@ class BottomNavScreen extends ConsumerWidget {
       child: Scaffold(
         
         body: screens[currentIndex],
-      
+        
         bottomNavigationBar: Container(
           margin: EdgeInsets.only(
             left: 20.w,

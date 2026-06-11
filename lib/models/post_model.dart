@@ -1,3 +1,5 @@
+import 'package:wink_app/models/media_model.dart';
+
 class PostModel {
   final String userName;
   final String userImage;
@@ -20,4 +22,10 @@ class PostModel {
     required this.likes,
     required this.comments,
   });
-}
+} 
+
+
+///
+///
+///
+///

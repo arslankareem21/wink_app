@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:wink_app/core/config/routes/app_routes.dart';
 import 'package:wink_app/core/config/theme/app_theme.dart';
-import 'package:wink_app/presentation/screens/auth/login_screen.dart';
-import 'package:wink_app/presentation/screens/auth/signup-screen.dart';
+import 'package:wink_app/presentation/screens/auth/auth_gaurd.dart';
+import 'package:wink_app/presentation/screens/auth/forget_password_screen.dart';
 import 'package:wink_app/presentation/screens/splash/splash_screen.dart';
+import 'package:wink_app/presentation/widgets/app_snackbar.dart';
+
 import 'package:wink_app/viewmodels/theme_viewmodel.dart';
 
 class App extends ConsumerWidget {
@@ -13,12 +16,14 @@ class App extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeProvider);
 
-    return MaterialApp(
+    return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
-      home: const SplashScreen(),
+      scaffoldMessengerKey: AppSnackBar.messengerKey,
+      routerConfig: AppRouter.router,
+      
     );
   }
 }

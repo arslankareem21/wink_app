@@ -4,6 +4,7 @@ import 'package:wink_app/core/config/theme/app_colors.dart';
 import 'package:wink_app/core/config/theme/app_spacing.dart';
 import 'package:wink_app/models/post_model.dart';
 import 'package:wink_app/presentation/components/post/post_card.dart';
+import 'package:wink_app/presentation/components/splash/splash_logo.dart';
 import 'package:wink_app/presentation/widgets/toogle_theme_button.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -73,8 +74,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Home Screen'),
-        leading: const ThemeToggleButton(),
+        backgroundColor: Colors.transparent,
+        leading: SizedBox(
+          height: 20.h,
+          width: 20.w,
+          child: SplashLogo()),
       ),
       body: Stack(
         children: [
@@ -97,4 +101,4 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     
   }
-}
+} //

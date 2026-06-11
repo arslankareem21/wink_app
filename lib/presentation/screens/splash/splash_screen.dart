@@ -1,11 +1,17 @@
+import 'dart:async';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:wink_app/core/config/theme/app_colors.dart';
+import 'package:wink_app/core/config/routes/navigation_service.dart';
+import 'package:wink_app/core/config/routes/route_names.dart';
+
 import 'package:wink_app/core/config/theme/app_spacing.dart';
-import 'package:wink_app/presentation/components/onboarding/onboarding_wrapper.dart';
 import 'package:wink_app/presentation/components/splash/splash_loading_indicator.dart';
 import 'package:wink_app/presentation/components/splash/splash_logo.dart';
-import 'package:wink_app/presentation/screens/onboarding/onboarding1_screen.dart';
+import 'package:wink_app/presentation/screens/auth/auth_gaurd.dart';
+import 'package:wink_app/service/auth_service.dart';
+
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -15,51 +21,53 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-
   @override
   void initState() {
     super.initState();
-
-    /// ✅ run once AFTER first frame (no build loop)
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _navigate();
-    });
+    _checkAuth();
   }
 
-  Future<void> _navigate() async {
-    await Future.delayed(const Duration(seconds: 3));
-
+  Future<void> _checkAuth() async {
+    await Future.delayed(const Duration(seconds: 2)); // splash delay
+    
     if (!mounted) return;
+    
+    final user = FirebaseAuth.instance.currentUser;
+    
+    if (user == null) {
+      NavigationService.go(context, AppRoutes.login);
+      return;
+    }
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const OnboardingWrapper(),
-      ),
-    );
+    // Check if Google user needs password setup
+    final needsSetup = await AuthRepository().needsPasswordSetup();
+    if (needsSetup) {
+      await AuthRepository().signOut();
+      if (!mounted) return;
+      NavigationService.go(context, AppRoutes.login);
+      return;
+    }
+
+    NavigationService.go(context, AppRoutes.home);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      
       body: SafeArea(
-        
         child: Padding(
           padding: AppSpacing.screenPadding,
-          
           child: Column(
             children: [
               Expanded(
                 child: Center(
                   child: SizedBox(
                     height: 100.h,
-                    child: SplashLogo()),
+                    child: const SplashLogo(),
+                  ),
                 ),
               ),
-          
               const SplashLoadingIndicator(),
-          
               AppSpacing.vxl,
             ],
           ),
@@ -68,3 +76,4 @@ class _SplashScreenState extends State<SplashScreen> {
     );
   }
 }
+

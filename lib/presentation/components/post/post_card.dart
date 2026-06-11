@@ -28,7 +28,7 @@ class PostCard extends StatelessWidget {
     return Container(
       margin: EdgeInsets.symmetric(
         horizontal: 16.w,
-        vertical: 10.h,
+        vertical: 10.h, //
       ),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,

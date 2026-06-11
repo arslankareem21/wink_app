@@ -1,94 +1,144 @@
-
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:wink_app/core/config/theme/app_colors.dart';
 import 'package:wink_app/core/config/theme/app_spacing.dart';
 import 'package:wink_app/core/config/theme/app_text_style.dart';
 import 'package:wink_app/core/utils/validators.dart';
-import 'package:wink_app/presentation/screens/home/home.dart';
-import 'package:wink_app/presentation/widgets/bottom_navbar.dart';
+import 'package:wink_app/presentation/components/splash/splash_logo.dart';
+import 'package:wink_app/presentation/widgets/app_snackbar.dart';
 import 'package:wink_app/presentation/widgets/elevated_button.dart';
 import 'package:wink_app/presentation/widgets/text_button.dart';
 import 'package:wink_app/presentation/widgets/textformfield.dart';
 
-class ForgetPasswordScreen extends StatefulWidget {
+import 'package:wink_app/viewmodels/auth_viewmodel.dart';
+
+class ForgetPasswordScreen extends ConsumerStatefulWidget {
   const ForgetPasswordScreen({super.key});
 
   @override
-  State<ForgetPasswordScreen> createState() => _ForgetPasswordScreenState();
+  ConsumerState<ForgetPasswordScreen> createState() => _ForgetPasswordScreenState();
 }
 
-class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
+class _ForgetPasswordScreenState extends ConsumerState<ForgetPasswordScreen> {
+  final emailController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Forget Password"),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.primaryYellow),
-          onPressed: () {
-            Navigator.pop(context);
-          }
-      ),
-      ),
-      body: SafeArea(
-        child: Center(
-          child: Card(
-            margin: AppSpacing.cardPadding,
-            elevation: 4,
-            child: Padding(
-              padding: AppSpacing.cardPadding,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  AppSpacing.vxxl,
-                  Text(
-                    textAlign: TextAlign.left,
-                  "Reset Password",
-                    style: AppTextStyles.authHeadline,
-                    ),
-                AppSpacing.vsm,
-                 Text(
-                  "Please enter your email to reset your password",
-                               style: AppTextStyles.authSubtitle,
-                               ),
-                        AppSpacing.vsm,
-                  AppTextField(
-                  // controller:emailController,
-                  hintText: 'Enter your email',
-                 prefixIcon: Icon(
-               Icons.email_outlined,
-                 color: AppColors.primaryYellow,
-                 size: 20.sp,
-                ),
-                        keyboardType: TextInputType.emailAddress,
-                        textInputAction: TextInputAction.next,
-                        validator: Validators.email,
-                        
-                  ),
-                   AppSpacing.vxxxl,
-                  AppButton(text: "Send Reset Link", onPressed: () {
-                    
-                  }),
-                    AppSpacing.vxxl,
+    ref.listen(authViewModelProvider, (prev, next) {
+      if (next.message != null && next.message != prev?.message) {
+        AppSnackBar.show(next.message!);
+        context.pop(); // Go back to login after success
+      }
+      if (next.error != null && next.error != prev?.error) {
+        AppSnackBar.show(next.error!, isError: true);
+      }
+    });
 
-                    Center(
-                      child: AppTextButton(
-                        text: "Send Reset Link", 
-                      textStyle: AppTextStyles.screenTitle.copyWith(
-                        color: AppColors.primaryYellow,
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w900,
+    final authState = ref.watch(authViewModelProvider);
+    final isLoading = authState.loadingType == AuthLoadingType.resetRequest;
+
+    return Scaffold(
+      resizeToAvoidBottomInset: true,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Padding(
+                    padding: AppSpacing.cardPadding,
+                    child: Center(
+                      child: Card(
+                        elevation: 4,
+                        child: Container(
+                          width: 342.w,
+                          padding: AppSpacing.cardPadding,
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                AppSpacing.vxl,
+                                const Center(child: SplashLogo()),
+                                AppSpacing.vsm,
+                                Center(
+                                  child: Text("Reset Password",
+                                      style: AppTextStyles.authHeadline),
+                                ),
+                                AppSpacing.vsm,
+                                Center(
+                                  child: Text(
+                                      "Enter your email to receive a reset link",
+                                      style: AppTextStyles.authSubtitle,
+                                      textAlign: TextAlign.center),
+                                ),
+                                AppSpacing.vsm,
+                                Text("Email Address", style: AppTextStyles.inputLabel),
+                                AppSpacing.vsm,
+                                AppTextField(
+                                  controller: emailController,
+                                  hintText: 'Enter your email',
+                                  keyboardType: TextInputType.emailAddress,
+                                  prefixIcon: Icon(
+                                    Icons.email_outlined,
+                                    color: AppColors.primaryYellow,
+                                    size: 20.sp,
+                                  ),
+                                  validator: Validators.email,
+                                ),
+                                AppSpacing.vsm,
+                                AppButton(
+                                  text: isLoading ? "Sending..." : "Send Reset Link",
+                                  isGhost: false,
+                                  width: double.infinity,
+                                  onPressed: isLoading
+                                      ? null
+                                      : () {
+                                          if (_formKey.currentState!.validate()) {
+                                            ref
+                                                .read(authViewModelProvider.notifier)
+                                                .sendResetLink(
+                                                    emailController.text.trim());
+                                          }
+                                        },
+                                ),
+                                AppSpacing.vsm,
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text("Remember password?",
+                                        style: AppTextStyles.authSubtitle),
+                                    AppTextButton(
+                                      text: "Login",
+                                      textStyle: AppTextStyles.textLink
+                                          .copyWith(color: AppColors.primaryYellow),
+                                      onPressed: () => context.pop(),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
-                      onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const BottomNavScreen()));
-                                        }),
                     ),
-                ],
+                  ),
+                ),
               ),
-            ),
-      ),
+            );
+          },
         ),
       ),
     );

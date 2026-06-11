@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:wink_app/presentation/screens/create/edit-video_screen.dart';
+import 'package:wink_app/presentation/screens/create/image_picker_screen.dart';
+import 'package:wink_app/presentation/screens/create/video_edit_screen.dart' hide VideoEditor;
 import 'package:wink_app/presentation/widgets/create_tile.dart';
+import 'package:wink_app/viewmodels/image_picker_vm.dart';
 
 import '../../../../core/config/theme/app_colors.dart';
 
 
-class CreateBottomSheet extends StatelessWidget {
+class CreateBottomSheet extends ConsumerWidget {
+             
   const CreateBottomSheet({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, ref ) {
+    final pickedFile = ref.watch(imagePickerProvider);
     return SafeArea(
       child: Container(
         padding: EdgeInsets.all(24.w),
@@ -28,11 +35,24 @@ class CreateBottomSheet extends StatelessWidget {
             SizedBox(height: 28.h),
       
             CreateTile(
-              icon: Icons.video_collection_rounded,
-              title: 'Create Short',
-              subtitle: 'Upload or record short videos',
-              onTap: () {},
-            ),
+  icon: Icons.video_collection_rounded,
+  title: 'Create Short',
+  subtitle: 'Upload or record short videos',
+  onTap: () async {
+    await ref.read(imagePickerProvider.notifier).pickVideoFromGallery();
+    if (!context.mounted) return;
+
+    final pickedFile = ref.read(imagePickerProvider);
+    if (pickedFile == null) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => VideoEditor(videoFile: pickedFile),
+      ),
+    );
+  },
+),
       
             SizedBox(height: 16.h),
       
