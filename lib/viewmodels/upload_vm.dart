@@ -19,32 +19,34 @@ final uploadProvider =
   );
 });
 
-// ---------------- STATE ----------------
 class UploadState {
   final bool isUploading;
   final double progress;
   final String? message;
+  final String? error;
 
   UploadState({
     required this.isUploading,
     required this.progress,
     this.message,
+    this.error,
   });
 
   UploadState copyWith({
     bool? isUploading,
     double? progress,
     String? message,
+    String? error,
   }) {
     return UploadState(
       isUploading: isUploading ?? this.isUploading,
       progress: progress ?? this.progress,
       message: message ?? this.message,
+      error: error,
     );
   }
 }
 
-// ---------------- NOTIFIER ----------------
 class UploadNotifier extends StateNotifier<UploadState> {
   final CloudinaryService cloudinary;
   final FirestoreService firestore;
@@ -52,69 +54,70 @@ class UploadNotifier extends StateNotifier<UploadState> {
   UploadNotifier(this.cloudinary, this.firestore)
       : super(UploadState(isUploading: false, progress: 0));
 
-  // ---------------- HELPERS ----------------
   void _start(String msg) {
-    state = state.copyWith(isUploading: true, progress: 0, message: msg);
+    if (!mounted) return;
+    state = state.copyWith(isUploading: true, progress: 0, message: msg, error: null);
   }
 
   void _update(double value, [String? msg]) {
+    if (!mounted) return;
     state = state.copyWith(progress: value, message: msg);
   }
 
-  void _finish() {
-    state = state.copyWith(isUploading: false, progress: 1, message: null);
+  void _success([String msg = "Upload successful"]) {
+    if (!mounted) return;
+    state = state.copyWith(isUploading: false, progress: 1, message: msg, error: null);
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) state = UploadState(isUploading: false, progress: 0);
+    });
   }
 
-  // ---------------- POST ----------------
+  void _error(String msg) {
+    if (!mounted) return;
+    state = state.copyWith(isUploading: false, error: msg, message: "Upload failed");
+  }
+
+  // ---------------- POST - 1 IMAGE ONLY ----------------
   Future<void> uploadPost({
     required String userId,
-    required List<File> files,
+    required File file,
     required String caption,
     required List<String> hashtags,
   }) async {
     _start("Uploading post...");
-
     try {
-      List<MediaModel> mediaList = [];
+      final result = await cloudinary.uploadFile(
+        file: file,
+        folder: "wink/posts",
+        isVideo: false,
+        onProgress: (p) => _update(p, "Uploading image..."),
+      );
 
-      for (int i = 0; i < files.length; i++) {
-        final file = files[i];
+      if (result == null) throw Exception("Upload failed");
 
-        _update(i / files.length, "Uploading image ${i + 1}");
-
-        final result = await cloudinary.uploadFile(
-          file: file,
-          folder: "wink/posts",
-          isVideo: false,
-        );
-
-        if (result == null) continue;
-
-        mediaList.add(
-          MediaModel(
-            url: result["url"] ?? "",
-            publicId: result["publicId"] ?? "",
-            type: MediaType.image,
-          ),
-        );
-      }
+      _update(0.9, "Saving post...");
 
       final post = PostModels(
         postId: firestore.generateId("posts"),
         userId: userId,
         caption: caption,
         hashtags: hashtags,
-        media: mediaList,
+        media: [
+          MediaModel(
+            url: result["url"]!,
+            publicId: result["publicId"]!,
+            type: MediaType.image,
+          )
+        ],
         likesCount: 0,
         commentsCount: 0,
         createdAt: DateTime.now(),
       );
 
       await firestore.savePost(post);
-
-      _update(1.0, "Post uploaded");
-    } finally {
-      _finish();
+      _success("Post uploaded successfully");
+    } catch (e) {
+      _error(e.toString());
     }
   }
 
@@ -125,26 +128,24 @@ class UploadNotifier extends StateNotifier<UploadState> {
     required String caption,
   }) async {
     _start("Uploading short...");
-
     try {
-      _update(0.3, "Uploading video...");
-
       final result = await cloudinary.uploadFile(
         file: video,
         folder: "wink/shorts",
         isVideo: true,
+        onProgress: (p) => _update(p, "Uploading video..."),
       );
 
-      if (result == null) return;
+      if (result == null) throw Exception("Upload failed");
 
-      _update(0.8, "Saving short...");
+      _update(0.9, "Saving short...");
 
       final short = ShortModel(
         shortId: firestore.generateId("shorts"),
         userId: userId,
         caption: caption,
-        videoUrl: result["url"] ?? "",
-        publicId: result["publicId"] ?? "",
+        videoUrl: result["url"]!,
+        publicId: result["publicId"]!,
         likesCount: 0,
         commentsCount: 0,
         viewsCount: 0,
@@ -152,10 +153,9 @@ class UploadNotifier extends StateNotifier<UploadState> {
       );
 
       await firestore.saveShort(short);
-
-      _update(1.0, "Uploaded");
-    } finally {
-      _finish();
+      _success("Short uploaded successfully");
+    } catch (e) {
+      _error(e.toString());
     }
   }
 
@@ -166,35 +166,32 @@ class UploadNotifier extends StateNotifier<UploadState> {
     required bool isVideo,
   }) async {
     _start("Uploading story...");
-
     try {
-      _update(0.3);
-
       final result = await cloudinary.uploadFile(
         file: file,
         folder: "wink/stories",
         isVideo: isVideo,
+        onProgress: (p) => _update(p, "Uploading..."),
       );
 
-      if (result == null) return;
+      if (result == null) throw Exception("Upload failed");
 
-      _update(0.8);
+      _update(0.9, "Saving...");
 
       final story = StoryModel(
         storyId: firestore.generateId("stories"),
         userId: userId,
-        mediaUrl: result["url"] ?? "",
-        publicId: result["publicId"] ?? "",
+        mediaUrl: result["url"]!,
+        publicId: result["publicId"]!,
         mediaType: isVideo ? MediaType.video : MediaType.image,
         createdAt: DateTime.now(),
         expiresAt: DateTime.now().add(const Duration(hours: 24)),
       );
 
       await firestore.saveStory(story);
-
-      _update(1.0);
-    } finally {
-      _finish();
+      _success("Story uploaded successfully");
+    } catch (e) {
+      _error(e.toString());
     }
   }
 
@@ -204,24 +201,26 @@ class UploadNotifier extends StateNotifier<UploadState> {
     required File file,
   }) async {
     _start("Updating profile...");
-
     try {
       final result = await cloudinary.uploadFile(
         file: file,
         folder: "wink/profilepics",
         isVideo: false,
+        onProgress: (p) => _update(p, "Uploading..."),
       );
 
-      if (result == null) return;
+      if (result == null) throw Exception("Upload failed");
+
+      _update(0.9, "Updating...");
 
       await firestore.updateProfileImage(
         userId: userId,
-        url: result["url"] ?? "",
+        url: result["url"]!,
       );
 
-      _update(1.0);
-    } finally {
-      _finish();
+      _success("Profile updated successfully");
+    } catch (e) {
+      _error(e.toString());
     }
   }
 }

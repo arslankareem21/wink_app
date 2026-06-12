@@ -76,16 +76,16 @@ class ProfileScreen extends ConsumerWidget {
                 //ProfileTabsView(param0, isOtherProfile: isOtherProfile)
                 ProfileTabsView(),
           ),
-          Center(
-            child: AppProfileAvatar(
-              size: 400,
-              imageSource: pickedFile,
-              isNetwork: pickedFile == null,
-              onTap: () {
-                ref.read(imagePickerProvider.notifier).pickFromGallery();
-              },
-            ),
-          ),
+          // Center(
+          //   child: AppProfileAvatar(
+          //     size: 40,
+          //     imageSource: pickedFile,
+          //     isNetwork: pickedFile == null,
+          //     onTap: () {
+          //       ref.read(imagePickerProvider.notifier).pickFromGallery();
+          //     },
+          //   ),
+          // ),
           IconButton(
             icon: authState.isLoading
                 ? const SizedBox(
