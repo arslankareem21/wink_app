@@ -14,7 +14,7 @@ class OnboardingDots extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final activeColor = theme.colorScheme.primary;
-    final inactiveColor = theme.colorScheme.onSurface.withOpacity(0.2);
+    final inactiveColor = theme.colorScheme.onSurface.withValues(alpha: 0.2);
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,

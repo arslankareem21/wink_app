@@ -13,10 +13,8 @@ import 'package:wink_app/presentation/components/splash/splash_logo.dart';
 import 'package:wink_app/presentation/screens/auth/setup_dailog.dart';
 import 'package:wink_app/presentation/widgets/app_snackbar.dart';
 import 'package:wink_app/presentation/widgets/elevated_button.dart';
-
 import 'package:wink_app/presentation/widgets/text_button.dart';
 import 'package:wink_app/presentation/widgets/textformfield.dart';
-
 import 'package:wink_app/viewmodels/auth_viewmodel.dart';
 
 class LoginScreen extends HookConsumerWidget {
@@ -38,7 +36,7 @@ class LoginScreen extends HookConsumerWidget {
         final state = ref.read(authViewModelProvider);
 
         // Autofill email
-        if (state.autofillEmail != null && 
+        if (state.autofillEmail != null &&
             state.autofillEmail != emailController.text) {
           emailController.text = state.autofillEmail!;
           passwordController.clear();
@@ -55,7 +53,7 @@ class LoginScreen extends HookConsumerWidget {
         }
 
         // Fixed: Navigate on 'Login successful' instead of goToHome
-        if (state.message == 'Login successful' || 
+        if (state.message == 'Login successful' ||
             state.message == 'Password set successfully') {
           NavigationService.go(context, AppRoutes.home);
           ref.read(authViewModelProvider.notifier).clear();
@@ -92,14 +90,14 @@ class LoginScreen extends HookConsumerWidget {
           ref.read(authViewModelProvider.notifier).clear();
         }
 
-        if (state.message != null && 
+        if (state.message != null &&
             !state.message!.contains('successful')) {
           AppSnackBar.show(state.message!);
           ref.read(authViewModelProvider.notifier).clear();
         }
       }
 
-      final sub = ref.listenManual(authViewModelProvider, (_, __) => listener());
+      final sub = ref.listenManual(authViewModelProvider, (_, _) => listener());
       return sub.close;
     }, []);
 
@@ -164,7 +162,6 @@ class LoginScreen extends HookConsumerWidget {
                                   prefixIcon: Icon(Icons.lock_outline,
                                       color: AppColors.primaryYellow,
                                       size: 20.sp),
-                                  validator: Validators.password,
                                 ),
                                 AppSpacing.vsm,
                                 Align(
@@ -186,18 +183,18 @@ class LoginScreen extends HookConsumerWidget {
                                   onPressed: isEmailLoading || isGoogleLoading
                                       ? null
                                       : () {
-                                          if (formKey.currentState!
-                                              .validate()) {
-                                            ref
-                                                .read(authViewModelProvider
-                                                    .notifier)
-                                                .login(
-                                                  emailController.text.trim(),
-                                                  passwordController.text
-                                                      .trim(),
-                                                );
-                                          }
-                                        },
+                                    if (formKey.currentState!
+                                        .validate()) {
+                                      ref
+                                          .read(authViewModelProvider
+                                          .notifier)
+                                          .login(
+                                        emailController.text.trim(),
+                                        passwordController.text
+                                            .trim(),
+                                      );
+                                    }
+                                  },
                                 ),
                                 AppSpacing.vsm,
                                 Row(
@@ -205,7 +202,7 @@ class LoginScreen extends HookConsumerWidget {
                                     const Expanded(child: Divider()),
                                     Padding(
                                       padding:
-                                          EdgeInsets.symmetric(horizontal: 8.w),
+                                      EdgeInsets.symmetric(horizontal: 8.w),
                                       child: Text("or continue with",
                                           style: AppTextStyles.authSubtitle),
                                     ),
@@ -225,9 +222,9 @@ class LoginScreen extends HookConsumerWidget {
                                     onPressed: isGoogleLoading || isEmailLoading
                                         ? null
                                         : () => ref
-                                            .read(authViewModelProvider
-                                                .notifier)
-                                            .signInWithGoogle(),
+                                        .read(authViewModelProvider
+                                        .notifier)
+                                        .signInWithGoogle(),
                                   ),
                                 ),
                                 AppSpacing.vsm,
@@ -239,9 +236,10 @@ class LoginScreen extends HookConsumerWidget {
                                     AppTextButton(
                                       text: "Sign Up",
                                       textStyle:
-                                          AppTextStyles.textLink.copyWith(
-                                              color: AppColors.primaryYellow),
-                                      onPressed: () => NavigationService.push(
+                                      AppTextStyles.textLink.copyWith(
+                                          color: AppColors.primaryYellow),
+                                      onPressed: () => 
+                                      NavigationService.push(
                                           context, AppRoutes.signup),
                                     ),
                                   ],

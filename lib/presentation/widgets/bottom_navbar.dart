@@ -22,7 +22,8 @@ class CustomNavBar extends StatelessWidget {
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(30),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5))],
+
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 5))],
       ),
       child: Stack(
         clipBehavior: Clip.none,
@@ -69,7 +70,7 @@ class CustomNavBar extends StatelessWidget {
                   width: 60, height: 60,
                   decoration: BoxDecoration(
                     color: activeColor, shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2),
                   ),
                   child: Icon(Icons.add, color: isDark ? Colors.black : Colors.white, size: 32),
                 ),

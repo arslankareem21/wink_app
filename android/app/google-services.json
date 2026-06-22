@@ -23,6 +23,14 @@
           }
         },
         {
+          "client_id": "621841020665-3kbdtbs8tdveeme5tf62hlvpcpbhi9l9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.wink_app",
+            "certificate_hash": "f5284b2129481a9e64d1d551e9ba6f09c5e1ce70"
+          }
+        },
+        {
           "client_id": "621841020665-kr9g3ral0frjec3pgl22vbhtge419a90.apps.googleusercontent.com",
           "client_type": 3
         }

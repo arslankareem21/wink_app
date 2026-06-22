@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:pro_image_editor/pro_image_editor.dart';
 import 'package:pro_video_editor/pro_video_editor.dart';
@@ -163,8 +162,8 @@ class _VideoEditorState extends State<VideoEditor> {
         // If the user muted during editing → _isAudioMuted = true → enableAudio = false → export is silent.
         // If the user left audio on   → _isAudioMuted = false → enableAudio = true  → export has audio.
         enableAudio: !_isAudioMuted,
-        imageLayers: params.layers.isNotEmpty && params.image != null
-            ? [ImageLayer(image: EditorLayerImage.memory(params.image!))]
+        imageLayers: params.layers.isNotEmpty
+            ? [ImageLayer(image: EditorLayerImage.memory(params.image))]
             : null,
         blur: params.blur,
         colorFilters: params
@@ -241,7 +240,7 @@ class _VideoEditorState extends State<VideoEditor> {
                 'Loading Video...',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       color: Colors.white,
-                    ),
+                ),
               ),
             ],
           ),

@@ -21,7 +21,7 @@ class OtherUserProfileStats extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg.w),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.md.w),
       child: Row(
         children: [
           SizedBox(width: 10.w,),

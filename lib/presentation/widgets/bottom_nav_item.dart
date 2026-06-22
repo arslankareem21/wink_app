@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:wink_app/presentation/provider/navbar_provider.dart';
-
 import '../../../../core/config/theme/app_colors.dart';
 
 

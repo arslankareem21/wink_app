@@ -1,5 +1,4 @@
 
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -19,36 +18,38 @@ class SettingsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsetsGeometry.symmetric(horizontal: AppSpacing.sm),
-      child: Row(
+      child: SingleChildScrollView(scrollDirection: Axis.horizontal,
+        child: Row(
+          
+          children: [
+            // Icon Container
+            Container(
+              width: 36.w,
+              height: 36.h,
+              decoration: BoxDecoration(
+               // color: iconColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(18.r),
+              ),
+              child: Icon(icon, color: iconColor,),
+            ),
         
-        children: [
-          // Icon Container
-          Container(
-            width: 36.w,
-            height: 36.h,
-            decoration: BoxDecoration(
-             // color: iconColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(18.r),
-            ),
-            child: Icon(icon, color: iconColor,),
-          ),
-
-          AppSpacing.hxl,
-                Text(
-                  text,
-                  
-                  style: AppTextStyles.bodyRegular.copyWith(
-                    color: AppColors.black,
+            AppSpacing.hxl,
+                  Text(
+                    text,
+                    
+                    style: AppTextStyles.bodyRegular.copyWith(
+                      color: AppColors.black,
+                    ),
                   ),
-                ),
-            Spacer(),
-            IconButton(
-              icon: Icon(Icons.chevron_right_rounded, size: 22.sp,
-              color: AppColors.dialogBgDark,
-               ),
-              onPressed: onTap,
-            ),
-        ],
+              Spacer(),
+              IconButton(
+                icon: Icon(Icons.chevron_right_rounded, size: 22.sp,
+                color: AppColors.dialogBgDark,
+                 ),
+                onPressed: onTap,
+              ),
+          ],
+        ),
       ),
      
     );

@@ -6,11 +6,9 @@ class ShortModel {
   final String caption;
   final String videoUrl;
   final String publicId;
-
   final int likesCount;
   final int commentsCount;
   final int viewsCount;
-
   final DateTime? createdAt;
 
   ShortModel({
@@ -35,7 +33,7 @@ class ShortModel {
       "likesCount": likesCount,
       "commentsCount": commentsCount,
       "viewsCount": viewsCount,
-      "createdAt": createdAt,
+      "createdAt": createdAt != null ? Timestamp.fromDate(createdAt!) : null,
     };
   }
 
@@ -49,7 +47,13 @@ class ShortModel {
       likesCount: map["likesCount"] ?? 0,
       commentsCount: map["commentsCount"] ?? 0,
       viewsCount: map["viewsCount"] ?? 0,
-     createdAt: (map["createdAt"] as Timestamp?)?.toDate(),
+      createdAt: (map["createdAt"] as Timestamp?)?.toDate(),
     );
   }
+
+  factory ShortModel.fromDoc(DocumentSnapshot doc) {
+    return ShortModel.fromMap(doc.data() as Map<String, dynamic>);
+  }
+
+  
 }

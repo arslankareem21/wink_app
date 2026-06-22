@@ -20,12 +20,7 @@ class _ProfileTabsViewState extends State<ProfileTabsView> {
         children: [
           //  Tab Bar
           TabBar(
-            // Style the active tab indicator
-            // indicatorColor: AppColors.primaryYellow,
             indicatorWeight: 2.h,
-            // indicatorSize: 20.w,
-
-            // Style the text labels
             labelColor: AppColors.primaryYellow,
             indicatorSize: TabBarIndicatorSize.tab,
             //unselectedLabelColor: AppColors.greyText,
@@ -63,23 +58,27 @@ class _ProfileTabsViewState extends State<ProfileTabsView> {
                 // label: 'SHORTS',
               ),
 
-              ///tap3
+              //tap3
             ],
           ),
 
-          //  Tab Content (The Views)
           Expanded(
             child: TabBarView(
               children: [
                 PostsGrid(
                   imageUrls: [
-                    ...List.generate(18,(i) => 'https://picsum.photos/300/300?random=${i + 1}',),
+                    ...List.generate(
+                      18,
+                      (i) => 'https://picsum.photos/300/300?random=${i + 1}',
+                    ),
                   ],
                 ),
 
                 PostsGrid(
                   imageUrls: [
-                    ...List.generate(18, (i) => 'https://picsum.photos/300/300?random=${i + 1}',
+                    ...List.generate(
+                      18,
+                      (i) => 'https://picsum.photos/300/300?random=${i + 1}',
                     ),
                   ],
                 ),
@@ -90,5 +89,4 @@ class _ProfileTabsViewState extends State<ProfileTabsView> {
       ),
     );
   }
-
 }

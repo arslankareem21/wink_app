@@ -1,4 +1,3 @@
-// presentation/components/profile/posts_grid.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -29,10 +28,10 @@ class OtherUserProfileTabController extends StatelessWidget {
             ),
 
             tabs: [
-              // 🟡 TAB 1: POSTS
+              //  TAB 1 POSTS
               Tab(icon: Icon(Icons.grid_view_rounded, size: 24.sp)),
 
-              // 🟡 TAB 2: SHORTS
+              // TAB 2 SHORTS
               Tab(
                 icon: Icon(
                   Icons.movie_creation_rounded, // Shorts icon
@@ -41,7 +40,7 @@ class OtherUserProfileTabController extends StatelessWidget {
                 // label: 'SHORTS',
               ),
 
-              //  TAB 3: SHORTS
+              //  TAB 3 SHORTS
               Tab(
                 icon: Icon(
                   Icons.person, // Shorts icon

@@ -6,7 +6,6 @@ import 'package:wink_app/core/config/theme/app_text_style.dart';
 import 'package:wink_app/presentation/components/onboarding/onboarding_indicator.dart';
 import 'package:wink_app/presentation/screens/auth/login_screen.dart';
 // change to your home screen
-import 'package:wink_app/presentation/screens/splash/splash_screen.dart';
 import 'package:wink_app/presentation/widgets/elevated_button.dart';
 import 'package:wink_app/presentation/widgets/toogle_theme_button.dart';
 

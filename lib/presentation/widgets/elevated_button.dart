@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:wink_app/core/config/theme/app_colors.dart';
 import 'package:wink_app/core/config/theme/app_spacing.dart';
@@ -68,8 +69,8 @@ class AppButton extends StatelessWidget {
         ? OutlinedButton.styleFrom(
             backgroundColor: effectiveBg,
             foregroundColor: effectiveFg,
-            disabledForegroundColor: effectiveFg?.withOpacity(0.5),
-            disabledBackgroundColor: effectiveBg?.withOpacity(0.5),
+            disabledForegroundColor: effectiveFg?.withValues(alpha: 0.5),
+            disabledBackgroundColor: effectiveBg?.withValues(alpha: 0.5),
             padding: effectivePadding,
             side: side,
             shape: RoundedRectangleBorder(
@@ -80,8 +81,8 @@ class AppButton extends StatelessWidget {
         : ElevatedButton.styleFrom(
             backgroundColor: effectiveBg,
             foregroundColor: effectiveFg,
-            disabledBackgroundColor: effectiveBg?.withOpacity(0.6),
-            disabledForegroundColor: effectiveFg?.withOpacity(0.6),
+            disabledBackgroundColor: effectiveBg?.withValues(alpha: 0.6),
+            disabledForegroundColor: effectiveFg?.withValues(alpha: 0.6),
             padding: effectivePadding,
             elevation: 0,
             shape: RoundedRectangleBorder(
@@ -90,9 +91,8 @@ class AppButton extends StatelessWidget {
             ),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ).merge(theme.elevatedButtonTheme.style);
-
     Widget buttonChild;
-    
+
     if (isLoading) {
       buttonChild = SizedBox(
         height: loaderSize,
@@ -106,7 +106,7 @@ class AppButton extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       );
-      
+
       buttonChild = icon != null
           ? Row(
               mainAxisSize: MainAxisSize.min,
@@ -123,12 +123,12 @@ class AppButton extends StatelessWidget {
     final button = isOutlined
         ? OutlinedButton(
             onPressed: isLoading ? null : onPressed,
-            style: buttonStyle, 
+            style: buttonStyle,
             child: Center(child: buttonChild),
           )
         : ElevatedButton(
             onPressed: isLoading ? null : onPressed,
-            style: buttonStyle, 
+            style: buttonStyle,
             child: Center(child: buttonChild),
           );
 

@@ -1,3 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 class Validators {
   /// Email validation
   static String? email(String? value) {
@@ -12,6 +16,53 @@ class Validators {
     }
     return null;
   }
+
+    static String? username(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Username is required';
+    }
+    
+    final trimmedValue = value.trim();
+
+    if (trimmedValue.length < 3) {
+      return 'Username must be at least 3 characters long';
+    }
+    
+    if (trimmedValue.length > 20) {
+      return 'Username cannot exceed 20 characters';
+    }
+
+    // Check if the first letter is a capital letter (A-Z)
+    if (!RegExp(r'^[A-Z]').hasMatch(trimmedValue)) {
+      return 'First letter of username must be a capital letter (A-Z)';
+    }
+
+    final usernameRegex = RegExp(r'^[a-zA-Z0-9._]+$');
+    if (!usernameRegex.hasMatch(trimmedValue)) {
+      return 'Only letters, numbers, underscores (_), or dots (.) allowed';
+    }
+
+      inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))];
+
+
+    return null; 
+  }
+
+
+void isUsernameTakenProvider = FutureProvider.family<bool, String>((ref, username) async {
+  if (username.isEmpty || username.length < 3)
+   return false;
+  
+  final querySnapshot = await FirebaseFirestore.instance
+      .collection('users') // Make sure this matches your Firestore collection name
+      .where('username', isEqualTo: username.toLowerCase())
+      .limit(1)
+      .get();
+
+  return querySnapshot.docs.isNotEmpty;
+});
+
+
 
   /// Password validation - min 8 chars, 1 uppercase, 1 number
   static String? password(String? value) {
@@ -57,12 +108,29 @@ class Validators {
 
   /// Name validation
   static String? name(String? value, {String fieldName = 'Name'}) {
+
     if (value == null || value.trim().isEmpty) {
       return '$fieldName is required';
     }
     if (value.trim().length < 2) {
       return '$fieldName must be at least 2 characters';
     }
+
+ if (!RegExp(r'^[A-Z]').hasMatch(value)) {
+    return 'First letter must be a capital letter';
+  }
+
+// if (!RegExp(r'^[a-zA-Z]+ [a-zA-Z]+$').hasMatch(value.trim())) {
+//   return 'Please enter First and Last name with a single space';
+// }
+  // if (!RegExp(r'^[a-zA-Z]+( [a-zA-Z]+)*$').hasMatch(value)) {
+  //    return 'Only letters and single spaces between words are allowed';
+  //    } 
+
+//   if (!RegExp(r'^[a-zA-Z]+ [a-zA-Z]+$').hasMatch(value.trim())) {
+//   return 'Please enter a valid full name (First Name and Last Name with a single space)';
+// }
+
     if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
       return '$fieldName can only contain letters';
     }
@@ -133,4 +201,10 @@ class Validators {
       return null;
     };
   }
+
+
+
+
+
+
 }

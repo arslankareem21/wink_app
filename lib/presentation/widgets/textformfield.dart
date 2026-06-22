@@ -7,7 +7,6 @@ import 'package:wink_app/core/config/theme/app_text_style.dart';
 class AppTextField extends StatefulWidget {
   final TextEditingController? controller;
   final String? hintText;
-  final String? labelText;
   final Widget? prefixIcon;
   final Widget? suffixIcon;
   final bool obscureText;
@@ -32,7 +31,6 @@ class AppTextField extends StatefulWidget {
     super.key,
     this.controller,
     this.hintText,
-    this.labelText,
     this.prefixIcon,
     this.suffixIcon,
     this.obscureText = false,
@@ -51,7 +49,7 @@ class AppTextField extends StatefulWidget {
     this.focusNode,
     this.width,
     this.height,
-    this.contentPadding,
+    this.contentPadding, String? errorText,
   });
 
   @override
@@ -109,6 +107,7 @@ class _AppTextFieldState extends State<AppTextField> {
   @override
   Widget build(BuildContext context) {
     final textField = TextFormField(
+      
       controller: widget.controller,
       obscureText: _obscureText,
       keyboardType: widget.isPassword 
@@ -131,7 +130,6 @@ class _AppTextFieldState extends State<AppTextField> {
       ),
       decoration: InputDecoration(
         hintText: widget.hintText,
-        labelText: widget.labelText,
         prefixIcon: widget.prefixIcon,
         suffixIcon: _buildSuffixIcon(), // Fixed here
         contentPadding: widget.contentPadding ?? 

@@ -38,7 +38,7 @@ class PostCard extends StatelessWidget {
             color:
                 isDark ? AppColors.shadowDark : AppColors.shadowLight,
             blurRadius: 12,
-            offset: const Offset(0, 4),
+            offset: const Offset(0, 0),
           ),
         ],
       ),

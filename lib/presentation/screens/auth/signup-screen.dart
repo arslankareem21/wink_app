@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:wink_app/core/config/routes/navigation_service.dart';
@@ -76,6 +77,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                           padding: AppSpacing.cardPadding,
                           child: Form(
                             key: formKey,
+                            autovalidateMode: AutovalidateMode
+                                .onUserInteraction, // 🌟 Naya Addition
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -83,69 +86,129 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                 const Center(child: SplashLogo()),
                                 AppSpacing.vsm,
                                 Center(
-                                  child: Text("Create Account",
-                                      style: AppTextStyles.authHeadline),
+                                  child: Text(
+                                    "Create Account",
+                                    style: AppTextStyles.authHeadline,
+                                  ),
                                 ),
                                 AppSpacing.vsm,
                                 Center(
-                                  child: Text("Sign up to get started",
-                                      style: AppTextStyles.authSubtitle),
+                                  child: Text(
+                                    "Sign up to get started",
+                                    style: AppTextStyles.authSubtitle,
+                                  ),
                                 ),
                                 AppSpacing.vsm,
-                                Text("Your Name", style: AppTextStyles.inputLabel),
+                                Text(
+                                  "Your Name",
+                                  style: AppTextStyles.inputLabel,
+                                ),
                                 AppSpacing.vsm,
                                 AppTextField(
+                                  textInputAction: TextInputAction.next,
                                   controller: nameController,
                                   hintText: 'Enter your name',
-                                  prefixIcon: Icon(Icons.person_outline,
-                                      color: AppColors.primaryYellow, size: 20.sp),
+                                  prefixIcon: Icon(
+                                    Icons.person_outline,
+                                    color: AppColors.primaryYellow,
+                                    size: 20.sp,
+                                  ),
                                   validator: Validators.name,
+                                  inputFormatters: [
+                                    //FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z ]')),
+                                    FilteringTextInputFormatter.deny(
+                                      RegExp(r'\s'),
+                                    //  Fil
+                                    ),
+                                  ],
                                 ),
                                 AppSpacing.vsm,
-                                Text("Email Address", style: AppTextStyles.inputLabel),
+                                Text(
+                                  "Email Address",
+                                  style: AppTextStyles.inputLabel,
+                                ),
                                 AppSpacing.vsm,
                                 AppTextField(
+                                  textInputAction: TextInputAction.next,
+
                                   controller: emailController,
                                   hintText: 'Enter your email',
                                   keyboardType: TextInputType.emailAddress,
-                                  prefixIcon: Icon(Icons.email_outlined,
-                                      color: AppColors.primaryYellow, size: 20.sp),
+                                  prefixIcon: Icon(
+                                    Icons.email_outlined,
+                                    color: AppColors.primaryYellow,
+                                    size: 20.sp,
+                                  ),
                                   validator: Validators.email,
+                                   inputFormatters: [
+                                    FilteringTextInputFormatter.deny(
+                                      RegExp(r'\s'),
+                                    ),
+                                  ],
                                 ),
                                 AppSpacing.vsm,
-                                Text("Password", style: AppTextStyles.inputLabel),
+                                Text(
+                                  "Password",
+                                  style: AppTextStyles.inputLabel,
+                                ),
                                 AppSpacing.vsm,
                                 AppTextField(
                                   controller: passwordController,
                                   hintText: 'Enter your password',
+                                  textInputAction: TextInputAction.next,
                                   isPassword: true,
-                                  prefixIcon: Icon(Icons.lock_outline,
-                                      color: AppColors.primaryYellow, size: 20.sp),
+                                  prefixIcon: Icon(
+                                    Icons.lock_outline,
+                                    color: AppColors.primaryYellow,
+                                    size: 20.sp,
+                                  ),
                                   validator: Validators.password,
+                                   inputFormatters: [
+                                    FilteringTextInputFormatter.deny(
+                                      RegExp(r'\s'),
+                                    ),
+                                  ],
                                 ),
                                 AppSpacing.vsm,
-                                Text("Confirm Password", style: AppTextStyles.inputLabel),
+                                Text(
+                                  "Confirm Password",
+                                  style: AppTextStyles.inputLabel,
+                                ),
                                 AppSpacing.vsm,
                                 AppTextField(
                                   controller: confirmPasswordController,
+                                  textInputAction: TextInputAction.done,
                                   hintText: 'Confirm your password',
                                   isPassword: true,
-                                  prefixIcon: Icon(Icons.lock_outline,
-                                      color: AppColors.primaryYellow, size: 20.sp),
-                                  validator: (v) => Validators.confirmPassword(
-                                      v, passwordController.text),
+                                  prefixIcon: Icon(
+                                    Icons.lock_outline,
+                                    color: AppColors.primaryYellow,
+                                    size: 20.sp,
+                                  ),
+                                  validator: (v) => Validators.confirmPassword(v,passwordController.text,
+                                  ), 
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.deny(
+                                      RegExp(r'\s'),
+                                    ),
+                                  ],
                                 ),
                                 AppSpacing.vsm,
                                 AppButton(
                                   width: double.infinity,
-                                  text: isLoading ? "Creating account..." : "Sign Up",
+                                  text: isLoading
+                                      ? "Creating account..."
+                                      : "Sign Up",
                                   isGhost: false,
                                   onPressed: isLoading
                                       ? null
                                       : () {
-                                          if (!formKey.currentState!.validate()) return;
+                                          if (!formKey.currentState!.validate())
+                                            return;
                                           ref
-                                              .read(authViewModelProvider.notifier)
+                                              .read(
+                                                authViewModelProvider.notifier,
+                                              )
                                               .signup(
                                                 emailController.text.trim(),
                                                 passwordController.text.trim(),
@@ -157,14 +220,19 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Text("Already have an account?",
-                                        style: AppTextStyles.authSubtitle),
+                                    Text(
+                                      "Already have an account?",
+                                      style: AppTextStyles.authSubtitle,
+                                    ),
                                     AppTextButton(
                                       text: "Login",
                                       textStyle: AppTextStyles.textLink
-                                          .copyWith(color: AppColors.primaryYellow),
+                                          .copyWith(
+                                            color: AppColors.primaryYellow,
+                                          ),
                                       // Fixed: Use NavigationService
-                                      onPressed: () => NavigationService.pop(context),
+                                      onPressed: () =>
+                                          NavigationService.pop(context),
                                     ),
                                   ],
                                 ),

@@ -6,11 +6,8 @@ import 'package:wink_app/presentation/screens/create/create_bottom_sheet.dart';
 import 'package:wink_app/presentation/screens/home/home_screen.dart';
 import 'package:wink_app/presentation/screens/notification/notification_screen.dart';
 import 'package:wink_app/presentation/screens/profile/profile_screen.dart';
-import 'package:wink_app/presentation/screens/create/shorts/short_feed_screen.dart';
+import 'package:wink_app/presentation/screens/reels/reels_page.dart';
 import 'package:wink_app/presentation/widgets/bottom_nav_item.dart';
-import 'package:wink_app/presentation/widgets/toogle_theme_button.dart';
-
-
 import '../../../../core/config/theme/app_colors.dart';
 
 
@@ -22,8 +19,8 @@ class BottomNavScreen extends ConsumerWidget {
     final currentIndex = ref.watch(bottomNavIndexProvider);
 
     final screens = [
-      const HomeScreen(),
-      const ShortsFeedScreen(),
+       HomeScreen(),
+      const ReelPage(),
       const SizedBox(),
       const NotificationScreen(),
       const ProfileScreen(),
@@ -32,19 +29,11 @@ class BottomNavScreen extends ConsumerWidget {
     return SafeArea(
       bottom: true,
       child: Scaffold(
-        
         body: screens[currentIndex],
-        
+
         bottomNavigationBar: Container(
-          margin: EdgeInsets.only(
-            left: 20.w,
-            right: 20.w,
-            bottom: 16.h,
-          ),
-          padding: EdgeInsets.symmetric(
-            horizontal: 10.w,
-            vertical: 10.h,
-          ),
+          margin: EdgeInsets.only(left: 20.w, right: 20.w, bottom: 16.h),
+          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
           decoration: BoxDecoration(
             color: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
             borderRadius: BorderRadius.circular(24.r),
@@ -66,13 +55,13 @@ class BottomNavScreen extends ConsumerWidget {
                 label: 'Home',
                 index: 0,
               ),
-      
+
               const BottomNavItem(
                 icon: Icons.play_circle_fill_rounded,
                 label: 'Shorts',
                 index: 1,
               ),
-      
+
               /// CREATE BUTTON
               Transform.translate(
                 offset: Offset(0, -22.h),
@@ -97,7 +86,7 @@ class BottomNavScreen extends ConsumerWidget {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primaryYellow.withOpacity(.35),
+                          color: AppColors.primaryYellow.withValues(alpha: .35),
                           blurRadius: 20,
                           offset: const Offset(0, 6),
                         ),
@@ -111,13 +100,13 @@ class BottomNavScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-      
+
               const BottomNavItem(
                 icon: Icons.favorite_rounded,
                 label: 'Activity',
                 index: 3,
               ),
-      
+
               const BottomNavItem(
                 icon: Icons.person_rounded,
                 label: 'Profile',

@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -10,7 +8,8 @@ import 'package:wink_app/core/config/theme/app_spacing.dart';
 import 'package:wink_app/presentation/components/splash/splash_loading_indicator.dart';
 import 'package:wink_app/presentation/components/splash/splash_logo.dart';
 
-import 'package:wink_app/service/auth_service.dart';
+import '../../../service/auth_service.dart';
+
 
 
 class SplashScreen extends StatefulWidget {
@@ -28,12 +27,12 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkAuth() async {
-    await Future.delayed(const Duration(seconds: 2)); // splash delay
-    
+    await Future.delayed(const Duration(seconds: 5)); // splash delay
+
     if (!mounted) return;
-    
+
     final user = FirebaseAuth.instance.currentUser;
-    
+
     if (user == null) {
       NavigationService.go(context, AppRoutes.login);
       return;

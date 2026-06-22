@@ -26,9 +26,9 @@ class ProImageEditorScreen extends StatefulWidget {
   final String path;
 
   const ProImageEditorScreen({
-    Key? key,
+    super.key,
     required this.path,
-  }) : super(key: key);
+  });
 
   @override
   State<ProImageEditorScreen> createState() => _ProImageEditorScreenState();
@@ -63,7 +63,7 @@ class _ProImageEditorScreenState extends State<ProImageEditorScreen> {
         // ✅ Show loading indicator while processing
         if (_isProcessing)
           Container(
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black.withValues(alpha: 0.5),
             child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,

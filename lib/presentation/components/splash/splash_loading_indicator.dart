@@ -52,7 +52,7 @@ class _SplashLoadingIndicatorState extends State<SplashLoadingIndicator>
                 value: _controller.value, // animated progress
                 minHeight: 4.h,
                 backgroundColor:
-                    AppColors.primaryYellow.withOpacity(.2),
+                    AppColors.primaryYellow.withValues(alpha: .2),
                 valueColor: const AlwaysStoppedAnimation(
                   AppColors.primaryYellow,
                 ),

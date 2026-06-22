@@ -8,6 +8,8 @@ import 'package:wink_app/core/config/theme/app_spacing.dart';
 
 class OtherUserProfileBio extends StatelessWidget {
   final String category;
+    final String website;
+
   final String description;
   final String location;
   final String collaborationEmail;
@@ -18,12 +20,15 @@ class OtherUserProfileBio extends StatelessWidget {
     required this.category,
     required this.description,
     required this.location,
-    required this.collaborationEmail, required this.name,
+    required this.collaborationEmail, required this.name, required this.website,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return  
+    
+    
+     Padding(
       padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg.w),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -36,6 +41,8 @@ class OtherUserProfileBio extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
+                    AppSpacing.vsm,
+
           // Category
           Text(
             category,
@@ -47,11 +54,23 @@ class OtherUserProfileBio extends StatelessWidget {
           AppSpacing.vsm,
 
           // Description
-          Text(
-            description,
-            style: AppTextStyles.bodyRegular.copyWith(
-              fontSize: 13.sp,
-            ),
+          Row(
+            children: [
+              
+                Icon(
+                Icons.star,
+                size: 14.sp,
+                //color: AppColors.greyText,
+              ),
+              AppSpacing.hxs,
+
+              Text(
+                description,
+                style: AppTextStyles.bodyRegular.copyWith(
+                  fontSize: 13.sp,
+                ),
+              ),
+            ],
           ),
 
           AppSpacing.vsm,
@@ -62,14 +81,14 @@ class OtherUserProfileBio extends StatelessWidget {
               Icon(
                 Icons.location_on_rounded,
                 size: 14.sp,
-                color: AppColors.greyText,
+                //color: AppColors.greyText,
               ),
               AppSpacing.hxs,
               Text(
                 location,
                 style: AppTextStyles.bodyRegular.copyWith(
                   fontSize: 13.sp,
-                  color: AppColors.greyText,
+                  //color: AppColors.greyText,
                 ),
               ),
             ],
@@ -83,19 +102,28 @@ class OtherUserProfileBio extends StatelessWidget {
               Icon(
                 Icons.email_outlined,
                 size: 14.sp,
-                color: AppColors.greyText,
+               // color: AppColors.greyText,
               ),
               AppSpacing.hxs,
               Text(
                 collaborationEmail,
                 style: AppTextStyles.bodyRegular.copyWith(
                   fontSize: 13.sp,
-                  color: AppColors.greyText,
+                 // color: AppColors.greyText,
                   decoration: TextDecoration.underline,
                 ),
               ),
             ],
           ),
+          AppSpacing.vsm,
+
+          Text(
+            website,
+            style: AppTextStyles.bodyRegular.copyWith(
+              fontSize: 13.sp,
+            ),
+          ),
+
         ],
       ),
     );

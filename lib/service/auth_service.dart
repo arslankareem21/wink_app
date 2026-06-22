@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:wink_app/core/utils/validators.dart';
 import 'package:wink_app/models/auth/user_model.dart';
-import 'package:wink_app/models/user_model.dart';
 
 class AuthRepository {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -17,11 +17,68 @@ class AuthRepository {
 
   User? get currentUser => _auth.currentUser;
 
+
+
+
+  /// 1. Check karega ke kya user Google se logged in hai aur uske paas pehle se password provider nahi hai
+  Future<bool> needsPasswordSetup() async {
+    final user = _auth.currentUser;
+    if (user == null) return false;
+
+    // User ke saare login providers check karein (Google, Facebook, Email, etc.)
+    final providerIds = user.providerData.map((info) => info.providerId).toList();
+
+    // Agar user ke providers mein 'google.com' hai lekin 'password' (email/password) nahi hai, 
+    // toh iska matlab use password set karne ki zaroorat hai.
+    return providerIds.contains('google.com') && !providerIds.contains('password');
+  }
+
+  /// 2. Google user ke liye password set/link karne ka function
+  Future<void> updatePassword(String password) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception("No authenticated user found.");
+    }
+
+    if (user.email == null) {
+      throw Exception("User email not found.");
+    }
+
+    // 🌟 Step A: User ke current email aur naye password se credential banayein
+    AuthCredential credential = EmailAuthProvider.credential(
+      email: user.email!,
+      password: password,
+    );
+
+    try {
+      // 🌟 Step B: Is credential ko current Google account ke sath link kar dein
+      // Is se user next time isi email aur password se bhi login kar sakega
+      await user.linkWithCredential(credential);
+    } on FirebaseException catch (e) {
+      // Agar 'requires-recent-login' ka error aaye toh user ko re-authenticate karna parta hai
+      if (e.code == 'requires-recent-login') {
+        throw Exception("Security sensitive operation. Please re-login and try again.");
+      } else if (e.code == 'provider-already-linked') {
+        throw Exception("This account is already configured with a password.");
+      } else {
+        throw Exception(e.message ?? "Failed to set password.");
+      }
+    } catch (e) {
+      throw Exception("An unexpected error occurred: $e");
+    }
+  }
+
+  // Aapka current logged in user getter (agar file me pehle se na ho)
+
+
+
+
+
   Future<void> _syncUserToFirestore(
-    User user,
-    String provider, {
-    String? name,
-  }) async {
+      User user,
+      String provider, {
+        String? name,
+      }) async {
     final docRef = _db.collection('users').doc(user.uid);
     final doc = await docRef.get();
 
@@ -43,10 +100,10 @@ class AuthRepository {
   }
 
   Future<UserCredential> signUp(
-    String email,
-    String password,
-    String name,
-  ) async {
+      String email,
+      String password,
+      String name,
+      ) async {
     try {
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email.trim(),
@@ -111,6 +168,23 @@ class AuthRepository {
       throw Exception('Google sign in failed: ${e.toString()}');
     }
   }
+  Future<bool> isUsernameAvailable(String username, {String? excludeUid}) async {
+  final clean = username.trim().toLowerCase();
+
+  // Use same validation as Validators.username
+  if (Validators.username(clean)!= null) return false;
+
+  final query = await _db
+     .collection('users')
+     .where('username', isEqualTo: clean)
+     .limit(1)
+     .get();
+
+  if (query.docs.isEmpty) return true;
+  if (excludeUid!= null && query.docs.first.id == excludeUid) return true;
+
+  return false;
+}
 
   Future<void> setPasswordForGoogleUser(String password) async {
     final user = _auth.currentUser;
@@ -119,7 +193,7 @@ class AuthRepository {
 
     try {
       await user.reload();
-      
+
       final hasEmailProvider = user.providerData
           .any((info) => info.providerId == EmailAuthProvider.PROVIDER_ID);
 
@@ -149,29 +223,29 @@ class AuthRepository {
     }
   }
 
-  Future<bool> needsPasswordSetup() async {
-    final user = _auth.currentUser;
-    if (user == null) return false;
+  // Future<bool> needsPasswordSetup() async {
+  //   final user = _auth.currentUser;
+  //   if (user == null) return false;
 
-    try {
-      final doc = await _db.collection('users').doc(user.uid).get();
-      
-      if (!doc.exists) {
-        final isGoogle = user.providerData
-            .any((info) => info.providerId == GoogleAuthProvider.PROVIDER_ID);
-        return isGoogle;
-      }
+  //   try {
+  //     final doc = await _db.collection('users').doc(user.uid).get();
 
-      final data = doc.data()!;
-      final provider = data['authProvider'] as String? ?? 'email';
-      final hasPassword = data['hasPassword'] as bool? ?? false;
+  //     if (!doc.exists) {
+  //       final isGoogle = user.providerData
+  //           .any((info) => info.providerId == GoogleAuthProvider.PROVIDER_ID);
+  //       return isGoogle;
+  //     }
 
-      return provider.contains('google') && !hasPassword;
-    } catch (e) {
-      // If Firestore fails, block access for safety
-      return true;
-    }
-  }
+  //     final data = doc.data()!;
+  //     final provider = data['authProvider'] as String? ?? 'email';
+  //     final hasPassword = data['hasPassword'] as bool? ?? false;
+
+  //     return provider.contains('google') && !hasPassword;
+  //   } catch (e) {
+  //     // If Firestore fails, block access for safety
+  //     return true;
+  //   }
+  // }
 
   Future<void> sendResetLink(String email) async {
     try {
@@ -201,7 +275,7 @@ class AuthRepository {
   }
 
   Future<void> signOut() async {
-    
+
     try {
       await _googleSignIn.disconnect();
     } catch (_) {}
@@ -226,7 +300,7 @@ class AuthRepository {
       'credential-already-in-use' => 'This account is already linked',
       'provider-already-linked' => 'Provider already linked',
       'account-exists-with-different-credential' =>
-        'Account exists with different sign-in method. Use Email & Password.',
+      'Account exists with different sign-in method. Use Email & Password.',
       'requires-recent-login' => 'Please login again to continue',
       _ => e.message ?? 'Authentication failed',
     };

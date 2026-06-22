@@ -10,7 +10,6 @@ class PostsGrid extends StatelessWidget {
     super.key,
     required this.imageUrls,
     this.onImageTap,
-    // required bool isVideo,
   });
 
   @override
@@ -42,7 +41,7 @@ class PostsGrid extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8.r),
                 border: Border.all(
-                  color: AppColors.border.withOpacity(0.1),
+                  color: AppColors.border.withValues(alpha: 0.1),
                   width: 1.w,
                 ),
               ),

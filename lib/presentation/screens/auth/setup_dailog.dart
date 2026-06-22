@@ -33,6 +33,28 @@ class _SetupPasswordDialogState extends ConsumerState<SetupPasswordDialog> {
     final authState = ref.watch(authViewModelProvider);
     final isLoading = authState.loadingType == AuthLoadingType.setPassword;
 
+
+
+    ref.listen<AuthState>(authViewModelProvider, (previous, next) {
+    if (next.message != null && next.message!.contains('successfully')) {
+      
+      // 1. Success SnackBar dikhao
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(next.message!), backgroundColor: Colors.green),
+      );
+      
+      // 2. ✅ YAHAN POP HO JAYEGA DIALOG!
+      Navigator.of(context).pop(); 
+    } 
+    
+    else if (next.error != null) {
+      // Agar koi error aaya toh popup band nahi hoga, bas error dikhayega
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(next.error!), backgroundColor: Colors.redAccent),
+      );
+    }
+  });
+
     return WillPopScope(
       onWillPop: () async => false,
       child: AlertDialog(
@@ -60,6 +82,7 @@ class _SetupPasswordDialogState extends ConsumerState<SetupPasswordDialog> {
                   validator: Validators.password,
                 ),
                 AppSpacing.vsm,
+
                 Text("Confirm Password", style: AppTextStyles.inputLabel),
                 AppSpacing.vsm,
                 AppTextField(
@@ -85,6 +108,7 @@ class _SetupPasswordDialogState extends ConsumerState<SetupPasswordDialog> {
                   },
             child: const Text('Cancel'),
           ),
+
           AppButton(
             text: isLoading ? 'Setting...' : 'Confirm',
             onPressed: isLoading
@@ -93,7 +117,7 @@ class _SetupPasswordDialogState extends ConsumerState<SetupPasswordDialog> {
                     if (_formKey.currentState!.validate()) {
                       ref
                           .read(authViewModelProvider.notifier)
-                          .setPasswordForGoogleUser(_passwordController.text.trim());
+                          .setupGoogleUserPassword(_passwordController.text.trim());
                     }
                   },
           ),

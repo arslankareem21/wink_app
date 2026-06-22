@@ -188,6 +188,6 @@ static const Color iconAccent = primaryYellow;
   /// SHADOW
   /// ==========================================================
 
-  static Color shadowLight = Colors.black.withOpacity(0.06);
-  static Color shadowDark = Colors.black.withOpacity(0.30);
+  static Color shadowLight = Colors.black.withValues(alpha: 0.06);
+  static Color shadowDark = Colors.black.withValues(alpha: 0.30);
 }

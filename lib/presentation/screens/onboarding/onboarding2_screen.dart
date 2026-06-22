@@ -23,71 +23,73 @@ class Onboarding2Screen extends StatelessWidget {
               child: ThemeToggleButton(),
             ),
             Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Image.asset(
-                          height: 342,
-                          width: 342,
-                          "assets/image/onboarding1_bg.png",
-                        ),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: Container(
-                            width: 342,
+              child: SingleChildScrollView(scrollDirection: Axis.vertical,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Image.asset(
                             height: 342,
-                            color: Colors.grey[300], // Placeholder color),
-                          ), // adjust radius
-                        ),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(16), // adjust radius
-                          child: Image.asset(
-                            'assets/image/onboarding2_boy.png',
-                            width: 300,
-                            height: 300,
-                            fit: BoxFit.cover, // keeps it nicely cropped
+                            width: 342,
+                            "assets/image/onboarding1_bg.png",
                           ),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              width: 342,
+                              height: 342,
+                              color: Colors.grey[300], // Placeholder color),
+                            ), // adjust radius
+                          ),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(16), // adjust radius
+                            child: Image.asset(
+                              'assets/image/onboarding2_boy.png',
+                              width: 300,
+                              height: 300,
+                              fit: BoxFit.cover, // keeps it nicely cropped
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    AppSpacing.vxl,
+                    Text(
+                      textAlign: TextAlign.center,
+                      "Create Shorts",
+                      style: AppTextStyles.authHeadline,
+                    ),
+                    Text(
+                      textAlign: TextAlign.center,
+                      "Express yourself through short-form \n video content and fun filters.",
+                      style: AppTextStyles.bodyRegular.copyWith(
+                        fontSize: 14.sp,
+                      ),
+                    ),
+                    AppSpacing.hlg,
+                    OnboardingDots(currentIndex: 1),
+                    SizedBox(height: 50.h),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        AppButton(
+                          width: 132.w,
+                          isGhost: true,
+                          text: 'Back',
+                          onPressed: onBack, // FIXED: use callback
+                        ),
+                        AppButton(
+                          width: 193.w,
+                          text: 'Next',
+                          onPressed: onNext, // FIXED: use callback
                         ),
                       ],
                     ),
-                  ),
-                  AppSpacing.vxl,
-                  Text(
-                    textAlign: TextAlign.center,
-                    "Create Shorts",
-                    style: AppTextStyles.authHeadline,
-                  ),
-                  Text(
-                    textAlign: TextAlign.center,
-                    "Express yourself through short-form \n video content and fun filters.",
-                    style: AppTextStyles.bodyRegular.copyWith(
-                      fontSize: 14.sp,
-                    ),
-                  ),
-                  AppSpacing.hlg,
-                  OnboardingDots(currentIndex: 1),
-                  SizedBox(height: 50.h),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      AppButton(
-                        width: 132.w,
-                        isGhost: true,
-                        text: 'Back',
-                        onPressed: onBack, // FIXED: use callback
-                      ),
-                      AppButton(
-                        width: 193.w,
-                        text: 'Next',
-                        onPressed: onNext, // FIXED: use callback
-                      ),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],

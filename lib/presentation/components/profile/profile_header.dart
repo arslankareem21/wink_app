@@ -3,7 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:wink_app/core/config/theme/app_colors.dart';
 import 'package:wink_app/core/config/theme/app_text_style.dart';
 import 'package:wink_app/core/config/theme/app_spacing.dart';
-import 'package:wink_app/presentation/widgets/circle_avatar.dart';
 
 class ProfileHeader extends StatelessWidget {
   final String name;
@@ -22,7 +21,7 @@ class ProfileHeader extends StatelessWidget {
 
     return Column(
       children: [
-      AppProfileAvatar(size: 100.r,isNetwork: true,imageSource: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRf3Ylx2q3aTJ5-OQ1LB5rGeL_szA8DDbEk4g&s'),
+      
         AppSpacing.vlg,
 
         // Name
