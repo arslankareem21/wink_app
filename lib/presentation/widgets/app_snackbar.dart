@@ -4,7 +4,7 @@ class AppSnackBar {
   static final GlobalKey<ScaffoldMessengerState> messengerKey =
       GlobalKey<ScaffoldMessengerState>();
 
-  static void show(String message, {bool isError = false, SnackBarAction? action}) {
+  static void show( String message, {bool isError = false, SnackBarAction? action}) {
     messengerKey.currentState?.removeCurrentSnackBar();
     messengerKey.currentState?.showSnackBar(
       SnackBar(

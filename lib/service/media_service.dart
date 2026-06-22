@@ -1,127 +1,130 @@
 import 'dart:io';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'cloudinary_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:wink_app/models/media_model.dart';
+import 'package:wink_app/models/media_type.dart';
+import 'package:wink_app/models/post_models.dart';
+import 'package:wink_app/models/short_model.dart';
+import 'package:wink_app/models/story_model.dart';
+import 'package:wink_app/service/cloudinary_service.dart';
+import 'package:wink_app/service/firestore_service.dart';
 
 class MediaService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final CloudinaryService _cloudinary = CloudinaryService();
+  final CloudinaryService _cloudinary;
+  final FirestoreService _firestore;
 
-  // ---------------- POSTS ----------------
+  MediaService(this._cloudinary, this._firestore);
+
   Future<void> createPost({
     required String userId,
-    required List<File> files,
+    required File image,
     required String caption,
     required List<String> hashtags,
   }) async {
-    final postRef = _firestore.collection("posts").doc();
+    final upload = await _cloudinary.uploadFile(
+      file: image,
+      type: 'posts',
+      userId: userId,
+    );
 
-    List<Map<String, dynamic>> mediaList = [];
+    final post = PostModels(
+      postId: _firestore.generateId("posts"),
+      userId: userId,
+      caption: caption,
+      hashtags: hashtags,
+      media: [
+        MediaModel(
+          url: upload["url"]!,
+          publicId: upload["publicId"]!,
+          type: MediaType.image,
+        )
+      ],
+      likesCount: 0,
+      commentsCount: 0,
+      createdAt: DateTime.now(),
+    );
 
-    for (final file in files) {
-      final upload = await _cloudinary.uploadFile(
-        file: file,
-        folder: "wink/posts",
-        isVideo: false,
-      );
-
-      if (upload != null) {
-        mediaList.add({
-          "url": upload["url"],
-          "publicId": upload["publicId"],
-          "type": "image",
-          "createdAt": FieldValue.serverTimestamp(),
-        });
-      }
-    }
-
-    await postRef.set({
-      "postId": postRef.id,
-      "userId": userId,
-      "caption": caption,
-      "hashtags": hashtags,
-      "media": mediaList,
-      "likesCount": 0,
-      "commentsCount": 0,
-      "createdAt": FieldValue.serverTimestamp(),
-
-    });
+    await _firestore.savePost(post);
   }
 
-  // ---------------- SHORTS ----------------
   Future<void> createShort({
     required String userId,
     required File video,
     required String caption,
-    
   }) async {
-    final ref = _firestore.collection("shorts").doc();
-
     final upload = await _cloudinary.uploadFile(
       file: video,
-      folder: "wink/shorts",
-      isVideo: true,
+      type: 'shorts',
+      userId: userId,
     );
 
-    if (upload == null) return;
+    final short = ShortModel(
+      shortId: _firestore.generateId("shorts"),
+      userId: userId,
+      caption: caption,
+      videoUrl: upload["url"]!,
+      publicId: upload["publicId"]!,
+      likesCount: 0,
+      commentsCount: 0,
+      viewsCount: 0,
+      createdAt: DateTime.now(),
+    );
 
-    await ref.set({
-      "shortId": ref.id,
-      "userId": userId,
-      "videoUrl": upload["url"],
-      "publicId": upload["publicId"],
-      "caption": caption,
-      "likesCount": 0,
-      "commentsCount": 0,
-      "viewsCount": 0,
-      "createdAt": FieldValue.serverTimestamp(),
-    });
+    await _firestore.saveShort(short);
   }
 
-  // ---------------- STORIES ----------------
   Future<void> createStory({
     required String userId,
     required File file,
     required bool isVideo,
   }) async {
-    final ref = _firestore.collection("stories").doc();
-
     final upload = await _cloudinary.uploadFile(
       file: file,
-      folder: "wink/stories",
-      isVideo: isVideo,
+      type: 'stories',
+      userId: userId,
     );
 
-    if (upload == null) return;
+    final story = StoryModel(
+      storyId: _firestore.generateId("stories"),
+      userId: userId,
+      mediaUrl: upload["url"]!,
+      publicId: upload["publicId"]!,
+      mediaType: isVideo ? MediaType.video : MediaType.image,
+      createdAt: DateTime.now(),
+      expiresAt: DateTime.now().add(const Duration(hours: 24)),
+    );
 
-    final now = DateTime.now();
-
-    await ref.set({
-      "storyId": ref.id,
-      "userId": userId,
-      "mediaUrl": upload["url"],
-      "publicId": upload["publicId"],
-      "mediaType": isVideo ? "video" : "image",
-      "createdAt": FieldValue.serverTimestamp(),
-      "expiresAt": now.add(const Duration(hours: 24)),
-    });
+    await _firestore.saveStory(story);
   }
 
-  // ---------------- PROFILE IMAGE ----------------
   Future<void> updateProfilePic({
     required String userId,
     required File file,
   }) async {
     final upload = await _cloudinary.uploadFile(
       file: file,
-      folder: "wink/profiles",
-      isVideo: false,
+      type: 'profile',
+      userId: userId,
     );
 
-    if (upload == null) return;
+    await _firestore.updateProfileImage(
+      userId: userId,
+      url: upload["url"]!,
+      publicId: upload["publicId"]!,
+    );
+  }
 
-    await _firestore.collection("users").doc(userId).update({
-      "photoUrl": upload["url"],
-      "photoPublicId": upload["publicId"],
-    });
+  Future<void> followUser(String currentUserId, String targetUserId) {
+    return _firestore.followUser(currentUserId, targetUserId);
+  }
+
+  Future<void> unfollowUser(String currentUserId, String targetUserId) {
+    return _firestore.unfollowUser(currentUserId, targetUserId);
   }
 }
+
+final mediaServiceProvider = Provider((ref) {
+  return MediaService(
+    ref.read(cloudinaryProvider),
+    ref.read(firestoreProvider),
+  );
+});

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'media_type.dart';
 
 class StoryModel {
@@ -6,7 +7,6 @@ class StoryModel {
   final String mediaUrl;
   final String publicId;
   final MediaType mediaType;
-
   final DateTime? createdAt;
   final DateTime? expiresAt;
 
@@ -27,8 +27,8 @@ class StoryModel {
       "mediaUrl": mediaUrl,
       "publicId": publicId,
       "mediaType": mediaType.value,
-      "createdAt": createdAt,
-      "expiresAt": expiresAt,
+      "createdAt": createdAt != null ? Timestamp.fromDate(createdAt!) : null,
+      "expiresAt": expiresAt != null ? Timestamp.fromDate(expiresAt!) : null,
     };
   }
 
@@ -39,8 +39,12 @@ class StoryModel {
       mediaUrl: map["mediaUrl"] ?? "",
       publicId: map["publicId"] ?? "",
       mediaType: MediaTypeX.fromString(map["mediaType"] ?? "image"),
-      createdAt: map["createdAt"]?.toDate(),
-      expiresAt: map["expiresAt"]?.toDate(),
+      createdAt: (map["createdAt"] as Timestamp?)?.toDate(),
+      expiresAt: (map["expiresAt"] as Timestamp?)?.toDate(),
     );
+  }
+
+  factory StoryModel.fromDoc(DocumentSnapshot doc) {
+    return StoryModel.fromMap(doc.data() as Map<String, dynamic>);
   }
 }

@@ -5,7 +5,7 @@ import '../../../core/config/theme/app_colors.dart';
 import '../../../core/config/theme/app_spacing.dart';
 
 class AppProfileAvatar extends StatelessWidget {
-  /// Accepts [String] (Network URL / Asset path), [File] (Picked image), or [null].
+  /// Accepts [String] (Network URL / Asset path / Local file path), [File] (Picked image), or [null].
   final dynamic imageSource;
 
   /// Diameter of the avatar. Scales dynamically via ScreenUtil.
@@ -26,6 +26,8 @@ class AppProfileAvatar extends StatelessWidget {
   /// Instructs the image string interpreter to treat string inputs as URLs.
   final bool isNetwork;
 
+  final dynamic onChangePhoto;
+
   const AppProfileAvatar({
     super.key,
     this.imageSource,
@@ -35,27 +37,40 @@ class AppProfileAvatar extends StatelessWidget {
     this.borderColor,
     this.onTap,
     this.isNetwork = false,
+   this.onChangePhoto,
   });
 
   @override
   Widget build(BuildContext context) {
     final double computedSize = size.w;
 
-    // Resolve ImageProvider natively without complicating the build body
+    // Fixed: Handle File, Network URL, Local file path, and Asset path correctly
     ImageProvider? getImageProvider() {
       if (imageSource == null) return null;
 
+      // Case 1: File object
       if (imageSource is File) {
         return FileImage(imageSource as File);
       }
 
+      // Case 2: String
       if (imageSource is String) {
         final String path = imageSource as String;
         if (path.isEmpty) return null;
 
-        return isNetwork 
-            ? NetworkImage(path) 
-            : AssetImage(path) as ImageProvider;
+        if (isNetwork) {
+          // Network URL from Firestore/Cloudinary
+          return NetworkImage(path);
+        } else {
+          // Check if it's a local file path
+          if (path.startsWith('/') || path.contains('cache') || path.contains('data/user')) {
+            // Local file path from image_picker
+            return FileImage(File(path));
+          } else {
+            // Asset path
+            return AssetImage(path);
+          }
+        }
       }
       return null;
     }
@@ -65,12 +80,12 @@ class AppProfileAvatar extends StatelessWidget {
     final avatar = Container(
       height: computedSize,
       width: computedSize,
-      padding: hasStory ? EdgeInsets.all(3.w) : EdgeInsets.zero,
+      padding: hasStory? EdgeInsets.all(3.w) : EdgeInsets.zero,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: hasStory
-            ? Border.all(
-                color: borderColor ?? AppColors.primaryYellow,
+           ? Border.all(
+                color: borderColor?? AppColors.primaryYellow,
                 width: 2.5.w,
               )
             : null,
@@ -78,31 +93,28 @@ class AppProfileAvatar extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // Explicit surface box decoration allows stable vector rendering of icons 
-          // alongside local/remote image caches inside standard containers
           Container(
             width: double.infinity,
             height: double.infinity,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: AppColors.greyText,
-              image: imageProvider != null
-                  ? DecorationImage(
+              image: imageProvider!= null
+                 ? DecorationImage(
                       image: imageProvider,
                       fit: BoxFit.cover,
                     )
                   : null,
             ),
             child: imageProvider == null
-                ? Icon(
+               ? Icon(
                     Icons.person,
-                    size: (size * 0.55).w, // Dynamically proportioned silhouette scale
+                    size: (size * 0.55).w,
                     color: Colors.grey[600],
                   )
                 : null,
           ),
 
-          /// Online Indicator Badge
           if (isOnline)
             Positioned(
               bottom: 1.w,
@@ -124,7 +136,7 @@ class AppProfileAvatar extends StatelessWidget {
       ),
     );
 
-    if (onTap != null) {
+    if (onTap!= null) {
       return GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,

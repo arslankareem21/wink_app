@@ -13,7 +13,7 @@ void main() async {
   await Firebase.initializeApp(
    options: DefaultFirebaseOptions.currentPlatform,
   );
-  
+                
  
   runApp(const ProviderScope(child: MyAppRoot()));
 }
@@ -21,7 +21,7 @@ void main() async {
 class MyAppRoot extends StatelessWidget {
   const MyAppRoot({super.key});
   
-  @override
+  @override  
   Widget build(BuildContext context) {
     return ScreenUtilInit(
       designSize: const Size(390, 884),
@@ -30,6 +30,6 @@ class MyAppRoot extends StatelessWidget {
       builder: (context, child) {
         return const App();
       },
-    );
-  }       
+   );
+  }  
 }

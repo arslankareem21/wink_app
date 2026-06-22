@@ -12,7 +12,7 @@ class UploadProgressOverlay extends ConsumerWidget {
     // Show snackbar on error
     ref.listen(uploadProvider, (prev, next) {
       if (prev?.error == null && next.error!= null) {
-        AppSnackBar.show(next.error!, isError: true);
+        AppSnackBar.show( next.error!, isError: true);
         // Reset state after showing error
         Future.delayed(const Duration(milliseconds: 100), () {
           if (ref.context.mounted) {

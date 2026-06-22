@@ -88,13 +88,13 @@ class LoginScreen extends HookConsumerWidget {
             ),
           );
         } else if (state.error != null) {
-          AppSnackBar.show(state.error!, isError: true);
+          AppSnackBar.show( state.error!, isError: true);
           ref.read(authViewModelProvider.notifier).clear();
         }
 
         if (state.message != null && 
             !state.message!.contains('successful')) {
-          AppSnackBar.show(state.message!);
+          AppSnackBar.show( state.message!);
           ref.read(authViewModelProvider.notifier).clear();
         }
       }

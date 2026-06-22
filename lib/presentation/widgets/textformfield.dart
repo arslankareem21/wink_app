@@ -51,7 +51,7 @@ class AppTextField extends StatefulWidget {
     this.focusNode,
     this.width,
     this.height,
-    this.contentPadding,
+    this.contentPadding, String? errorText,
   });
 
   @override

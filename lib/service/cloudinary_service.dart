@@ -1,97 +1,120 @@
-import 'dart:io';
-import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+import 'package:crypto/crypto.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:image/image.dart' as img;
 
 class CloudinaryService {
-  final String cloudName = "dxtkhzk0a";
-  final String uploadPreset = "wink_uploads";
-  static const int maxImageMB = 10;
-  static const int maxVideoMB = 100;
+  final Dio _dio = Dio();
+  final String cloudName = 'dxtkhzk0a';
+  final String uploadPreset = 'wink_uploads';
+  // Add these from Cloudinary Dashboard > Settings > API Keys
+  final String apiKey = 'YOUR_API_KEY'; 
+  final String apiSecret = 'YOUR_API_SECRET';
 
-  Future<Map<String, String>?> uploadFile({
+  Future<Map<String, String>> uploadFile({
     required File file,
-    required String folder,
-    required bool isVideo,
-    void Function(double progress)? onProgress,
+    required String type, // 'posts', 'shorts', 'stories', 'profile'
+    required String userId,
+    void Function(double)? onProgress,
   }) async {
+    File uploadFile = file;
     try {
-      // 1. File size check first
-      final fileSizeMB = await file.length() / (1024 * 1024);
-      if (isVideo && fileSizeMB > maxVideoMB) {
-        throw Exception("Video too large. Max ${maxVideoMB}MB");
+      final ext = file.path.split('.').last.toLowerCase();
+      final isVideo = type == 'shorts' || 
+          (type == 'stories' && ['mp4', 'mov', 'avi', 'mkv', 'webm', '3gp'].contains(ext));
+
+      // HEIC convert
+      if (!isVideo && (ext == 'heic' || ext == 'heif')) {
+        final bytes = await file.readAsBytes();
+        final image = img.decodeImage(bytes);
+        if (image != null) {
+          final jpgBytes = img.encodeJpg(image, quality: 90);
+          uploadFile = File('${Directory.systemTemp.path}/temp_${DateTime.now().millisecondsSinceEpoch}.jpg');
+          await uploadFile.writeAsBytes(jpgBytes);
+        }
       }
-      if (!isVideo && fileSizeMB > maxImageMB) {
-        throw Exception("Image too large. Max ${maxImageMB}MB");
+
+      if (isVideo) {
+        const allowedVideo = ['mp4', 'mov', 'avi', 'mkv', 'webm', '3gp'];
+        if (!allowedVideo.contains(ext)) throw Exception('Unsupported video format');
       }
 
-      final url = Uri.parse(
-        "https://api.cloudinary.com/v1_1/$cloudName/${isVideo ? "video" : "image"}/upload",
-      );
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final safeUserId = userId.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+      final folder = 'wink/uploads/$type';
+      final publicId = '$folder/${safeUserId}_$timestamp';
 
-      final request = http.MultipartRequest("POST", url);
-      request.fields["upload_preset"] = uploadPreset;
-      request.fields["folder"] = folder;
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(uploadFile.path),
+        'upload_preset': uploadPreset,
+        'public_id': publicId,
+        'folder': folder,
+        if (isVideo) 'resource_type': 'video',
+      });
 
-      final fileLength = await file.length();
-      final stream = http.ByteStream(file.openRead());
-      
-      int byteCount = 0;
-      final multipartFile = http.MultipartFile(
-        "file",
-        stream.transform(
-          StreamTransformer.fromHandlers(
-            handleData: (data, sink) {
-              byteCount += data.length;
-              onProgress?.call(byteCount / fileLength);
-              sink.add(data);
-            },
-            handleError: (error, stack, sink) {
-              throw Exception("File read error: $error");
-            },
-          ),
+      final response = await _dio.post(
+        'https://api.cloudinary.com/v1_1/$cloudName/${isVideo ? 'video' : 'image'}/upload',
+        data: formData,
+        options: Options(
+          sendTimeout: const Duration(minutes: 5),
+          receiveTimeout: const Duration(minutes: 5),
         ),
-        fileLength,
-        filename: file.path.split("/").last,
+        onSendProgress: (sent, total) {
+          if (onProgress != null && total > 0) onProgress(sent / total);
+        },
       );
 
-      request.files.add(multipartFile);
+      if (uploadFile.path != file.path) await uploadFile.delete().catchError((_) {});
 
-      // 2. Timeout + proper error handling
-      final streamedResponse = await request.send().timeout(
-        const Duration(minutes: 5),
-        onTimeout: () => throw TimeoutException("Upload timed out. Check internet."),
-      );
-      
-      final responseBody = await streamedResponse.stream.bytesToString();
-
-      // 3. Check Cloudinary errors
-      if (streamedResponse.statusCode != 200) {
-        final error = json.decode(responseBody);
-        throw Exception("Cloudinary: ${error['error']?['message'] ?? 'Upload failed'}");
+      if (response.statusCode == 200) {
+        final data = response.data;
+        String secureUrl = data['secure_url'] as String? ?? '';
+        if (secureUrl.isEmpty) throw Exception('Cloudinary returned empty URL');
+        onProgress?.call(1.0);
+        return {
+          "url": secureUrl,
+          "publicId": data['public_id'] as String? ?? publicId,
+        };
+      } else if (response.statusCode == 420) {
+        throw Exception('Server busy. Try again later');
+      } else {
+        throw Exception('Upload failed: ${response.data['error']?['message']}');
       }
-
-      // 4. Parse JSON correctly
-      final data = json.decode(responseBody) as Map<String, dynamic>;
-      final urlResult = data["secure_url"] as String?;
-      final publicIdResult = data["public_id"] as String?;
-
-      if (urlResult == null || urlResult.isEmpty) {
-        throw Exception("Cloudinary returned empty URL");
-      }
-
-      return {
-        "url": urlResult,
-        "publicId": publicIdResult ?? "",
-      };
-    } on TimeoutException catch (e) {
-      throw Exception("Network timeout. Try again.");
-    } on SocketException {
-      throw Exception("No internet connection");
-    } on HandshakeException {
-      throw Exception("Connection failed. Check internet.");
     } catch (e) {
-      throw Exception(e.toString().replaceAll("Exception: ", ""));
+      if (uploadFile.path != file.path) await uploadFile.delete().catchError((_) {});
+      throw Exception('Upload failed: $e');
     }
   }
+
+  Future<void> deleteFile(String publicId) async {
+    final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    final signature = _generateSignature(publicId, timestamp);
+    
+    final uri = Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/image/destroy');
+    
+    final response = await http.post(
+      uri,
+      body: {
+        'public_id': publicId,
+        'api_key': apiKey,
+        'timestamp': timestamp.toString(),
+        'signature': signature,
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Delete failed: ${response.body}');
+    }
+  }
+
+  String _generateSignature(String publicId, int timestamp) {
+    final toSign = 'public_id=$publicId&timestamp=$timestamp$apiSecret';
+    final bytes = utf8.encode(toSign);
+    return sha1.convert(bytes).toString();
+  }
 }
+
+final cloudinaryProvider = Provider<CloudinaryService>((ref) => CloudinaryService());

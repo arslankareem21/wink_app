@@ -1,354 +1,265 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/svg.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:wink_app/core/config/routes/navigation_service.dart';
 import 'package:wink_app/core/config/theme/app_colors.dart';
 import 'package:wink_app/core/config/theme/app_spacing.dart';
 import 'package:wink_app/core/config/theme/app_text_style.dart';
-import 'package:wink_app/presentation/components/profile/edit_profile/edit_profile_form_field.dart';
-import 'package:wink_app/presentation/components/profile/edit_profile/edit_profile_header.dart';
-import 'package:wink_app/presentation/components/profile/edit_profile/edit_profile_photo.dart';
+import 'package:wink_app/presentation/widgets/app_snackbar.dart';
+import 'package:wink_app/presentation/widgets/circle_avatar.dart';
 import 'package:wink_app/presentation/widgets/elevated_button.dart';
 import 'package:wink_app/presentation/widgets/textformfield.dart';
 import 'package:wink_app/presentation/widgets/toogle_theme_button.dart';
+import 'package:wink_app/viewmodels/auth_viewmodel.dart';
+import 'package:wink_app/viewmodels/edit_profile_vm.dart';
+import 'package:wink_app/viewmodels/image_picker_vm.dart';
+import 'package:wink_app/viewmodels/upload_vm.dart';
 
-class EditProfileScreen extends ConsumerStatefulWidget {
+class EditProfileScreen extends HookConsumerWidget {
   const EditProfileScreen({super.key});
 
   @override
-  ConsumerState<EditProfileScreen> createState() => _EditProfileScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentUserAsync = ref.watch(currentUserProvider);
+    final pickedFile = ref.watch(imagePickerProvider);
+    final uploadState = ref.watch(uploadProvider);
+    final editState = ref.watch(editProfileViewModelProvider);
 
-class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
-  // Controllers
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _bioController = TextEditingController();
-  final TextEditingController _websiteController = TextEditingController();
-
-  // Form State
-  bool _hasNameError = false;
-  String? _nameErrorText;
-  bool _isLoading = false;
-
-  @override
-  void initState() {
-    super.initState();
-    // Initialize with current user data
-    _nameController.text = 'Alex Rivera';
-    _usernameController.text = 'arivera_vibe';
-    _bioController.text =
-        'Digital creator & urban explorer. Sharing the best of city life one frame at a time. 🌆';
-    _websiteController.text = 'https://alexrivera.me';
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _usernameController.dispose();
-    _bioController.dispose();
-    _websiteController.dispose();
-    super.dispose();
-  }
-
-  void _validateForm() {
-    setState(() {
-      if (_nameController.text.trim().isEmpty) {
-        _hasNameError = true;
-        _nameErrorText = 'Name is required';
-      } else {
-        _hasNameError = false;
-        _nameErrorText = null;
+    // Listen to upload completion and refresh user data
+    ref.listen(uploadProvider, (previous, next) {
+      if (previous?.isUploading == true && next.isUploading == false && next.error == null) {
+        // Upload finished successfully - refresh both screens
+        ref.invalidate(currentUserProvider);
       }
     });
-  }
 
-  Future<void> _saveChanges() async {
-    _validateForm();
+    final nameController = useTextEditingController();
+    final usernameController = useTextEditingController();
+    final bioController = useTextEditingController();
+    final websiteController = useTextEditingController();
+    final categoryController = useTextEditingController();
+    final locationController = useTextEditingController();
+    final descriptionController = useTextEditingController();
+    final collaborationEmailController = useTextEditingController();
 
-    if (_hasNameError) return;
+    final isDataLoaded = useState(false);
+    final hasNameError = useState(false);
 
-    setState(() {
-      _isLoading = true;
-    });
+    useEffect(() {
+      currentUserAsync.whenData((user) {
+        if (!isDataLoaded.value && user!= null) {
+          nameController.text = user.name;
+          usernameController.text = user.username?? '';
+          bioController.text = user.bio?? '';
+          websiteController.text = user.website?? '';
+          categoryController.text = user.category?? '';
+          locationController.text = user.location?? '';
+          descriptionController.text = user.description?? '';
+          collaborationEmailController.text = user.collaborationEmail?? '';
+          isDataLoaded.value = true;
+        }
+      });
+      return null;
+    }, [currentUserAsync]);
 
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
+    void saveChanges() async {
+      final user = currentUserAsync.value;
+      if (user == null || user.userId.isEmpty) {
+        AppSnackBar.show('Invalid User Session!');
+        return;
+      }
 
-    setState(() {
-      _isLoading = false;
-    });
+      if (nameController.text.trim().isEmpty) {
+        hasNameError.value = true;
+        return;
+      }
+      hasNameError.value = false;
 
-    // Show success message
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Profile updated successfully!'),
-          backgroundColor: AppColors.primaryYellow,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14.r),
-          ),
-        ),
-      );
+      try {
+        await ref.read(editProfileViewModelProvider.notifier).updateProfileData(
+          uid: user.userId,
+          username: usernameController.text.trim(),
+          bio: descriptionController.text.trim(),
+          website: websiteController.text.trim(),
+          displayName: nameController.text.trim(),
+          category: categoryController.text.trim(),
+          collaborationEmail: collaborationEmailController.text.trim(),
+          location: locationController.text.trim(),
+        );
 
-      // Navigate back
-      Navigator.of(context).pop();
+        if (context.mounted) {
+          AppSnackBar.show('Profile updated successfully');
+          NavigationService.pop(context);
+        }
+      } catch (e) {
+        if (context.mounted) {
+          AppSnackBar.show('Error: ${e.toString().replaceAll('Exception: ', '')}');
+        }
+      }
     }
-  }
 
-  void _cancelChanges() {
-    // Show confirmation dialog
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).cardColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20.r),
-        ),
-        title: Text(
-          'Discard Changes?',
-          style: TextStyle(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.white
-                : AppColors.black,
-          ),
-        ),
-        content: Text(
-          'Are you sure you want to discard your changes?',
-          style: TextStyle(color: AppColors.greyText),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              'Keep Editing',
-              style: TextStyle(color: AppColors.primaryYellow),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).pop();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-            ),
-            child: const Text('Discard'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
-      // Header
       appBar: AppBar(
-        title: Text('Edit Profile ',style: AppTextStyles.appBarTitle,),
+        title: Text('Edit Profile ', style: AppTextStyles.appBarTitle),
         leading: ThemeToggleButton(),
         actions: [
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Icon(Icons.done, size: 20.sp),
+            child: IconButton(
+              onPressed: editState.isLoading? null : saveChanges,
+              icon: editState.isLoading
+               ? SizedBox(
+                      width: 20.sp,
+                      height: 20.sp,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Icon(Icons.done),
+            ),
           ),
         ],
       ),
+      body: currentUserAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Error: $e')),
+        data: (user) {
+          if (user == null) return const Center(child: Text('User not found'));
 
-      body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AppSpacing.vxl,
+          // Add timestamp to bust cache
+          final networkImageUrl = user.profileImageUrl!= null && user.profileImageUrl!.isNotEmpty
+           ? '${user.profileImageUrl}?v=${user.updatedAt.millisecondsSinceEpoch}'
+              : null;
 
-            // Profile Photo Section
-            Center(
-              child: ProfilePhotoSection(
-                onChangePhoto: () {
-                  // Open image picker
-                  _showImagePickerOptions();
-                },
-              ),
-            ),
+          return SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppSpacing.vxl,
+                Center(
+                  child: GestureDetector(
+                    onTap: editState.isLoading || uploadState.isUploading
+                      ? null
+                        : () async {
+                            await ref.read(imagePickerProvider.notifier).pickFromGallery();
+                            final newFile = ref.read(imagePickerProvider);
 
-            AppSpacing.vxxl,
-
-            // Name Field
-            Text(
-              "NAME",
-              textAlign: TextAlign.left,
-            ),            AppSpacing.vsm,
-
-            AppTextField(hintText: 'Your name', controller: _nameController),
-            AppSpacing.vxxl,
-
-            // Username Field
-            Text(
-              "USERNAME",
-              textAlign: TextAlign.left,
-            ),            AppSpacing.vsm,
-
-            AppTextField(
-              hintText: 'Your username',
-              controller: _usernameController,
-            ),
-            AppSpacing.vxxl,
-
-            // Bio Field
-            Text(
-              "BIO",
-              textAlign: TextAlign.left,
-            ),            AppSpacing.vsm,
-
-            AppTextField(
-              maxLines: 6,
-              hintText: 'BIO', controller: _bioController,
-              height: 110.h,),
-
-            AppSpacing.vxxl,
-
-            // Website Field
-            Text(
-              "WEBSITE FIELD",
-              textAlign: TextAlign.left,
-            ),
-            AppSpacing.vsm,
-            AppTextField(hintText: 'Website', controller: _websiteController),
-
-            AppSpacing.vxxl,
-
-            // Action Buttons
-            Positioned(
-              right: 0,
-              left: 0,
-              child: Center(
-                // ✅ ADD THIS
-                child: AppButton(
-                  width: 240.w,
-                  text: 'Save Changes',
-                  isGhost: false,
-                  onPressed: () {},
-                ),
-              ),
-            ),
-            AppSpacing.vlg,
-
-            Positioned(
-              right: 0,
-              left: 0,
-              child: Center(
-                // ✅ ADD THIS
-                child: AppButton(
-                  width: 240.w,
-                  text: 'Cancel',
-                  isGhost: true,
-                  onPressed: () {},
-                ),
-              ),
-            ),
-
-            AppSpacing.vxxl,
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showImagePickerOptions() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Theme.of(context).cardColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-      ),
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg.w,
-            vertical: AppSpacing.xl.h,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Handle Bar
-              Container(
-                width: 40.w,
-                height: 4.h,
-                decoration: BoxDecoration(
-                  color: AppColors.greyText.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-              ),
-
-              AppSpacing.vlg,
-
-              // Take Photo Option
-              ListTile(
-                leading: Icon(
-                  Icons.camera_alt_rounded,
-                  color: AppColors.primaryYellow,
-                  size: 24.sp,
-                ),
-                title: Text(
-                  'Take Photo',
-                  style: TextStyle(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? AppColors.white
-                        : AppColors.black,
+                            if (newFile!= null && context.mounted) {
+                              try {
+                                await ref.read(uploadProvider.notifier).uploadProfilePic(file: newFile);
+                                ref.read(imagePickerProvider.notifier).clear();
+                                if (context.mounted) AppSnackBar.show('Profile photo updated');
+                              } catch (e) {
+                                if (context.mounted) AppSnackBar.show('Upload failed: $e');
+                              } finally {
+                                ref.read(uploadProvider.notifier).reset();
+                              }
+                            }
+                          },
+                    child: Stack(
+                      alignment: Alignment.bottomRight,
+                      children: [
+                        AppProfileAvatar(
+                          key: ValueKey('${pickedFile?.path}_${networkImageUrl}_${user.updatedAt.millisecondsSinceEpoch}'),
+                          size: 80.sp,
+                          imageSource: pickedFile?.path?? networkImageUrl,
+                          isNetwork: pickedFile == null,
+                        ),
+                        Container(
+                          padding: EdgeInsets.all(8.w),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryYellow,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Theme.of(context).scaffoldBackgroundColor,
+                              width: 2,
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.camera_alt,
+                            size: 18.sp,
+                            color: Colors.white,
+                          ),
+                        ),
+                        if (uploadState.isUploading)
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.black54,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  value: uploadState.progress > 0? uploadState.progress : null,
+                                  strokeWidth: 3,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  // Implement camera
-                },
-              ),
-
-              // Choose from Gallery Option
-              ListTile(
-                leading: Icon(
-                  Icons.photo_library_rounded,
-                  color: AppColors.primaryYellow,
-                  size: 24.sp,
+                AppSpacing.vxxl,
+                Text("NAME"),
+                AppSpacing.vsm,
+                AppTextField(
+                  hintText: 'Your name',
+                  controller: nameController,
+                  errorText: hasNameError.value? 'Name is required' : null,
                 ),
-                title: Text(
-                  'Choose from Gallery',
-                  style: TextStyle(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? AppColors.white
-                        : AppColors.black,
+                AppSpacing.vxxl,
+                Text("USERNAME"),
+                AppSpacing.vsm,
+                AppTextField(hintText: 'Your username', controller: usernameController),
+                AppSpacing.vxxl,
+                Text("BIO"),
+                AppSpacing.vsm,
+                AppTextField(
+                  maxLines: 6,
+                  hintText: 'BIO',
+                  controller: descriptionController,
+                  height: 110.h,
+                ),
+                AppSpacing.vxxl,
+                Text("WEBSITE"),
+                AppSpacing.vsm,
+                AppTextField(hintText: 'Website', controller: websiteController),
+                AppSpacing.vxxl,
+                Text("COLLABORATIONEMAIL"),
+                AppSpacing.vsm,
+                AppTextField(hintText: 'collaborationEmail', controller: collaborationEmailController),
+                AppSpacing.vxxl,
+                Text("CATEGORY"),
+                AppSpacing.vsm,
+                AppTextField(hintText: 'category', controller: categoryController),
+                AppSpacing.vxxl,
+                Text("LOCATION"),
+                AppSpacing.vsm,
+                AppTextField(hintText: 'location', controller: locationController),
+                AppSpacing.vxxl,
+                Center(
+                  child: AppButton(
+                    width: 240.w,
+                    text: editState.isLoading? 'Saving...' : 'Save Changes',
+                    onPressed: editState.isLoading? null : saveChanges,
                   ),
                 ),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  // Implement gallery picker
-                },
-              ),
-
-              // Remove Photo Option
-              ListTile(
-                leading: Icon(
-                  Icons.delete_outline_rounded,
-                  color: Colors.red,
-                  size: 24.sp,
+                AppSpacing.vlg,
+                Center(
+                  child: AppButton(
+                    width: 240.w,
+                    text: 'Cancel',
+                    isGhost: true,
+                    onPressed: editState.isLoading? null : () => NavigationService.pop(context),
+                  ),
                 ),
-                title: const Text(
-                  'Remove Photo',
-                  style: TextStyle(color: Colors.red),
-                ),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  // Implement remove photo
-                },
-              ),
-            ],
-          ),
-        ),
+                AppSpacing.vxxl,
+              ],
+            ),
+          );
+        },
       ),
     );
   }

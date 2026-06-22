@@ -1,5 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:wink_app/models/auth/user_model.dart';
+import 'package:wink_app/models/user_model.dart'; // ADD THIS
 import 'package:wink_app/service/auth_service.dart';
 
 enum AuthLoadingType {
@@ -17,6 +21,7 @@ class AuthState {
   final String? message;
   final String? autofillEmail;
   final bool showPasswordDialog;
+  final UserModel? user; // ADD THIS LINE
 
   const AuthState({
     this.loadingType = AuthLoadingType.none,
@@ -24,6 +29,7 @@ class AuthState {
     this.message,
     this.autofillEmail,
     this.showPasswordDialog = false,
+    this.user, // ADD THIS LINE
   });
 
   bool get isLoading => loadingType != AuthLoadingType.none;
@@ -34,6 +40,7 @@ class AuthState {
     String? message,
     String? autofillEmail,
     bool? showPasswordDialog,
+    UserModel? user, // ADD THIS LINE
   }) {
     return AuthState(
       loadingType: loadingType ?? this.loadingType,
@@ -41,13 +48,48 @@ class AuthState {
       message: message,
       autofillEmail: autofillEmail,
       showPasswordDialog: showPasswordDialog ?? this.showPasswordDialog,
+      user: user ?? this.user, // ADD THIS LINE
     );
   }
 }
 
 class AuthViewModel extends StateNotifier<AuthState> {
   final AuthRepository _repo;
-  AuthViewModel(this._repo) : super(const AuthState());
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance; // ADD THIS
+  
+  AuthViewModel(this._repo) : super(const AuthState()) {
+    _init(); // ADD THIS
+  }
+
+  // ADD THIS METHOD
+  void _init() {
+    FirebaseAuth.instance.authStateChanges().listen((firebaseUser) async {
+      if (firebaseUser != null) {
+        await _loadUser(firebaseUser.uid);
+      } else {
+        state = state.copyWith(user: null);
+      }
+    });
+  }
+
+  // ADD THIS METHOD
+  Future<void> _loadUser(String uid) async {
+    try {
+      final doc = await _firestore.collection('users').doc(uid).get();
+      if (doc.exists) {
+        state = state.copyWith(user: UserModel.fromDoc(doc));
+      }
+    } catch (e) {
+      print('Load user error: $e');
+    }
+  }
+
+  // ADD THIS METHOD - call this after profile pic upload
+  Future<void> refreshUser() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    await _loadUser(uid);
+  }
 
   // Bug 10: Signup + auto logout
   Future<void> signup(String email, String password, String name) async {
@@ -59,14 +101,14 @@ class AuthViewModel extends StateNotifier<AuthState> {
     );
     try {
       await _repo.signUp(email, password, name);
-      await _repo.signOut(); // Bug 10: Force login after signup
+      await _repo.signOut();
       state = state.copyWith(
         loadingType: AuthLoadingType.none,
         message: "Account created. Please login",
         autofillEmail: email,
+        user: null, // Clear user on signup
       );
     } catch (e) {
-      // Bug 27, 28, 29: Always reset loading on error
       state = state.copyWith(
         loadingType: AuthLoadingType.none,
         error: _cleanError(e),
@@ -84,6 +126,7 @@ class AuthViewModel extends StateNotifier<AuthState> {
     );
     try {
       await _repo.signIn(email, password);
+      // _init listener will auto-load user
       state = state.copyWith(
         loadingType: AuthLoadingType.none,
         message: 'Login successful',
@@ -108,13 +151,11 @@ class AuthViewModel extends StateNotifier<AuthState> {
     try {
       final result = await _repo.signInWithGoogle();
       
-      // Bug 22: User cancelled picker
       if (result == null) {
-        state = const AuthState(); // Reset completely
+        state = const AuthState();
         return;
       }
 
-      // Bug 3, 4, 5: Check password setup
       final needsPassword = await _repo.needsPasswordSetup();
       if (needsPassword) {
         state = state.copyWith(
@@ -130,12 +171,10 @@ class AuthViewModel extends StateNotifier<AuthState> {
       );
     } catch (e) {
       final msg = _cleanError(e);
-      // Bug 6, 7: Extract email for UX
       String? email;
       if (msg.contains('Please login with Email & Password')) {
         email = _repo.currentUser?.email;
       }
-      // Critical: Always reset loadingType on error - Fixes stuck button
       state = state.copyWith(
         loadingType: AuthLoadingType.none,
         error: msg,
@@ -172,12 +211,13 @@ class AuthViewModel extends StateNotifier<AuthState> {
     state = const AuthState(
       showPasswordDialog: false,
       message: 'Password setup required to continue',
+      user: null,
     );
   }
 
   Future<void> signOut() async {
     await _repo.signOut();
-    state = const AuthState(message: 'Signed out');
+    state = const AuthState(message: 'Signed out', user: null);
   }
 
   // Bug 15: Password reset
@@ -218,13 +258,23 @@ final authViewModelProvider = StateNotifierProvider<AuthViewModel, AuthState>((r
   return AuthViewModel(repo);
 });
 
-
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository();
 });
 
 final currentUserIdProvider = Provider<String?>((ref) {
-  // Watches the repository instance and returns the UID if a user is logged in
   final authRepo = ref.watch(authRepositoryProvider);
   return authRepo.currentUser?.uid;
+});
+
+
+final currentUserProvider = StreamProvider<UserModel?>((ref) {
+  final userId = FirebaseAuth.instance.currentUser?.uid;
+  if (userId == null) return Stream.value(null);
+  
+  return FirebaseFirestore.instance
+      .collection('users')
+      .doc(userId)
+      .snapshots()
+      .map((doc) => doc.exists ? UserModel.fromDoc(doc) : null);
 });
