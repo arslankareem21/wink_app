@@ -314,7 +314,19 @@ class UploadViewModel extends StateNotifier<UploadState> {
     }
   }
 
-
+// Groups a raw list of stories by the user who posted them
+Map<String, List<StoryModel>> groupStoriesByUser(List<StoryModel> allStories) {
+  Map<String, List<StoryModel>> grouped = {};
+  
+  for (var story in allStories) {
+    if (!grouped.containsKey(story.userId)) {
+      grouped[story.userId] = [];
+    }
+    grouped[story.userId]!.add(story);
+  }
+  
+  return grouped;
+}
 
 
 //expansile widget in flutter

@@ -41,7 +41,9 @@ class NotificationTile extends StatelessWidget {
             AppProfileAvatar(
               size: 44,
               imageSource: notification.userAvatar,
-              isNetwork: notification.userAvatar != null, onChangePhoto: () {  }, textSize: 15.sp, radius: 35.r,
+              isNetwork: notification.userAvatar != null, onChangePhoto: () {  },
+               //textSize: 15.sp,
+                radius: 35.r,
             ),
             AppSpacing.hlg,
             

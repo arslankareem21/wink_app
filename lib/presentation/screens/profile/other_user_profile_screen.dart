@@ -15,12 +15,14 @@ class OtherProfileScreen extends ConsumerWidget {
   final String myId;
   final String profileId;
   final Map<String, dynamic> myData;
+ // final String userd;
 
   const OtherProfileScreen({
     super.key,
     required this.myId,
     required this.profileId,
     required this.myData,
+    // required this.userd,
   });
 
   @override
@@ -85,13 +87,15 @@ class OtherProfileScreen extends ConsumerWidget {
                               const Center(child: CircularProgressIndicator()),
                           error: (_, __) => const Text('Error loading stats'),
                           data: (myUser) {
-                            return OtherUserProfileHeader(
-                              username: user.username ?? 'no_username',
-                              name: user.name ?? 'No Name',
-                              postsCount: user.postsCount ?? 0,
-                              followersCount: user.followersCount ?? 0,
-                              followingCount: user.followingCount ?? 0,
-                            );
+                            return 
+                           OtherUserProfileHeader(
+  username: user.username ?? 'no_username',
+  name: user.name ?? 'No Name',
+  // ✅ Firestore se agar string ya null aaye to handle ho jaye
+  postsCount: (user.postsCount != null) ? int.tryParse(user.postsCount.toString()) ?? 0 : 0, 
+  followersCount: user.followersCount ?? 0,
+  followingCount: user.followingCount ?? 0,
+);
                           },
                         ),
 
@@ -162,7 +166,9 @@ class OtherProfileScreen extends ConsumerWidget {
                 ),
               ];
             },
-            body: const OtherUserProfileTabController(),
+            body:  OtherUserProfileTabController(
+              //userModel.id,
+              targetUserId:profileId ,),
           ),
         );
       },

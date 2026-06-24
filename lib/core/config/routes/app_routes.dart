@@ -17,46 +17,60 @@ import 'package:wink_app/presentation/screens/successfully_post/successfully_pos
 
 
 class AppRouter {
+
+
+
+
+
+
+
+
+
+
+  
   
   static final GoRouter router = GoRouter(
     initialLocation: AppRoutes.splash,
     routes: [
-  //     GoRoute(
-  // path: AppRoutes.viewStoryScreen,
-  // name: 'view story',
-  // builder: (context, state) {
-  //   // state.extra se story model safely nikal rahe hain
-  //   final story = state.extra as StoryModel?;  
-    
-  //   if (story == null) {
-  //     return const Scaffold(
-  //       backgroundColor: Colors.black,
-  //       body: Center(
-  //         child: Text(
-  //           'Story data missing from router!', 
-  //           style: TextStyle(color: Colors.white),
-  //         ),
-  //       ),
-  //     );
-  //   }  
-  //   return ViewStoryScreen(story: story);
-  // },
-//),
-       GoRoute(
-        path: AppRoutes.viewStoryScreen,
-        name: 'view story',
-        builder: (context, state){
-        //  ViewStoryScreen(story: story)
-      final story = state.extra as StoryModel?;  
-      if (story == null) {
-      // Yahan aap koi Error screen dikha sakte hain ya default widget
+  
+    //    GoRoute(
+    //     path: AppRoutes.viewStoryScreen,
+    //     name: 'view story',
+    //     builder: (context, state){
+    //     //  ViewStoryScreen(story: story)
+    //   final stories = state.extra as StoryModel?;  
+    //   if (stories == null) {
+    //   // Yahan aap koi Error screen dikha sakte hain ya default widget
+    //   return const Scaffold(
+    //     body: Center(child: Text('Story data missing!')),
+    //   );
+    // }  
+    //   return  ViewStoryScreen(stories: stories);
+    //     }
+    //   ),
+    GoRoute(
+  path: AppRoutes.viewStoryScreen,
+  name: 'view story',
+  builder: (context, state) {
+    // 1. Ek single story ki jagah ab List<StoryModel> cast karein
+    final stories = state.extra as List<StoryModel>?;  
+
+    if (stories == null || stories.isEmpty) {
       return const Scaffold(
-        body: Center(child: Text('Story data missing!')),
+        backgroundColor: Colors.black,
+        body: Center(
+          child: Text(
+            'Story data missing!', 
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
       );
-    }  
-      return  ViewStoryScreen(story: story);
-        }
-      ),
+    }   
+    
+    // 2. Apni badli hui screen ko poori list pass kar dein
+    return ViewStoryScreen(stories: stories);
+  },
+),
        GoRoute(
         path: AppRoutes.createStory,
         name: 'create story',

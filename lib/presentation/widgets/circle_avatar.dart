@@ -4,9 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:wink_app/core/config/theme/app_spacing.dart';
 
 class AppProfileAvatar extends StatelessWidget {
-  final double textSize;
   final double radius;
-  final String? text;
   final File? imageFile; // State se aayi hui file receive karein
   final VoidCallback? onChangePhoto;
 
@@ -37,14 +35,12 @@ class AppProfileAvatar extends StatelessWidget {
     this.size = 48,
     this.hasStory = false,
     this.isOnline = false,
-    this.text,
     this.borderColor,
     this.onTap,
     this.isNetwork = false,
     String? profileImageUrl,
     this.imageFile,
      this.onChangePhoto,
-    required this.textSize,
     required this.radius,
   });
 
@@ -171,9 +167,9 @@ class AppProfileAvatar extends StatelessWidget {
         //               as ImageProvider,
         //   ),
         // ),
-        AppSpacing.vsm,
+        // AppSpacing.vsm,
 
-        Text(text ?? "", style: TextStyle(fontSize: textSize)),
+        // Text(text ?? "", style: TextStyle(fontSize: textSize)),
       ],
     );
   }

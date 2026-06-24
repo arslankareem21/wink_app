@@ -1,5 +1,3 @@
-// presentation/components/profile/profile_photo_section.dart
-
 import 'dart:io';
 
 import 'package:flutter/material.dart';

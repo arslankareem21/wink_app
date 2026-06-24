@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:wink_app/presentation/components/profile/other_profile/other_profile_status.dart';
 import 'package:wink_app/presentation/widgets/circle_avatar.dart';
+import 'package:wink_app/viewmodels/auth_viewmodel.dart';
 import 'package:wink_app/viewmodels/image_picker_vm.dart';
 
 class OtherUserProfileHeader extends ConsumerWidget {
@@ -26,16 +27,31 @@ class OtherUserProfileHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final pickedImageFile = ref.watch(imagePickerProvider);
+    final currentUserAsync = ref.watch(currentUserProvider);
+
+ return currentUserAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Error: $e')),
+        data: (user) {
+          if (user == null) return const Center(child: Text('User not found'));
+
+
+
+          final networkImageUrl =
+              user.profileImageUrl != null && user.profileImageUrl!.isNotEmpty
+              ? user.profileImageUrl
+              : null;
 
     return Row(
       children: [
         // Profile Picture
         AppProfileAvatar(
           radius: 35.r,
-          imageFile: pickedImageFile,
-          //profileImageUrl: profileImageUrl,
+          imageSource: pickedImageFile?.path ?? networkImageUrl,
+          //isNetwork: true,
+          imageFile: null,
+          profileImageUrl: profileImageUrl,
           onChangePhoto: () {},
-          textSize: 13.sp,
         ),
 
         OtherUserProfileStats(
@@ -44,6 +60,6 @@ class OtherUserProfileHeader extends ConsumerWidget {
           followingCount: followingCount,
         ),
       ],
-    );
+    );});
   }
 }

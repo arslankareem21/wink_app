@@ -115,7 +115,6 @@
 //   }
 // } //
 
-
 ////////////////////////////////////////////////////// MY HOME
 
 // import 'dart:io';
@@ -372,8 +371,6 @@
 //   }
 // }
 
-
-
 import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -385,6 +382,7 @@ import 'package:wink_app/core/config/routes/route_names.dart';
 import 'package:wink_app/core/config/theme/app_colors.dart';
 import 'package:wink_app/core/config/theme/app_spacing.dart';
 import 'package:wink_app/models/post_model.dart';
+import 'package:wink_app/models/story_model.dart';
 import 'package:wink_app/presentation/components/post/post_card.dart';
 import 'package:wink_app/presentation/provider/story/story_provider.dart';
 import 'package:wink_app/presentation/provider/user_provider.dart';
@@ -440,12 +438,26 @@ class HomeScreen extends ConsumerWidget {
         final String myUserId = user.uid;
 
         return activeStoriesAsync.when(
-          loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
-          error: (err, stack) => Scaffold(body: Center(child: Text('Story fetch error: $err'))),
+          loading: () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+          error: (err, stack) =>
+              Scaffold(body: Center(child: Text('Story fetch error: $err'))),
           data: (storiesList) {
             // Meri aur baqi doston ki stories logic background layer par
-            final myStories = storiesList.where((s) => s.userId == myUserId).toList();
-            final otherStories = storiesList.where((s) => s.userId != myUserId).toList();
+            final myStories = storiesList
+                .where((s) => s.userId == myUserId)
+                .toList();
+            final otherStories = storiesList
+                .where((s) => s.userId != myUserId)
+                .toList();
+
+            final Map<String, List<StoryModel>> groupedOtherStories =
+                groupStoriesByUser(
+                  storiesList.where((s) => s.userId != myUserId).toList(),
+                );
+
+            // 3. Unique User IDs ki list nikal li taake utne hi gole (avatars) banein
+            final otherUserIds = groupedOtherStories.keys.toList();
 
             return Scaffold(
               appBar: AppBar(title: const Text("Wink")),
@@ -457,7 +469,8 @@ class HomeScreen extends ConsumerWidget {
                     height: 120.h,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
-                      itemCount: 1 + otherStories.length,
+                      itemCount: 1 + otherUserIds.length,
+                      //otherStories.length,
                       itemBuilder: (context, index) {
                         // PEHLA ITEM: Add Story Button (Aapki original dynamic code UI)
                         if (index == 0) {
@@ -471,7 +484,8 @@ class HomeScreen extends ConsumerWidget {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => ViewStoryScreen(story: myStories.first),
+                                      builder: (context) =>
+                                          ViewStoryScreen(stories: myStories),
                                     ),
                                   );
                                 } else {
@@ -496,10 +510,24 @@ class HomeScreen extends ConsumerWidget {
                                             backgroundColor: Colors.grey[900],
                                             backgroundImage: hasStory
                                                 ? (myStories.first.bytes != null
-                                                    ? MemoryImage(myStories.first.bytes!)
-                                                    : myStories.first.mediaUrl.startsWith('http')
-                                                        ? NetworkImage(myStories.first.mediaUrl)
-                                                        : null) as ImageProvider?
+                                                          ? MemoryImage(
+                                                              myStories
+                                                                  .first
+                                                                  .bytes!,
+                                                            )
+                                                          : myStories
+                                                                .first
+                                                                .mediaUrl
+                                                                .startsWith(
+                                                                  'http',
+                                                                )
+                                                          ? NetworkImage(
+                                                              myStories
+                                                                  .first
+                                                                  .mediaUrl,
+                                                            )
+                                                          : null)
+                                                      as ImageProvider?
                                                 : const AssetImage(
                                                     'assets/placeholder.png',
                                                   ),
@@ -513,15 +541,23 @@ class HomeScreen extends ConsumerWidget {
                                           ),
                                         ),
                                         Positioned(
-                                          bottom: 2, // Purana perfect offset layout
+                                          bottom:2, // Purana perfect offset layout
                                           right: 2,
-                                          child: CircleAvatar(
-                                            radius: 11.r,
-                                            backgroundColor: Colors.blue,
-                                            child: const Icon(
-                                              Icons.add,
-                                              size: 12,
-                                              color: Colors.white,
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              NavigationService.push(
+                                                context,
+                                                AppRoutes.createStory,
+                                              );
+                                            },
+                                            child: CircleAvatar(
+                                              radius: 11.r,
+                                              backgroundColor: Colors.blue,
+                                              child: const Icon(
+                                                Icons.add,
+                                                size: 12,
+                                                color: Colors.white,
+                                              ),
                                             ),
                                           ),
                                         ),
@@ -529,7 +565,10 @@ class HomeScreen extends ConsumerWidget {
                                     ),
                                   ),
                                   AppSpacing.vxs,
-                                  Text('My Story', style: TextStyle(fontSize: 13.sp)),
+                                  Text(
+                                    'My Story',
+                                    style: TextStyle(fontSize: 13.sp),
+                                  ),
                                 ],
                               ),
                             ),
@@ -537,44 +576,70 @@ class HomeScreen extends ConsumerWidget {
                         }
 
                         // BAQI ITEMS: Active Stories (Exact Purani UI hierarchy)
-                        final story = otherStories[index - 1];
+                        final friendId = otherUserIds[index - 1];
 
-                        return Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8.w),
-                          child: GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ViewStoryScreen(story: story),
-                                ),
-                              );
-                            },
-                            child: Column(
-                              children: [
-                                CircleAvatar(
-                                  radius: 35.r,
-                                  backgroundColor: AppColors.primaryYellow,
-                                  child: CircleAvatar(
-                                    radius: 32.r,
-                                    backgroundColor: Colors.grey[900],
-                                    backgroundImage: (() {
-                                      if (story.mediaUrl.startsWith('http://') ||
-                                          story.mediaUrl.startsWith('https://')) {
-                                        return NetworkImage(story.mediaUrl);
-                                      }
-                                      return const AssetImage('assets/placeholder.png') as ImageProvider;
-                                    })(),
-                                  ),
-                                ),
-                                AppSpacing.vxs,
-                                Text(
-                                  user.name ?? 'Profile',
-                                ),
-                              ],
-                            ),
-                          ),
+                        final friendStories = groupedOtherStories[friendId]!;
+                        final displayStory = friendStories
+                            .first; // Gole par display karne ke liye pehli story
+                        return FriendStoryAvatar(
+                          friendId: friendId,
+                          friendStories: friendStories,
                         );
+                        //           Padding(
+                        //             padding: EdgeInsets.symmetric(horizontal: 8.w),
+                        //             child: GestureDetector(
+                        //               onTap: () {
+                        //                 Navigator.push(
+                        //                   context,
+                        //                   MaterialPageRoute(
+                        //                     builder: (context) =>
+                        //                      ViewStoryScreen(stories: friendStories)
+                        //                   ),
+                        //                 );
+                        //               },
+                        //               child: Column(
+                        //                 children: [
+                        //                   CircleAvatar(
+                        //                     radius: 35.r,
+                        //                     backgroundColor: AppColors.primaryYellow,
+                        //                     child: CircleAvatar(
+                        //                       radius: 32.r,
+                        //                       backgroundColor: Colors.grey[900],
+                        //                       backgroundImage:
+                        //                       displayStory.mediaUrl.startsWith('http')
+                        //                           ? NetworkImage(displayStory.mediaUrl)
+                        //                           : const AssetImage('assets/placeholder.png') as ImageProvider,
+                        //                       // (() {
+                        //                       //   if (story.mediaUrl.startsWith('http://') ||
+                        //                       //       story.mediaUrl.startsWith('https://')) {
+                        //                       //     return NetworkImage(story.mediaUrl);
+                        //                       //   }
+                        //                       //   return const AssetImage('assets/placeholder.png') as ImageProvider;
+                        //                       // })
+
+                        //                     ),
+                        //                   ),
+                        //                   AppSpacing.vxs,
+                        //                   friendUserAsync.when(
+                        // loading: () => SizedBox(width: 10.w, height: 10.h, child: const CircularProgressIndicator(strokeWidth: 2)),
+                        // error: (_, __) => Text('Friend', style: TextStyle(fontSize: 12.sp)),
+                        // data: (friendUser) {
+                        //   // Agar aapke user model me field name kuch aur hai (like username), toh usey friendUser.username karlein
+                        //   return Text(
+                        //     friendUser?.userName ?? friendUser?.name ?? 'Friend',
+                        //     style: TextStyle(fontSize: 12.sp),
+                        //     maxLines: 1,
+                        //     overflow: TextOverflow.ellipsis,
+                        //   );
+                        //               })              // Text(
+                        //                   //   friendUser?.userName ?? friendUser?.name ?? 'Friend',
+                        //                   //   //displayStory.userName ?? 'Friend',
+                        //                   //   //user.name ?? 'Profile',
+                        //                   // ),
+                        //                 ],
+                        //               ),
+                        //             ),
+                        //           );
                       },
                     ),
                   ),
@@ -600,4 +665,79 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
+class FriendStoryAvatar extends ConsumerWidget {
+  final String friendId;
+  final List<StoryModel> friendStories;
 
+  const FriendStoryAvatar({
+    super.key,
+    required this.friendId,
+    required this.friendStories,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final friendUserAsync = ref.watch(userProvider(friendId));
+    final displayStory = friendStories.first;
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 8.w),
+      child: GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ViewStoryScreen(stories: friendStories),
+            ),
+          );
+        },
+        child: Column(
+          children: [
+            CircleAvatar(
+              radius: 35.r,
+              backgroundColor: AppColors.primaryYellow,
+              child: CircleAvatar(
+                radius: 32.r,
+                backgroundColor: Colors.grey[900],
+                backgroundImage: displayStory.mediaUrl.startsWith('http')
+                    ? NetworkImage(displayStory.mediaUrl)
+                    : const AssetImage('assets/placeholder.png')
+                          as ImageProvider,
+              ),
+            ),
+            AppSpacing.vxs,
+            friendUserAsync.when(
+              loading: () => SizedBox(
+                width: 10.w,
+                height: 10.h,
+                child: const CircularProgressIndicator(strokeWidth: 2),
+              ),
+              error: (_, __) =>
+                  Text('Friend', style: TextStyle(fontSize: 12.sp)),
+              data: (friendUser) {
+                return Text(
+                  //friendUser?.userName ??
+                  friendUser?.name ?? 'Friend',
+                  style: TextStyle(fontSize: 12.sp),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+Map<String, List<StoryModel>> groupStoriesByUser(List<StoryModel> allStories) {
+  Map<String, List<StoryModel>> grouped = {};
+  for (var story in allStories) {
+    if (!grouped.containsKey(story.userId)) {
+      grouped[story.userId] = [];
+    }
+    grouped[story.userId]!.add(story);
+  }
+  return grouped;
+}

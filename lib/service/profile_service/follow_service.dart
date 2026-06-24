@@ -1,88 +1,206 @@
 
+
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FollowService {
   final _db = FirebaseFirestore.instance;
 
-
   Future<bool> isFollowing(String me, String other) async {
-  // Agar dono mein se koi ek ID bhi khaali hai, toh aage mat barhein
-  if (me.isEmpty || other.isEmpty) {
-    print("Warning: 'me' ya 'other' ID khaali hai!");
-    return false; 
+    if (me.isEmpty || other.isEmpty) {
+      print("Warning: 'me' ya 'other' ID khaali hai!");
+      return false; 
+    }
+
+    try {
+      final doc = await _db
+          .collection('users')
+          .doc(me)
+          .collection('following')
+          .doc(other)
+          .get(const GetOptions(source: Source.serverAndCache)); // Cache + Server dono check karega
+
+      return doc.exists;
+    } on FirebaseException catch (e) {
+      print("Firestore Error in isFollowing: ${e.code} - ${e.message}");
+      // Agar server unavailable ho, toh locally cache se check karne ki koshish karein
+      try {
+        final docCache = await _db
+            .collection('users')
+            .doc(me)
+            .collection('following')
+            .doc(other)
+            .get(const GetOptions(source: Source.cache));
+        return docCache.exists;
+      } catch (_) {
+        return false;
+      }
+    } catch (e) {
+      print("Generic Error in isFollowing: $e");
+      return false;
+    }
   }
-
-  final doc = await _db
-      .collection('users')
-      .doc(me)
-      .collection('following')
-      .doc(other)
-      .get();
-
-  return doc.exists;
-}
 
   Future<void> follow({
     required String me,
     required String other,
     required Map<String, dynamic> myData,
   }) async {
-    final batch = _db.batch();
+    try {
+      final batch = _db.batch();
 
-    final meRef = _db.collection('users').doc(me);
-    final otherRef = _db.collection('users').doc(other);
+      final meRef = _db.collection('users').doc(me);
+      final otherRef = _db.collection('users').doc(other);
 
-    batch.set(
-      otherRef.collection('followers').doc(me),
-      {
-        'uid': me,
-        'username': myData['username'],
-        'displayName': myData['displayName'],
-        'profileImageUrl': myData['profileImageUrl'],
-      },
-    );
+      batch.set(
+        otherRef.collection('followers').doc(me),
+        {
+          'uid': me,
+          'username': myData['username'],
+          'displayName': myData['displayName'],
+          'profileImageUrl': myData['profileImageUrl'],
+        },
+      );
 
-    batch.set(
-      meRef.collection('following').doc(other),
-      {
-        'uid': other,
-      },
-    );
+      batch.set(
+        meRef.collection('following').doc(other),
+        {
+          'uid': other,
+        },
+      );
 
-    batch.update(meRef, {
-      'followingCount': FieldValue.increment(1),
-    });
+      batch.update(meRef, {
+        'followingCount': FieldValue.increment(1),
+      });
 
-    batch.update(otherRef, {
-      'followersCount': FieldValue.increment(1),
-    });
+      batch.update(otherRef, {
+        'followersCount': FieldValue.increment(1),
+      });
 
-    await batch.commit();
+      await batch.commit();
+    } on FirebaseException catch (e) {
+      print("Firestore Error in follow: ${e.code} - ${e.message}");
+      rethrow; // Isay rethrow karein taake UI level par user ko alert dikha sakein
+    }
   }
 
   Future<void> unfollow({
     required String me,
     required String other,
   }) async {
-    final batch = _db.batch();
+    try {
+      final batch = _db.batch();
 
-    final meRef = _db.collection('users').doc(me);
-    final otherRef = _db.collection('users').doc(other);
+      final meRef = _db.collection('users').doc(me);
+      final otherRef = _db.collection('users').doc(other);
 
-    batch.delete(otherRef.collection('followers').doc(me));
-    batch.delete(meRef.collection('following').doc(other));
+      batch.delete(otherRef.collection('followers').doc(me));
+      batch.delete(meRef.collection('following').doc(other));
 
-    batch.update(meRef, {
-      'followingCount': FieldValue.increment(-1),
-    });
+      batch.update(meRef, {
+        'followingCount': FieldValue.increment(-1),
+      });
 
-    batch.update(otherRef, {
-      'followersCount': FieldValue.increment(-1),
-    });
+      batch.update(otherRef, {
+        'followersCount': FieldValue.increment(-1),
+      });
 
-    await batch.commit();
+      await batch.commit();
+    } on FirebaseException catch (e) {
+      print("Firestore Error in unfollow: ${e.code} - ${e.message}");
+      rethrow;
+    }
   }
 }
+
+
+// import 'package:cloud_firestore/cloud_firestore.dart';
+
+// class FollowService {
+//   final _db = FirebaseFirestore.instance;
+
+
+//   Future<bool> isFollowing(String me, String other) async {
+//   // Agar dono mein se koi ek ID bhi khaali hai, toh aage mat barhein
+//   if (me.isEmpty || other.isEmpty) {
+//     print("Warning: 'me' ya 'other' ID khaali hai!");
+//     return false; 
+//   }
+
+//   final doc = await _db
+//       .collection('users')
+//       .doc(me)
+//       .collection('following')
+//       .doc(other)
+//       .get();
+
+//   return doc.exists;
+// }
+
+//   Future<void> follow({
+//     required String me,
+//     required String other,
+//     required Map<String, dynamic> myData,
+//   }) async {
+//     final batch = _db.batch();
+
+//     final meRef = _db.collection('users').doc(me);
+//     final otherRef = _db.collection('users').doc(other);
+
+//     batch.set(
+//       otherRef.collection('followers').doc(me),
+//       {
+//         'uid': me,
+//         'username': myData['username'],
+//         'displayName': myData['displayName'],
+//         'profileImageUrl': myData['profileImageUrl'],
+//       },
+//     );
+
+//     batch.set(
+//       meRef.collection('following').doc(other),
+//       {
+//         'uid': other,
+//       },
+//     );
+
+//     batch.update(meRef, {
+//       'followingCount': FieldValue.increment(1),
+//     });
+
+//     batch.update(otherRef, {
+//       'followersCount': FieldValue.increment(1),
+//     });
+
+//     await batch.commit();
+//   }
+
+
+
+
+//   Future<void> unfollow({
+//     required String me,
+//     required String other,
+//   }) async {
+//     final batch = _db.batch();
+
+//     final meRef = _db.collection('users').doc(me);
+//     final otherRef = _db.collection('users').doc(other);
+
+//     batch.delete(otherRef.collection('followers').doc(me));
+//     batch.delete(meRef.collection('following').doc(other));
+
+//     batch.update(meRef, {
+//       'followingCount': FieldValue.increment(-1),
+//     });
+
+//     batch.update(otherRef, {
+//       'followersCount': FieldValue.increment(-1),
+//     });
+
+//     await batch.commit();
+//   }
+// }
 
 
 

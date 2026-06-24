@@ -9,6 +9,8 @@ class ReelModel {
   final int comments;
   final int shares;
   final bool isLiked;
+    final String userID;
+
 
   ReelModel({
     required this.videoUrl,
@@ -19,12 +21,13 @@ class ReelModel {
     this.likes = 0,
     this.comments = 0,
     this.shares = 0,
-    this.isLiked = false,
+    this.isLiked = false, required this.userID,
   });
 
   String? get id => null;
 
   ReelModel copyWith({
+    String? userID,
     String? videoUrl,
     String? username,
     String? profileUrl,
@@ -45,6 +48,7 @@ class ReelModel {
       comments: comments ?? this.comments,
       shares: shares ?? this.shares,
       isLiked: isLiked ?? this.isLiked,
+       userID: userID ?? this.userID,
     );
   }
 }

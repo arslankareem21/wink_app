@@ -5,14 +5,13 @@ import 'package:wink_app/core/config/routes/navigation_service.dart';
 import 'package:wink_app/core/config/routes/route_names.dart';
 import 'package:wink_app/core/config/theme/app_spacing.dart';
 import 'package:wink_app/core/config/theme/app_text_style.dart';
-import 'package:wink_app/presentation/components/profile/pofile_dafault_tab_controller.dart';
+import 'package:wink_app/presentation/components/profile/profileTabController/pofile_dafault_tab_controller.dart';
 import 'package:wink_app/presentation/components/profile/profile_header.dart';
 import 'package:wink_app/presentation/components/profile/profile_status.dart';
 import 'package:wink_app/presentation/provider/user_provider.dart';
 import 'package:wink_app/presentation/screens/profile/other_user_profile_screen.dart';
 import 'package:wink_app/presentation/screens/setting/setting_screen.dart';
 import 'package:wink_app/presentation/widgets/circle_avatar.dart';
-
 import 'package:wink_app/viewmodels/auth_viewmodel.dart';
 import 'package:wink_app/viewmodels/image_picker_vm.dart';
 
@@ -27,17 +26,6 @@ class ProfileScreen extends ConsumerWidget {
     final currentUserAsync = ref.watch(currentUserProvider);
 final currentUserId = ref.read(currentUserProvider).value?.userId ?? '';
 final currentUserData = ref.read(currentUserProvider).value?.toMap() ?? {};
-        //final userAsync = ref.watch(userProvider);
-
-    // return userAsync.when(
-    //   loading: () =>
-    //       const Scaffold(body: Center(child: CircularProgressIndicator())),
-    //   error: (error, stack) =>
-    //       Scaffold(body: Center(child: Text('Error loading profile: $error'))),
-    //   data: (user) {
-    //     if (user == null) {
-    //       return const Scaffold(body: Center(child: Text('User not found')));
-    //     }
     
     
     return Scaffold(
@@ -113,7 +101,7 @@ final currentUserData = ref.read(currentUserProvider).value?.toMap() ?? {};
             size: 100.sp,
             imageSource: pickedFile,
             isNetwork: pickedFile == null,
-           textSize: 13.sp, radius: 40.sp,
+           radius: 40.sp,
           ),
           IconButton(
             icon: authState.isLoading
