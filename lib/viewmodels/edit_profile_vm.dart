@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:wink_app/service/auth_service.dart'; // to access repo
 
 class EditProfileState {
   final bool isLoading;
@@ -18,17 +19,18 @@ class EditProfileState {
     bool? isSuccess,
   }) {
     return EditProfileState(
-      isLoading: isLoading?? this.isLoading,
+      isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
-      isSuccess: isSuccess?? this.isSuccess,
+      isSuccess: isSuccess ?? this.isSuccess,
     );
   }
 }
 
 class EditProfileViewModel extends Notifier<EditProfileState> {
   final FirebaseFirestore _firestore;
+  final AuthRepository _authRepo; // ADD THIS
 
-  EditProfileViewModel(this._firestore);
+  EditProfileViewModel(this._firestore, this._authRepo); // UPDATE
 
   @override
   EditProfileState build() {
@@ -56,12 +58,23 @@ class EditProfileViewModel extends Notifier<EditProfileState> {
       return;
     }
 
+    state = state.copyWith(isLoading: true, errorMessage: null, isSuccess: false);
+
     try {
-      state = state.copyWith(isLoading: true, errorMessage: null, isSuccess: false);
+      // ADD THIS: Check username availability before updating
+      final cleanUsername = username.trim().toLowerCase();
+      final isAvailable = await _authRepo.isUsernameAvailable(
+        cleanUsername,
+        excludeUid: uid,
+      );
+      
+      if (!isAvailable) {
+        throw Exception('Username already taken');
+      }
 
       final Map<String, dynamic> data = {
         'name': displayName,
-        'username': username,
+        'username': cleanUsername,
         'bio': bio,
         'description': bio,
         'website': website,
@@ -107,5 +120,6 @@ class EditProfileViewModel extends Notifier<EditProfileState> {
 
 final editProfileViewModelProvider =
     NotifierProvider.autoDispose<EditProfileViewModel, EditProfileState>(() {
-  return EditProfileViewModel(FirebaseFirestore.instance);
+  final authRepo = AuthRepository(); // or ref.read(authRepositoryProvider)
+  return EditProfileViewModel(FirebaseFirestore.instance, authRepo);
 });

@@ -6,6 +6,7 @@ import 'package:wink_app/core/config/routes/navigation_service.dart';
 import 'package:wink_app/core/config/theme/app_colors.dart';
 import 'package:wink_app/core/config/theme/app_spacing.dart';
 import 'package:wink_app/core/config/theme/app_text_style.dart';
+import 'package:wink_app/core/utils/validators.dart'; // IMPORT
 import 'package:wink_app/presentation/widgets/app_snackbar.dart';
 import 'package:wink_app/presentation/widgets/circle_avatar.dart';
 import 'package:wink_app/presentation/widgets/elevated_button.dart';
@@ -15,6 +16,8 @@ import 'package:wink_app/viewmodels/auth_viewmodel.dart';
 import 'package:wink_app/viewmodels/edit_profile_vm.dart';
 import 'package:wink_app/viewmodels/image_picker_vm.dart';
 import 'package:wink_app/viewmodels/upload_vm.dart';
+
+
 
 class EditProfileScreen extends HookConsumerWidget {
   const EditProfileScreen({super.key});
@@ -26,10 +29,8 @@ class EditProfileScreen extends HookConsumerWidget {
     final uploadState = ref.watch(uploadProvider);
     final editState = ref.watch(editProfileViewModelProvider);
 
-    // Listen to upload completion and refresh user data
     ref.listen(uploadProvider, (previous, next) {
       if (previous?.isUploading == true && next.isUploading == false && next.error == null) {
-        // Upload finished successfully - refresh both screens
         ref.invalidate(currentUserProvider);
       }
     });
@@ -45,12 +46,47 @@ class EditProfileScreen extends HookConsumerWidget {
 
     final isDataLoaded = useState(false);
     final hasNameError = useState(false);
+    final originalUsername = useState<String>('');
+
+    final usernameInput = useState('');
+    useEffect(() {
+      void listener() => usernameInput.value = usernameController.text;
+      usernameController.addListener(listener);
+      return () => usernameController.removeListener(listener);
+    }, [usernameController]);
+
+    final debouncedUsername = useDebounced(usernameInput.value, const Duration(milliseconds: 500));
+
+    final usernameCheck = ref.watch(usernameAvailableProvider((
+      username: debouncedUsername?? '',
+      uid: currentUserAsync.value?.userId?? '',
+    )));
+
+    // Use Validators.username + async exists check
+    final usernameError = useMemoized(() {
+      final val = (debouncedUsername?? '').trim();
+
+      // 1. Sync validation from Validators
+      final syncError = Validators.username(val);
+      if (syncError!= null) return syncError;
+
+      // 2. Skip async if keeping own username
+      if (val.toLowerCase() == originalUsername.value.toLowerCase()) return null;
+
+      // 3. Async exists check
+      if (usernameCheck.isLoading) return 'Checking...';
+      if (usernameCheck.hasError) return 'Error checking username';
+      if (usernameCheck.hasValue && usernameCheck.value == false) return 'Username already exists';
+
+      return null;
+    }, [debouncedUsername, originalUsername.value, usernameCheck]);
 
     useEffect(() {
       currentUserAsync.whenData((user) {
         if (!isDataLoaded.value && user!= null) {
           nameController.text = user.name;
           usernameController.text = user.username?? '';
+          originalUsername.value = user.username?? '';
           bioController.text = user.bio?? '';
           websiteController.text = user.website?? '';
           categoryController.text = user.category?? '';
@@ -76,10 +112,15 @@ class EditProfileScreen extends HookConsumerWidget {
       }
       hasNameError.value = false;
 
+      if (usernameError!= null) {
+        AppSnackBar.show(usernameError!);
+        return;
+      }
+
       try {
         await ref.read(editProfileViewModelProvider.notifier).updateProfileData(
           uid: user.userId,
-          username: usernameController.text.trim(),
+          username: usernameController.text.trim().toLowerCase(),
           bio: descriptionController.text.trim(),
           website: websiteController.text.trim(),
           displayName: nameController.text.trim(),
@@ -107,9 +148,9 @@ class EditProfileScreen extends HookConsumerWidget {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: IconButton(
-              onPressed: editState.isLoading? null : saveChanges,
+              onPressed: editState.isLoading || usernameError!= null? null : saveChanges,
               icon: editState.isLoading
-               ? SizedBox(
+                 ? SizedBox(
                       width: 20.sp,
                       height: 20.sp,
                       child: CircularProgressIndicator(strokeWidth: 2),
@@ -125,9 +166,8 @@ class EditProfileScreen extends HookConsumerWidget {
         data: (user) {
           if (user == null) return const Center(child: Text('User not found'));
 
-          // Add timestamp to bust cache
           final networkImageUrl = user.profileImageUrl!= null && user.profileImageUrl!.isNotEmpty
-           ? '${user.profileImageUrl}?v=${user.updatedAt.millisecondsSinceEpoch}'
+             ? '${user.profileImageUrl}?v=${user.updatedAt.millisecondsSinceEpoch}'
               : null;
 
           return SingleChildScrollView(
@@ -139,7 +179,7 @@ class EditProfileScreen extends HookConsumerWidget {
                 Center(
                   child: GestureDetector(
                     onTap: editState.isLoading || uploadState.isUploading
-                      ? null
+                       ? null
                         : () async {
                             await ref.read(imagePickerProvider.notifier).pickFromGallery();
                             final newFile = ref.read(imagePickerProvider);
@@ -212,7 +252,23 @@ class EditProfileScreen extends HookConsumerWidget {
                 AppSpacing.vxxl,
                 Text("USERNAME"),
                 AppSpacing.vsm,
-                AppTextField(hintText: 'Your username', controller: usernameController),
+                AppTextField(
+                  hintText: 'Your username',
+                  controller: usernameController,
+                  errorText: usernameError,
+                  suffixIcon: usernameCheck.isLoading
+                     ? Padding(
+                          padding: EdgeInsets.all(12.w),
+                          child: SizedBox(
+                            width: 16.sp,
+                            height: 16.sp,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        )
+                      : usernameError == null && (debouncedUsername?.isNotEmpty?? false)
+                         ? Icon(Icons.check_circle, color: Colors.green, size: 20.sp)
+                          : null,
+                ),
                 AppSpacing.vxxl,
                 Text("BIO"),
                 AppSpacing.vsm,
@@ -243,7 +299,7 @@ class EditProfileScreen extends HookConsumerWidget {
                   child: AppButton(
                     width: 240.w,
                     text: editState.isLoading? 'Saving...' : 'Save Changes',
-                    onPressed: editState.isLoading? null : saveChanges,
+                    onPressed: editState.isLoading || usernameError!= null? null : saveChanges,
                   ),
                 ),
                 AppSpacing.vlg,

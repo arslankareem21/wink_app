@@ -27,6 +27,7 @@ class AppTextField extends StatefulWidget {
   final double? width;
   final double? height;
   final EdgeInsetsGeometry? contentPadding;
+  final String? errorText; // ADDED: nullable, won't break existing code
 
   const AppTextField({
     super.key,
@@ -51,7 +52,8 @@ class AppTextField extends StatefulWidget {
     this.focusNode,
     this.width,
     this.height,
-    this.contentPadding, String? errorText,
+    this.contentPadding,
+    this.errorText, // ADDED
   });
 
   @override
@@ -68,41 +70,38 @@ class _AppTextFieldState extends State<AppTextField> {
   }
 
   Widget? _buildSuffixIcon() {
-    // Case 1: Both password toggle + custom suffixIcon
-    if (widget.isPassword && widget.suffixIcon != null) {
+    if (widget.isPassword && widget.suffixIcon!= null) {
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           widget.suffixIcon!,
           IconButton(
             icon: Icon(
-              _obscureText 
-                  ? Icons.visibility_off_outlined 
+              _obscureText
+                 ? Icons.visibility_off_outlined
                   : Icons.visibility_outlined,
               color: AppColors.appBarDark,
               size: 20.sp,
             ),
-            onPressed: () => setState(() => _obscureText = !_obscureText),
+            onPressed: () => setState(() => _obscureText =!_obscureText),
           ),
         ],
       );
     }
-    
-    // Case 2: Only password toggle
+
     if (widget.isPassword) {
       return IconButton(
         icon: Icon(
-          _obscureText 
-              ? Icons.visibility_off_outlined 
+          _obscureText
+             ? Icons.visibility_off_outlined
               : Icons.visibility_outlined,
           color: AppColors.primaryYellow,
           size: 20.sp,
         ),
-        onPressed: () => setState(() => _obscureText = !_obscureText),
+        onPressed: () => setState(() => _obscureText =!_obscureText),
       );
     }
-    
-    // Case 3: Only custom suffixIcon
+
     return widget.suffixIcon;
   }
 
@@ -111,15 +110,15 @@ class _AppTextFieldState extends State<AppTextField> {
     final textField = TextFormField(
       controller: widget.controller,
       obscureText: _obscureText,
-      keyboardType: widget.isPassword 
-          ? TextInputType.visiblePassword 
+      keyboardType: widget.isPassword
+         ? TextInputType.visiblePassword
           : widget.keyboardType,
       textInputAction: widget.textInputAction,
       validator: widget.validator,
       onChanged: widget.onChanged,
       onFieldSubmitted: widget.onFieldSubmitted,
       inputFormatters: widget.inputFormatters,
-      maxLines: widget.isPassword ? 1 : widget.maxLines,
+      maxLines: widget.isPassword? 1 : widget.maxLines,
       minLines: widget.minLines,
       enabled: widget.enabled,
       readOnly: widget.readOnly,
@@ -132,9 +131,10 @@ class _AppTextFieldState extends State<AppTextField> {
       decoration: InputDecoration(
         hintText: widget.hintText,
         labelText: widget.labelText,
+        errorText: widget.errorText, // ADDED
         prefixIcon: widget.prefixIcon,
-        suffixIcon: _buildSuffixIcon(), // Fixed here
-        contentPadding: widget.contentPadding ?? 
+        suffixIcon: _buildSuffixIcon(),
+        contentPadding: widget.contentPadding??
             EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
         hintStyle: AppTextStyles.bodyRegular.copyWith(
           fontSize: 14.sp,
@@ -144,10 +144,22 @@ class _AppTextFieldState extends State<AppTextField> {
           fontSize: 14.sp,
           color: AppColors.subtitleLight,
         ),
+        errorStyle: AppTextStyles.bodyRegular.copyWith(
+          fontSize: 12.sp,
+          color: Colors.red,
+        ),
+        errorBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.red, width: 1.5),
+          borderRadius: BorderRadius.circular(8.r),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.red, width: 2),
+          borderRadius: BorderRadius.circular(8.r),
+        ),
       ),
     );
 
-    if (widget.width != null || widget.height != null) {
+    if (widget.width!= null || widget.height!= null) {
       return SizedBox(
         width: widget.width,
         height: widget.height,

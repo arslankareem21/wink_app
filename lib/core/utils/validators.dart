@@ -49,7 +49,7 @@ class Validators {
     if (value == null || value.isEmpty) {
       return 'Please confirm your password';
     }
-    if (value != password) {
+    if (value!= password) {
       return 'Passwords do not match';
     }
     return null;
@@ -66,6 +66,23 @@ class Validators {
     if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
       return '$fieldName can only contain letters';
     }
+    return null;
+  }
+
+  /// ADD THIS: Username validation - sync rules only
+  static String? username(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Username is required';
+    }
+    final val = value.trim();
+    if (val.length < 3) return 'At least 3 characters';
+    if (val.length > 30) return 'Max 30 characters';
+    if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(val)) {
+      return 'Only letters, numbers and _ allowed';
+    }
+    if (RegExp(r'^[0-9]+$').hasMatch(val)) return 'Cannot be only numbers';
+    if (val.startsWith('_') || val.endsWith('_')) return 'Cannot start or end with _';
+    if (val.contains('__')) return 'Cannot have __ together';
     return null;
   }
 
@@ -103,7 +120,7 @@ class Validators {
 
   /// Max length validation
   static String? maxLength(String? value, int length, {String fieldName = 'Field'}) {
-    if (value != null && value.length > length) {
+    if (value!= null && value.length > length) {
       return '$fieldName must be less than $length characters';
     }
     return null;
@@ -128,7 +145,7 @@ class Validators {
     return (value) {
       for (final validator in validators) {
         final result = validator(value);
-        if (result != null) return result;
+        if (result!= null) return result;
       }
       return null;
     };

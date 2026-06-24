@@ -278,3 +278,9 @@ final currentUserProvider = StreamProvider<UserModel?>((ref) {
       .snapshots()
       .map((doc) => doc.exists ? UserModel.fromDoc(doc) : null);
 });
+
+final usernameAvailableProvider = FutureProvider.autoDispose.family<bool, ({String username, String uid})>((ref, params) async {
+  if (params.username.trim().isEmpty) return true;
+  final repo = ref.read(authRepositoryProvider);
+  return await repo.isUsernameAvailable(params.username, excludeUid: params.uid);
+});

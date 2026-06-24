@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:wink_app/core/utils/validators.dart';
 import 'package:wink_app/models/auth/user_model.dart';
 import 'package:wink_app/models/user_model.dart';
 
@@ -8,14 +9,46 @@ class AuthRepository {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // Bug 27 FIX: Don't pass clientId on Android. Let it read google-services.json
-  // For iOS, it reads GoogleService-Info.plist automatically
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
-    // serverClientId: 'YOUR_WEB_CLIENT_ID', // Only if you need ID token for backend
   );
 
   User? get currentUser => _auth.currentUser;
+
+  
+
+Future<bool> isUsernameAvailable(String username, {String? excludeUid}) async {
+  final clean = username.trim().toLowerCase();
+
+  // Use same validation as Validators.username
+  if (Validators.username(clean)!= null) return false;
+
+  final query = await _db
+     .collection('users')
+     .where('username', isEqualTo: clean)
+     .limit(1)
+     .get();
+
+  if (query.docs.isEmpty) return true;
+  if (excludeUid!= null && query.docs.first.id == excludeUid) return true;
+
+  return false;
+}
+
+  // ADD THIS: generate unique username
+  Future<String> generateUniqueUsername(String email) async {
+    String base = email.split('@').first.toLowerCase().replaceAll(RegExp(r'[^a-z0-9_]'), '');
+    if (base.isEmpty) base = 'user';
+    
+    String candidate = base;
+    int counter = 0;
+    
+    while (!(await isUsernameAvailable(candidate))) {
+      counter++;
+      candidate = '${base}$counter';
+    }
+    return candidate;
+  }
 
   Future<void> _syncUserToFirestore(
     User user,
@@ -26,11 +59,14 @@ class AuthRepository {
     final doc = await docRef.get();
 
     if (!doc.exists) {
+      // FIX: generate unique username instead of random
+      final uniqueUsername = await generateUniqueUsername(user.email ?? 'user');
+      
       final newUser = UserModel(
         userId: user.uid,
         name: name ?? user.displayName ?? 'New User',
         email: user.email ?? '',
-        username: '${user.email?.split('@').first ?? 'user'}_${user.uid.substring(0, 5)}',
+        username: uniqueUsername,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
         authProvider: provider,
@@ -106,7 +142,6 @@ class AuthRepository {
         throw _handleError(e, null);
       }
     } catch (e) {
-      // Catch GoogleSignIn exceptions too
       if (e is Exception) rethrow;
       throw Exception('Google sign in failed: ${e.toString()}');
     }
@@ -168,7 +203,6 @@ class AuthRepository {
 
       return provider.contains('google') && !hasPassword;
     } catch (e) {
-      // If Firestore fails, block access for safety
       return true;
     }
   }
@@ -200,8 +234,9 @@ class AuthRepository {
     }
   }
 
+  
+
   Future<void> signOut() async {
-    
     try {
       await _googleSignIn.disconnect();
     } catch (_) {}
