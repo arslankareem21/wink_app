@@ -168,6 +168,7 @@ class AuthRepository {
       throw Exception('Google sign in failed: ${e.toString()}');
     }
   }
+  
   Future<bool> isUsernameAvailable(String username, {String? excludeUid}) async {
   final clean = username.trim().toLowerCase();
 

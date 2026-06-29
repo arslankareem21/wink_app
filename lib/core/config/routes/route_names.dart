@@ -9,8 +9,7 @@ class AppRoutes {
   static const settingAccount = '/SettingsAccountScreen';
   static const editProfile = '/EditProfileScreen';
   static const Profile = '/ProfileScreen';
-    static const createStory = '/createStory';
-    static const viewStoryScreen = '/viewStoryScreen';
-
+  static const createStory = '/createStory';
+  static const viewStoryScreen = '/viewStoryScreen';
   static const Settings = '/SettingsScreen';
 }

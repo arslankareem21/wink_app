@@ -8,8 +8,6 @@ import 'package:wink_app/core/config/theme/app_text_style.dart';
 import 'package:wink_app/presentation/components/profile/profileTabController/pofile_dafault_tab_controller.dart';
 import 'package:wink_app/presentation/components/profile/profile_header.dart';
 import 'package:wink_app/presentation/components/profile/profile_status.dart';
-import 'package:wink_app/presentation/provider/user_provider.dart';
-import 'package:wink_app/presentation/screens/profile/other_user_profile_screen.dart';
 import 'package:wink_app/presentation/screens/setting/setting_screen.dart';
 import 'package:wink_app/presentation/widgets/circle_avatar.dart';
 import 'package:wink_app/viewmodels/auth_viewmodel.dart';

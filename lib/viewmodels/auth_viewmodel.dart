@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:wink_app/core/handler/auth_handler.dart';
 import 'package:wink_app/models/auth/user_model.dart';
 import 'package:wink_app/presentation/widgets/app_snackbar.dart';
 import 'package:wink_app/service/auth_service.dart';
@@ -53,7 +54,7 @@ class AuthState {
 class AuthViewModel extends StateNotifier<AuthState> {
   final AuthRepository _repo;
   AuthViewModel(this._repo) : super(const AuthState());
-
+  
   // Bug 10: Signup + auto logout
   Future<void> signup(String email, String password, String name) async {
     state = state.copyWith(
@@ -84,12 +85,17 @@ class AuthViewModel extends StateNotifier<AuthState> {
       message: null,
     );
     try {
-      await _repo.signIn(email, password);
+     final result = await _repo.signIn(email, password);
       state = state.copyWith(
         loadingType: AuthLoadingType.none,
         message: 'Login successful',
         
       );
+       final token = await result.user?.getIdToken();
+         if(token !=null){
+          await  AuthHandler.ref.storeToken(token, true);
+      // await  AuthHandler.ref.setupUser(result?.user);
+       } 
       AppSnackBar.show('login successful');
     } catch (e) {
       state = state.copyWith(
@@ -98,9 +104,9 @@ class AuthViewModel extends StateNotifier<AuthState> {
       );
     }
   }
-
   
   Future<void> signInWithGoogle() async {
+  
     state = state.copyWith(
       loadingType: AuthLoadingType.googleSignIn,
       error: null,
@@ -108,9 +114,18 @@ class AuthViewModel extends StateNotifier<AuthState> {
       autofillEmail: null,
       showPasswordDialog: false, 
     );
+
     try {
       final result = await _repo.signInWithGoogle();
 
+        // print("User login is: ${result?.user?.getIdToken()}");
+        final token = await result?.user?.getIdToken();
+        
+       if(token !=null){
+          await  AuthHandler.ref.storeToken(token, true);
+      // await  AuthHandler.ref.setupUser(result?.user);
+       } 
+     
       if (result == null) {
         state = const AuthState();
         return;
@@ -135,6 +150,8 @@ class AuthViewModel extends StateNotifier<AuthState> {
       );
     }
   }
+
+
 Future<void> setupGoogleUserPassword(String newPassword) async {
   state = state.copyWith(
     loadingType: AuthLoadingType.passwordSetup, 
@@ -164,6 +181,7 @@ Future<void> setupGoogleUserPassword(String newPassword) async {
     );
   }
 }
+
  Future<void> cancelPasswordSetup() async {
     state = state.copyWith(
       loadingType: AuthLoadingType.none,
@@ -218,6 +236,7 @@ final authViewModelProvider = StateNotifierProvider<AuthViewModel, AuthState>((r
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository();
 });
+
 
 final currentUserIdProvider = Provider<String?>((ref) {
   final authRepo = ref.watch(authRepositoryProvider);

@@ -15,39 +15,11 @@ import 'package:wink_app/presentation/screens/splash/splash_screen.dart';
 import 'package:wink_app/presentation/screens/story/story_viewer_screen.dart';
 import 'package:wink_app/presentation/screens/successfully_post/successfully_post.dart';
 
-
-class AppRouter {
-
-
-
-
-
-
-
-
-
-
-  
+class AppRouter {  
   
   static final GoRouter router = GoRouter(
     initialLocation: AppRoutes.splash,
     routes: [
-  
-    //    GoRoute(
-    //     path: AppRoutes.viewStoryScreen,
-    //     name: 'view story',
-    //     builder: (context, state){
-    //     //  ViewStoryScreen(story: story)
-    //   final stories = state.extra as StoryModel?;  
-    //   if (stories == null) {
-    //   // Yahan aap koi Error screen dikha sakte hain ya default widget
-    //   return const Scaffold(
-    //     body: Center(child: Text('Story data missing!')),
-    //   );
-    // }  
-    //   return  ViewStoryScreen(stories: stories);
-    //     }
-    //   ),
     GoRoute(
   path: AppRoutes.viewStoryScreen,
   name: 'view story',

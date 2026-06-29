@@ -196,6 +196,7 @@ class EditProfileViewModel extends Notifier<EditProfileState> {
     return const EditProfileState();
   }
 
+
   Future<void> updateProfileData({
     required String uid,
     required String displayName,
@@ -219,7 +220,6 @@ class EditProfileViewModel extends Notifier<EditProfileState> {
 
     try {
       state = state.copyWith(isLoading: true, errorMessage: null, isSuccess: false);
-
       final Map<String, dynamic> data = {
         'name': displayName,
         'username': username,
@@ -233,7 +233,6 @@ class EditProfileViewModel extends Notifier<EditProfileState> {
       };
 
       await _firestore.collection('users').doc(uid).update(data);
-
       if (ref.mounted) {
         state = state.copyWith(
           isLoading: false,

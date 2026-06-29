@@ -153,7 +153,7 @@ class AppProfileAvatar extends StatelessWidget {
         ? FileImage(imageFile!) // 1. Agar abhi gallery se pick ki hai (File)
         : (imageSource is String && imageSource != null && imageSource.toString().isNotEmpty)
             ? NetworkImage(imageSource.toString()) // 2. Agar internet/firebase ki URL hai
-            : const AssetImage('assets/images/default_avatar.png') as ImageProvider, // 3. Fallback placeholder
+            : const AssetImage('assets/image/default_avatar.jpg') as ImageProvider, // 3. Fallback placeholder
   ),
 ),
         // GestureDetector(

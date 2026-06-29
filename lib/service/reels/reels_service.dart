@@ -230,12 +230,16 @@ import 'package:wink_app/models/reels/reels_models.dart';
 import 'package:wink_app/models/short_model.dart'; 
 
 class ReelService {
+
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // ✅ autoDispose hata diya taake data state cache mein save rahe aur tab badalne par destroy na ho
+  //Yeh aapki apni profile par reels ko live (Stream) dikhane ke liye hai.
+  // snapshots() ki wajah se jaise hi aap koi naye reel upload karengi, yeh khud hi
+  // bina page refresh kiye screen par show kar degi.
   static final userReelsStreamProvider = StreamProvider<List<ReelModel>>((ref) {
-    final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
-    
+  final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+  
     print("Fetching reels for user: $currentUserId"); // Debug log
 
     return FirebaseFirestore.instance
@@ -268,7 +272,9 @@ class ReelService {
         });
   });
 
-  // Purana fetchReels function
+
+//Yeh normal tarike se pure network se saari reels ko aik dafa khinch kar lata hai.
+// Purana fetchReels function
   Future<List<ReelModel>> fetchReels() async {
     try {
       QuerySnapshot snapshot = await _firestore.collection('shorts').get();

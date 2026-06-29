@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 enum SnackType { success, error, info }
 
 class SnackbarService {
-  static final GlobalKey<ScaffoldMessengerState> messengerKey =
-      GlobalKey<ScaffoldMessengerState>();
+  static final GlobalKey<ScaffoldMessengerState> messengerKey = GlobalKey<ScaffoldMessengerState>();
 
   static void show(
     String message, {

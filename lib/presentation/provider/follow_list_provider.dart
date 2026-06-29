@@ -2,8 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wink_app/models/profile/follow_user_model.dart';
 import 'package:wink_app/service/profile_service/follow_list_service.dart';
 
-final followListServiceProvider =
-    Provider((ref) => FollowListService());
+//instance
+final followListServiceProvider = Provider((ref) => FollowListService());
 
 final followersProvider =
     FutureProvider.family<List<FollowUserModel>, String>((ref, uid) {
@@ -14,3 +14,8 @@ final followingProvider =
     FutureProvider.family<List<FollowUserModel>, String>((ref, uid) {
   return ref.read(followListServiceProvider).getFollowing(uid);
 });
+
+//Provider ki file mein service ka instance isliye banaya gaya hai taake 
+//Kaam (Logic) aur State (Management) alag rahein. Service database se data nikalne
+// ka kaam karti hai, aur provider us instance ko use karke data UI tak delivery karne ka
+// kaam karta hai!

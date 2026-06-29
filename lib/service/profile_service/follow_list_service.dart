@@ -11,9 +11,17 @@ class FollowListService {
         .collection('followers')
         .get();
 
+
+//Yeh Firestore mein users -> [uid] -> followers wali sub-collection ke andar jati hai.
+
+//.get() ke zariye un saare logon ka data mangwati hai jinhone is user ko follow kiya hua hai.
+
     return snap.docs
         .map((e) => FollowUserModel.fromMap(e.data()))
         .toList();
+
+//Phir un saare documents ko map karke FollowUserModel (jo aapki model class hai, jisme naam, picture hoti hai) ki ek saaf-suthri List bana kar return kar deti hai.
+
   }
 
   Future<List<FollowUserModel>> getFollowing(String uid) async {

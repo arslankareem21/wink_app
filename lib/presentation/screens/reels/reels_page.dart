@@ -35,6 +35,7 @@ class _ReelPageState extends ConsumerState<ReelPage> {
 
   @override
   Widget build(BuildContext context) {
+
     final reels = ref.watch(reelsViewModelProvider);
     final viewModel = ref.read(reelsViewModelProvider.notifier);
 
@@ -47,7 +48,7 @@ class _ReelPageState extends ConsumerState<ReelPage> {
               controller: _pageController,
               itemCount: reels.length,
               onPageChanged: (index) {
-                viewModel.onPageChanged(index);
+              viewModel.onPageChanged(index);
               },
               itemBuilder: (context, index) {
                 // Key lagana zaroori hai taake Flutter widget state ko sahi se map kare
@@ -58,9 +59,9 @@ class _ReelPageState extends ConsumerState<ReelPage> {
                 );
               },
             ),
-    );
+          );
+      }
   }
-}
 
 class ReelPlayerItem extends ConsumerStatefulWidget {
   final ReelModel reel;
@@ -80,25 +81,72 @@ class _ReelPlayerItemState extends ConsumerState<ReelPlayerItem>
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 5),
+    _animationController = AnimationController( vsync: this, duration: const Duration(seconds: 5),
     );
-
     _initializeController();
   }
 
-  Future<void> _initializeController() async {
-    final viewModel = ref.read(reelsViewModelProvider.notifier);
-    final controller = await viewModel.getController(widget.index);
+  // Future<void> _initializeController() async {
 
+  //   final viewModel = ref.read(reelsViewModelProvider.notifier);
+  //   final controller = await viewModel.getController(widget.index);
+
+  //   if (!mounted) return;
+  //   _videoController = controller;
+
+  //   if (mounted) {
+  //     setState(() {
+  //       _initialized = _videoController?.value.isInitialized ?? false;
+  //     });
+
+  //     if (widget.index == viewModel.focusedIndex) {
+  //       _videoController?.play();
+  //       _animationController.repeat();
+  //     } else {
+  //       _videoController?.pause();
+  //       _animationController.stop();
+  //     }
+  //   }
+  // }
+
+// 1. Apne State variables mein yeh add karein
+bool _hasVideoError = false;
+
+Future<void> _initializeController() async {
+  final viewModel = ref.read(reelsViewModelProvider.notifier);
+  
+  try {
+    final controller = await viewModel.getController(widget.index);
     if (!mounted) return;
 
     _videoController = controller;
 
+    // 🎯 CHECK 1: Agar controller initialization ke waqt hi video error de chuka ho
+    if (_videoController!.value.hasError) {
+      if (mounted) {
+        setState(() {
+          _hasVideoError = true;
+          _initialized = false;
+        });
+      }
+      return;
+    }
+
+    // 🎯 CHECK 2: Video ke status ko dynamically sunte rahein agar chalte-chalte error aaye
+    _videoController!.addListener(() {
+      if (_videoController != null && _videoController!.value.hasError) {
+        if (mounted && !_hasVideoError) {
+          setState(() {
+            _hasVideoError = true;
+          });
+        }
+      }
+    });
+
     if (mounted) {
       setState(() {
         _initialized = _videoController?.value.isInitialized ?? false;
+        _hasVideoError = false;
       });
 
       if (widget.index == viewModel.focusedIndex) {
@@ -109,7 +157,15 @@ class _ReelPlayerItemState extends ConsumerState<ReelPlayerItem>
         _animationController.stop();
       }
     }
+  } catch (e) {
+    print("Video Init Error Caught: $e");
+    if (mounted) {
+      setState(() {
+        _hasVideoError = true;
+      });
+    }
   }
+}
 
   @override
   void dispose() {
@@ -122,14 +178,14 @@ class _ReelPlayerItemState extends ConsumerState<ReelPlayerItem>
   Widget build(BuildContext context) {
     final viewModel = ref.read(reelsViewModelProvider.notifier);
 
-    // 🎯 1. Listen to focused index changes properly
+    //Listen to focused index changes properly
     ref.listen<int>(
       reelsViewModelProvider.notifier.select((vm) => vm.focusedIndex),
       (previous, next) {
-        if (_initialized && _videoController != null) {
-          if (widget.index == next) {
-            // Agar yeh item ab focus mein aaya hai, toh play karein
-            if (!_videoController!.value.isPlaying) {
+             if (_initialized && _videoController != null) {
+             if (widget.index == next) {
+             // Agar yeh item ab focus mein aaya hai, toh play karein
+             if (!_videoController!.value.isPlaying) {
               _videoController!.play();
               _animationController.repeat();
               setState(() {});
@@ -153,7 +209,7 @@ class _ReelPlayerItemState extends ConsumerState<ReelPlayerItem>
           onTap: () async {
             if (_videoController != null && _initialized) {
               try {
-                // 🎯 2. Manual toggle ab perfectly kaam karega bina build interference ke
+                // Manual toggle ab perfectly kaam karega bina build interference ke
                 if (_videoController!.value.isPlaying) {
                   await _videoController!.pause();
                   _animationController.stop();
@@ -170,7 +226,28 @@ class _ReelPlayerItemState extends ConsumerState<ReelPlayerItem>
           child: Container(
             color: Colors.black,
             child: Center(
-              child: _initialized && _videoController != null
+              child: 
+              _hasVideoError
+      ? Container(
+          color: Colors.black,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.video_collection_rounded, color: Colors.white.withOpacity(0.4), size: 60),
+              const SizedBox(height: 12),
+              const Text(
+                "Video unplayable on this device",
+                style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                "Resolution: ${widget.reel.caption.isNotEmpty ? 'Unsupported format' : 'Codec Error'}",
+                style: const TextStyle(color: Colors.white38, fontSize: 11),
+              ),
+            ],
+          ),
+        ):
+              _initialized && _videoController != null
                   ? AspectRatio(
                       aspectRatio: _videoController!.value.aspectRatio == 0.0
                           ? 9 / 16
@@ -196,9 +273,7 @@ class _ReelPlayerItemState extends ConsumerState<ReelPlayerItem>
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
-                      Icons.play_arrow,
-                      size: 60,
-                      color: Colors.white70,
+                      Icons.play_arrow,size: 60,color: Colors.white70,
                     ),
                   ),
                 );
@@ -224,9 +299,6 @@ class _ReelPlayerItemState extends ConsumerState<ReelPlayerItem>
       ],
     );
   }
-  
-  // ... Baqi ke methods (_buildOverlay, _buildActionItem, etc.) same rahein ge
-//}
 
   Widget _buildOverlay(ReelsViewModel viewModel) {
     final userAsync = ref.watch(userProvider(widget.reel.username));
@@ -275,7 +347,6 @@ class _ReelPlayerItemState extends ConsumerState<ReelPlayerItem>
           imageFile: pickedImageFile,
         //profileImageUrl: profileImageUrl,
           onChangePhoto: () {},
-          //textSize: 13.sp,
         ),
                       // CircleAvatar(
                       //   radius: 16,
@@ -288,7 +359,7 @@ class _ReelPlayerItemState extends ConsumerState<ReelPlayerItem>
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                          fontSize: 14,
                         ),
                       ),
                       const SizedBox(width: 6),

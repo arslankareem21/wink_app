@@ -9,6 +9,10 @@ import 'package:wink_app/service/cloudinary_service.dart';
 import 'package:wink_app/service/firestore_service.dart';
 import 'package:wink_app/viewmodels/auth_viewmodel.dart';
 
+
+
+//Database(Firestore) -> Providers -> UI (Screens).
+
 // Providers - ONLY THESE 2
 final cloudinaryProvider = Provider((ref) => CloudinaryService());
 final firestoreProvider = Provider((ref) => FirestoreService());

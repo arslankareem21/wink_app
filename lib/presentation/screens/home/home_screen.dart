@@ -372,7 +372,6 @@
 // }
 
 import 'dart:io';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -481,18 +480,11 @@ class HomeScreen extends ConsumerWidget {
                               onTap: () async {
                                 if (hasStory) {
                                   // Fix click background logic attached to original route redirection
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          ViewStoryScreen(stories: myStories),
+                             Navigator.push( context,MaterialPageRoute(builder: (context) =>ViewStoryScreen(stories: myStories),
                                     ),
                                   );
                                 } else {
-                                  NavigationService.push(
-                                    context,
-                                    AppRoutes.createStory,
-                                  );
+                                  NavigationService.push(context,AppRoutes.createStory);
                                 }
                               },
                               child: Column(
@@ -507,36 +499,17 @@ class HomeScreen extends ConsumerWidget {
                                               : Colors.grey[800],
                                           child: CircleAvatar(
                                             radius: 32.r,
-                                            backgroundColor: Colors.grey[900],
-                                            backgroundImage: hasStory
-                                                ? (myStories.first.bytes != null
-                                                          ? MemoryImage(
-                                                              myStories
-                                                                  .first
-                                                                  .bytes!,
-                                                            )
-                                                          : myStories
-                                                                .first
-                                                                .mediaUrl
-                                                                .startsWith(
-                                                                  'http',
-                                                                )
-                                                          ? NetworkImage(
-                                                              myStories
-                                                                  .first
-                                                                  .mediaUrl,
-                                                            )
+                                           backgroundColor: Colors.grey[900],
+                                           backgroundImage: hasStory
+                                                          ? (myStories.first.bytes != null
+                                                          ? MemoryImage(myStories.first.bytes!,)
+                                                          : myStories.first.mediaUrl.startsWith('http')
+                                                          ? NetworkImage(myStories.first.mediaUrl,)
                                                           : null)
-                                                      as ImageProvider?
-                                                : const AssetImage(
-                                                    'assets/placeholder.png',
-                                                  ),
-                                            child: !hasStory
-                                                ? const Icon(
-                                                    Icons.add,
-                                                    color: Colors.white,
-                                                    size: 25,
-                                                  )
+                                                  as ImageProvider?
+                                                : const AssetImage('assets/placeholder.png',),
+                                                  child: !hasStory
+                                                ? const Icon(Icons.add,color: Colors.white,size: 25)
                                                 : null,
                                           ),
                                         ),
@@ -545,19 +518,12 @@ class HomeScreen extends ConsumerWidget {
                                           right: 2,
                                           child: GestureDetector(
                                             onTap: () {
-                                              NavigationService.push(
-                                                context,
-                                                AppRoutes.createStory,
-                                              );
+                                              NavigationService.push(context,AppRoutes.createStory,);
                                             },
                                             child: CircleAvatar(
                                               radius: 11.r,
                                               backgroundColor: Colors.blue,
-                                              child: const Icon(
-                                                Icons.add,
-                                                size: 12,
-                                                color: Colors.white,
-                                              ),
+                                              child: const Icon(Icons.add,size: 12,color: Colors.white),
                                             ),
                                           ),
                                         ),
@@ -566,8 +532,7 @@ class HomeScreen extends ConsumerWidget {
                                   ),
                                   AppSpacing.vxs,
                                   Text(
-                                    'My Story',
-                                    style: TextStyle(fontSize: 13.sp),
+                                    'My Story', style: TextStyle(fontSize: 13.sp),
                                   ),
                                 ],
                               ),
@@ -582,8 +547,7 @@ class HomeScreen extends ConsumerWidget {
                         final displayStory = friendStories
                             .first; // Gole par display karne ke liye pehli story
                         return FriendStoryAvatar(
-                          friendId: friendId,
-                          friendStories: friendStories,
+                          friendId: friendId, friendStories: friendStories,
                         );
                         //           Padding(
                         //             padding: EdgeInsets.symmetric(horizontal: 8.w),

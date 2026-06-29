@@ -218,6 +218,28 @@ class UploadState {
   }
 }
 
+///  Iska kaam app mein user ki taraf se upload hone wali har cheez
+///  (Posts, Shorts, Stories, aur Profile Pictures) ko manage karna hai.
+
+/// Iska kaam UI se file lekar pehle use Cloudinary par upload karna hai, 
+/// aur phir uska link database (Firestore) mein save karna hai.
+
+/// Jab user app mein koi nayi post, short video, ya story lagata hai, 
+/// toh yeh file peeche chalne wale 4 bade bade kaam sambhalti hai:
+
+///Agar yeh file aapki app mein na ho, toh user kuch bhi upload nahi kar payega. 
+///Na profile picture change hogi, na posts hongi. Yeh file UI (Screens)
+/// aur Servers (Cloudinary & Firestore) ke beech mein ek bridge (pula) 
+/// ka kaam kar rahi hai jo data ko safely yahan se wahan lekar jata hai. 
+
+
+// UI(User ki File) -> Cloudinary -> Firestore.
+
+//Aapne button dabaya -> Doosri file (UploadViewModel) ne naya data Firebase/Cloudinary par bhej diya.
+//Jaise hi Firebase par naya data aaya $\rightarrow$ Pehli file (Streams) 
+//ne foran dekh liya ke "Aray! Database mein naya data aaya hai!" aur usne bina der kiye 
+//aapki screen (UI) ko update kar diya.
+
 class UploadViewModel extends StateNotifier<UploadState> {
   final CloudinaryService _cloudinary;
   final FirestoreService _firestore;

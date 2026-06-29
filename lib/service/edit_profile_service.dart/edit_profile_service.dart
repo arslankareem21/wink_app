@@ -20,7 +20,6 @@ class EditProfileService {
     });
   }
 
-
 void isUsernameTakenProvider = FutureProvider.family<bool, String>((ref, username) async {
   if (username.isEmpty || username.length < 3)
    return false;

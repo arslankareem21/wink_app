@@ -30,7 +30,22 @@ class FollowParams {
   int get hashCode => Object.hash(me, other);
 }
 
+//Yeh class mobile ki UI (Screen) ke sath judi hoti hai. Iska kaam hai button
+// ka rang aur text control karna (true ya false state ke zariye) aur screen ko batana ke kab refresh hona hai.
 
+//state: Iske paas ek variable hota hai jise state kehte hain. Agar state
+// true ho toh screen par Following dikhta hai, agar false ho toh Follow dikhta hai.
+
+//check(): Jaise hi kisi ki profile khulti hai, yeh notifier foran chalta
+// hai aur FollowService ki madad se database se status mangwa kar state ko true ya false set kar deta hai.
+
+//toggle(): Jab user button par click karta hai, toh yeh faisla leta hai ke agar 
+//state true thi toh FollowService.unfollow() ko chalaye, aur agar false thi toh FollowService.follow() ko chalaye.
+
+//FollowNotifier screen par click hote hi alert hota hai, woh FollowService ko aawaaz deta hai ke
+// "Bhai jaldi se database badlo", aur jab service database badal deti hai, toh notifier state ko
+// badal kar aur ref.invalidate chala kar mobile ki screen par naye numbers aur naya text show karwa
+// deta hai!
 
 class FollowNotifier extends StateNotifier<bool> {
   final Ref ref;
@@ -40,9 +55,10 @@ class FollowNotifier extends StateNotifier<bool> {
     check();
   }
 
+  //Database se pooch kar halat badalna (check Method):
   Future<void> check() async {
     state = await ref
-        .read(followServiceProvider)
+        .read(followServiceProvider)              
         .isFollowing(params.me, params.other);
   }
 
@@ -56,7 +72,7 @@ class FollowNotifier extends StateNotifier<bool> {
       );
       state = false;
     } else {
-      await service.follow(
+        await service.follow(
         me: params.me,
         other: params.other,
         myData: params.myData,

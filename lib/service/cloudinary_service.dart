@@ -175,6 +175,8 @@ class CloudinaryService {
     }
   }
 
+
+
   Future<void> deleteFile(String publicId) async {
     final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     final signature = _generateSignature(publicId, timestamp);
@@ -196,11 +198,15 @@ class CloudinaryService {
     }
   }
 
+
+
   String _generateSignature(String publicId, int timestamp) {
     final toSign = 'public_id=$publicId&timestamp=$timestamp$apiSecret';
     final bytes = utf8.encode(toSign);
     return sha1.convert(bytes).toString();
   }
 }
+
+
 
 final cloudinaryProvider = Provider<CloudinaryService>((ref) => CloudinaryService());
