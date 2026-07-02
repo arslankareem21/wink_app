@@ -90,7 +90,7 @@ class OtherProfileScreen extends ConsumerWidget {
                             return OtherUserProfileHeader(
                               username: user.username ?? 'no_username',
                               name: user.name ?? 'No Name',
-                              // ✅ Firestore se agar string ya null aaye to handle ho jaye
+                              // Firestore se agar string ya null aaye to handle ho jaye
                               postsCount: (user.postsCount != null)
                                   ? int.tryParse(user.postsCount.toString()) ??
                                         0

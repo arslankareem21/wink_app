@@ -83,6 +83,8 @@ class AuthRepository {
     final doc = await docRef.get();
 
     if (!doc.exists) {
+      final uniqueUsername = await generateUniqueUsername(user.email ?? 'user');
+
       final newUser = UserModel(
         userId: user.uid,
         name: name ?? user.displayName ?? 'New User',
@@ -185,7 +187,22 @@ class AuthRepository {
   if (excludeUid!= null && query.docs.first.id == excludeUid) return true;
 
   return false;
-}
+}    
+      // ADD THIS: generate unique username
+
+     Future<String> generateUniqueUsername(String email) async {
+    String base = email.split('@').first.toLowerCase().replaceAll(RegExp(r'[^a-z0-9_]'), '');
+    if (base.isEmpty) base = 'user';
+    
+    String candidate = base;
+    int counter = 0;
+    
+    while (!(await isUsernameAvailable(candidate))) {
+      counter++;
+      candidate = '${base}$counter';
+    }
+    return candidate;
+  }
 
   Future<void> setPasswordForGoogleUser(String password) async {
     final user = _auth.currentUser;

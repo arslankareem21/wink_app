@@ -86,8 +86,9 @@ class _VideoEditorState extends State<VideoEditor> {
 
       if (mounted) {
         setState(() {
-          _proVideoController.thumbnails =
-              thumbnailList.map((bytes) => MemoryImage(bytes)).toList();
+          _proVideoController.thumbnails = thumbnailList
+              .map((bytes) => MemoryImage(bytes))
+              .toList();
         });
       }
     } catch (e) {
@@ -152,10 +153,7 @@ class _VideoEditorState extends State<VideoEditor> {
       final exportModel = VideoRenderData(
         id: _taskId,
         videoSegments: [
-          VideoSegment(
-            video: EditorVideo.file(widget.videoFile),
-            volume: 1.0,
-          )
+          VideoSegment(video: EditorVideo.file(widget.videoFile), volume: 1.0),
         ],
         outputFormat: VideoOutputFormat.mp4,
         // FIX: Use our own _isAudioMuted flag instead of _proVideoController.isAudioEnabled.
@@ -166,8 +164,7 @@ class _VideoEditorState extends State<VideoEditor> {
             ? [ImageLayer(image: EditorLayerImage.memory(params.image))]
             : null,
         blur: params.blur,
-        colorFilters: params
-            .colorFilters
+        colorFilters: params.colorFilters
             .map((matrix) => ColorFilter(matrix: matrix))
             .toList(),
         startTime: params.startTime,
@@ -238,9 +235,9 @@ class _VideoEditorState extends State<VideoEditor> {
               const SizedBox(height: 20),
               Text(
                 'Loading Video...',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Colors.white,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(color: Colors.white),
               ),
             ],
           ),
@@ -274,9 +271,7 @@ class _VideoEditorState extends State<VideoEditor> {
             showControls: true,
             isAudioSupported: true,
             enableEstimatedFileSize: true,
-            style: VideoEditorStyle(
-              playIndicatorBackground: Colors.white30,
-            ),
+            style: VideoEditorStyle(playIndicatorBackground: Colors.white30),
           ),
         ),
         callbacks: ProImageEditorCallbacks(

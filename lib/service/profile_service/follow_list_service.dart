@@ -20,7 +20,8 @@ class FollowListService {
         .map((e) => FollowUserModel.fromMap(e.data()))
         .toList();
 
-//Phir un saare documents ko map karke FollowUserModel (jo aapki model class hai, jisme naam, picture hoti hai) ki ek saaf-suthri List bana kar return kar deti hai.
+//Phir un saare documents ko map karke FollowUserModel (jo aapki model class hai, jisme naam,
+// picture hoti hai) ki ek saaf-suthri List bana kar return kar deti hai.
 
   }
 

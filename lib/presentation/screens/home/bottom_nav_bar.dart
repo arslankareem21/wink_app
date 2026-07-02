@@ -7,9 +7,7 @@ import 'package:wink_app/presentation/screens/home/home_screen.dart';
 import 'package:wink_app/presentation/screens/notification/notification_screen.dart';
 import 'package:wink_app/presentation/screens/profile/profile_screen.dart';
 import 'package:wink_app/presentation/screens/reels/reels_page.dart';
-import 'package:wink_app/presentation/widgets/bottom_nav_item.dart';
 import '../../../../core/config/theme/app_colors.dart';
-
 
 class BottomNavScreen extends ConsumerWidget {
   const BottomNavScreen({super.key});
@@ -17,25 +15,42 @@ class BottomNavScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = ref.watch(bottomNavIndexProvider);
+    final navTheme = Theme.of(context).bottomNavigationBarTheme;
 
     final screens = [
-       HomeScreen(),
+      HomeScreen(),
       const ReelPage(),
-      const SizedBox(),
       const NotificationScreen(),
       const ProfileScreen(),
     ];
 
     return SafeArea(
-      bottom: true,
+      top: false,
       child: Scaffold(
         body: screens[currentIndex],
-
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            showModalBottomSheet(
+              context: context,
+              backgroundColor: Theme.of(context).cardColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
+              ),
+              builder: (_) => const CreateBottomSheet(),
+            );
+          },
+          backgroundColor: AppColors.primaryYellow,
+          foregroundColor: AppColors.secondary,
+          elevation: 8,
+          shape: const CircleBorder(),
+          child: const Icon(Icons.add_rounded, size: 30),
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         bottomNavigationBar: Container(
-          margin: EdgeInsets.only(left: 20.w, right: 20.w, bottom: 16.h),
-          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
+          // margin: EdgeInsets.only(left: 20.w, right: 20.w, bottom: 16.h),
+          // padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
           decoration: BoxDecoration(
-            color: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
+            color: navTheme.backgroundColor,
             borderRadius: BorderRadius.circular(24.r),
             boxShadow: [
               BoxShadow(
@@ -47,70 +62,60 @@ class BottomNavScreen extends ConsumerWidget {
               ),
             ],
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              const BottomNavItem(
-                icon: Icons.home_rounded,
-                label: 'Home',
-                index: 0,
-              ),
-
-              const BottomNavItem(
-                icon: Icons.play_circle_fill_rounded,
-                label: 'Shorts',
-                index: 1,
-              ),
-
-              /// CREATE BUTTON
-              Transform.translate(
-                offset: Offset(0, -22.h),
-                child: GestureDetector(
-                  onTap: () {
-                    showModalBottomSheet(
-                      context: context,
-                      backgroundColor: Theme.of(context).cardColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(28.r),
-                        ),
-                      ),
-                      builder: (_) => const CreateBottomSheet(),
-                    );
-                  },
-                  child: Container(
-                    height: 62.h,
-                    width: 62.w,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryYellow,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primaryYellow.withValues(alpha: .35),
-                          blurRadius: 20,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.add,
-                      size: 34.sp,
-                      color: AppColors.secondary,
-                    ),
-                  ),
+          child: NavigationBar(
+            height: 72.h,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            indicatorColor: AppColors.primaryYellow.withValues(alpha: 0.16),
+            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+            selectedIndex: currentIndex,
+            onDestinationSelected: (index) {
+              ref.read(bottomNavIndexProvider.notifier).state = index;
+            },
+            destinations: [
+              NavigationDestination(
+                icon: Icon(
+                  Icons.home_outlined,
+                  color: navTheme.unselectedItemColor,
                 ),
+                selectedIcon: Icon(
+                  Icons.home_rounded,
+                  color: navTheme.selectedItemColor,
+                ),
+                label: 'Home',
               ),
-
-              const BottomNavItem(
-                icon: Icons.favorite_rounded,
+              NavigationDestination(
+                icon: Icon(
+                  Icons.play_circle_outline_rounded,
+                  color: navTheme.unselectedItemColor,
+                ),
+                selectedIcon: Icon(
+                  Icons.play_circle_fill_rounded,
+                  color: navTheme.selectedItemColor,
+                ),
+                label: 'Shorts',
+              ),
+              NavigationDestination(
+                icon: Icon(
+                  Icons.favorite_border_rounded,
+                  color: navTheme.unselectedItemColor,
+                ),
+                selectedIcon: Icon(
+                  Icons.favorite_rounded,
+                  color: navTheme.selectedItemColor,
+                ),
                 label: 'Activity',
-                index: 3,
               ),
-
-              const BottomNavItem(
-                icon: Icons.person_rounded,
+              NavigationDestination(
+                icon: Icon(
+                  Icons.person_outline_rounded,
+                  color: navTheme.unselectedItemColor,
+                ),
+                selectedIcon: Icon(
+                  Icons.person_rounded,
+                  color: navTheme.selectedItemColor,
+                ),
                 label: 'Profile',
-                index: 4,
               ),
             ],
           ),

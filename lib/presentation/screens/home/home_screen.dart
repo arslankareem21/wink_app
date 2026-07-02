@@ -2,19 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:wink_app/core/config/routes/navigation_service.dart';
+import 'package:wink_app/core/config/routes/route_names.dart';
 import 'package:wink_app/core/config/theme/app_colors.dart';
 import 'package:wink_app/core/config/theme/app_spacing.dart';
-import 'package:wink_app/models/post_model.dart';
 import 'package:wink_app/models/post_models.dart';
 import 'package:wink_app/models/story_model.dart';
 import 'package:wink_app/presentation/components/post/post_card.dart';
-
 import 'package:wink_app/presentation/components/splash/splash_logo.dart';
 import 'package:wink_app/presentation/provider/story/story_provider.dart';
-import 'package:wink_app/presentation/provider/user_provider.dart'
-    hide userProvider;
+import 'package:wink_app/presentation/provider/user_provider.dart' hide userProvider;
 import 'package:wink_app/presentation/screens/story/story_viewer_screen.dart';
-import 'package:wink_app/viewmodels/auth_viewmodel.dart';
 import 'package:wink_app/viewmodels/post_viewmodel.dart';
 
 // 1. Auth provider
@@ -30,7 +28,6 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final postsAsync = ref.watch(feedPostsProvider);
-    final currentUserID = ref.watch(currentUserProvider);
     final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
     final userAsync = ref.watch(userProvider(currentUserId));
     final activeStoriesAsync = ref.watch(activeStoriesStreamProvider);
@@ -41,6 +38,7 @@ class HomeScreen extends ConsumerWidget {
       error: (error, stack) =>
           Scaffold(body: Center(child: Text('Error loading profile: $error'))),
       data: (user) {
+        // ignore: dead_code
         if (user == null) {
           return const Scaffold(body: Center(child: Text('User not found')));
         }
@@ -96,31 +94,225 @@ class HomeScreen extends ConsumerWidget {
                   if (posts.isEmpty) {
                     return const _EmptyFeed();
                   }
-                  return RefreshIndicator(
-                    onRefresh: () async => ref.refresh(feedPostsProvider),
-                    child: Padding(
-                      padding: AppSpacing.screenPadding,
-                      child: ListView.separated(
-                        padding: EdgeInsets.only(top: 8.h, bottom: 24.h),
-                        itemCount: posts.length,
-                        separatorBuilder: (_, __) =>
-                            SizedBox(height: 0), // PostCard has margin
-                        itemBuilder: (context, index) {
-                          final post = posts[index];
-                          return PostCard(
-                            key: ValueKey(
-                              post.postId,
-                            ), // Important for state preservation
-                            post: post,
-                            currentUserId: currentUserId,
-                            onComment: () =>
-                                _openComments(context, post.postId),
-                            onShare: () => _sharePost(context, post.postId),
-                            onHashtagTap: (tag) => _searchHashtag(context, tag),
-                          );
-                        },
+                  return Column(
+                    children: [
+                      ///////////////////////////////
+                      // 1. STORIES SECTION (Exact Purana Layout Structure)
+                      SizedBox(
+                        height: 120.h,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: 1 + otherUserIds.length,
+                          //otherStories.length,
+                          itemBuilder: (context, index) {
+                            // PEHLA ITEM: Add Story Button (Aapki original dynamic code UI)
+                            if (index == 0) {
+                              final bool hasStory = myStories.isNotEmpty;
+                              return Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 8.w),
+                                child: GestureDetector(
+                                  onTap: () async {
+                                    if (hasStory) {
+                                      // Fix click background logic attached to original route redirection
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => ViewStoryScreen(
+                                            stories: myStories,
+                                          ),
+                                        ),
+                                      );
+                                    } else {
+                                      NavigationService.push(
+                                        context,
+                                        AppRoutes.createStory,
+                                      );
+                                    }
+                                  },
+                                  child: Column(
+                                    children: [
+                                      SingleChildScrollView(
+                                        child: Stack(
+                                          children: [
+                                            CircleAvatar(
+                                              radius: 35.r,
+                                              backgroundColor: hasStory
+                                                  ? AppColors.primaryYellow
+                                                  : Colors.grey[800],
+                                              child: CircleAvatar(
+                                                radius: 32.r,
+                                                backgroundColor:
+                                                    Colors.grey[900],
+                                                backgroundImage: hasStory
+                                                    ? (myStories.first.bytes !=
+                                                                  null
+                                                              ? MemoryImage(
+                                                                  myStories
+                                                                      .first
+                                                                      .bytes!,
+                                                                )
+                                                              : myStories
+                                                                    .first
+                                                                    .mediaUrl
+                                                                    .startsWith(
+                                                                      'http',
+                                                                    )
+                                                              ? NetworkImage(
+                                                                  myStories
+                                                                      .first
+                                                                      .mediaUrl,
+                                                                )
+                                                              : null)
+                                                          as ImageProvider?
+                                                    : const AssetImage(
+                                                        'assets/placeholder.png',
+                                                      ),
+                                                child: !hasStory
+                                                    ? const Icon(
+                                                        Icons.add,
+                                                        color: Colors.white,
+                                                        size: 25,
+                                                      )
+                                                    : null,
+                                              ),
+                                            ),
+                                            Positioned(
+                                              bottom:
+                                                  2, // Purana perfect offset layout
+                                              right: 2,
+                                              child: GestureDetector(
+                                                onTap: () {
+                                                  NavigationService.push(
+                                                    context,
+                                                    AppRoutes.createStory,
+                                                  );
+                                                },
+                                                child: CircleAvatar(
+                                                  radius: 11.r,
+                                                  backgroundColor: Colors.blue,
+                                                  child: const Icon(
+                                                    Icons.add,
+                                                    size: 12,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      AppSpacing.vxs,
+                                      Text(
+                                        'My Story',
+                                        style: TextStyle(fontSize: 13.sp),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }
+
+                            // BAQI ITEMS: Active Stories (Exact Purani UI hierarchy)
+                            final friendId = otherUserIds[index - 1];
+
+                            final friendStories =
+                                groupedOtherStories[friendId]!;
+                            final displayStory = friendStories
+                                .first; // Gole par display karne ke liye pehli story
+                            return FriendStoryAvatar(
+                              friendId: friendId,
+                              friendStories: friendStories,
+                            );
+                            //           Padding(
+                            //             padding: EdgeInsets.symmetric(horizontal: 8.w),
+                            //             child: GestureDetector(
+                            //               onTap: () {
+                            //                 Navigator.push(
+                            //                   context,
+                            //                   MaterialPageRoute(
+                            //                     builder: (context) =>
+                            //                      ViewStoryScreen(stories: friendStories)
+                            //                   ),
+                            //                 );
+                            //               },
+                            //               child: Column(
+                            //                 children: [
+                            //                   CircleAvatar(
+                            //                     radius: 35.r,
+                            //                     backgroundColor: AppColors.primaryYellow,
+                            //                     child: CircleAvatar(
+                            //                       radius: 32.r,
+                            //                       backgroundColor: Colors.grey[900],
+                            //                       backgroundImage:
+                            //                       displayStory.mediaUrl.startsWith('http')
+                            //                           ? NetworkImage(displayStory.mediaUrl)
+                            //                           : const AssetImage('assets/placeholder.png') as ImageProvider,
+                            //                       // (() {
+                            //                       //   if (story.mediaUrl.startsWith('http://') ||
+                            //                       //       story.mediaUrl.startsWith('https://')) {
+                            //                       //     return NetworkImage(story.mediaUrl);
+                            //                       //   }
+                            //                       //   return const AssetImage('assets/placeholder.png') as ImageProvider;
+                            //                       // })
+
+                            //                     ),
+                            //                   ),
+                            //                   AppSpacing.vxs,
+                            //                   friendUserAsync.when(
+                            // loading: () => SizedBox(width: 10.w, height: 10.h, child: const CircularProgressIndicator(strokeWidth: 2)),
+                            // error: (_, __) => Text('Friend', style: TextStyle(fontSize: 12.sp)),
+                            // data: (friendUser) {
+                            //   // Agar aapke user model me field name kuch aur hai (like username), toh usey friendUser.username karlein
+                            //   return Text(
+                            //     friendUser?.userName ?? friendUser?.name ?? 'Friend',
+                            //     style: TextStyle(fontSize: 12.sp),
+                            //     maxLines: 1,
+                            //     overflow: TextOverflow.ellipsis,
+                            //   );
+                            //               })              // Text(
+                            //                   //   friendUser?.userName ?? friendUser?.name ?? 'Friend',
+                            //                   //   //displayStory.userName ?? 'Friend',
+                            //                   //   //user.name ?? 'Profile',
+                            //                   // ),
+                            //                 ],
+                            //               ),
+                            //             ),
+                            //           );
+                          },
+                        ),
                       ),
-                    ),
+                      ///////////////////////////////////////////post work
+                      Expanded(
+                        child: RefreshIndicator(
+                          onRefresh: () async => ref.refresh(feedPostsProvider),
+                          child: Padding(
+                            padding: AppSpacing.screenPadding,
+                            child: ListView.separated(
+                              padding: EdgeInsets.only(top: 8.h, bottom: 24.h),
+                              itemCount: posts.length,
+                              separatorBuilder: (_, __) =>
+                                  SizedBox(height: 0), // PostCard has margin
+                              itemBuilder: (context, index) {
+                                final post = posts[index];
+                                return PostCard(
+                                  key: ValueKey(
+                                    post.postId,
+                                  ), // Important for state preservation
+                                  post: post,
+                                  currentUserId: currentUserId,
+                                  onComment: () =>
+                                      _openComments(context, post.postId),
+                                  onShare: () =>
+                                      _sharePost(context, post.postId),
+                                  onHashtagTap: (tag) =>
+                                      _searchHashtag(context, tag),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   );
                 },
               ),

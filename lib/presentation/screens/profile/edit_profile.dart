@@ -1,490 +1,15 @@
-// import 'dart:async';
-// import 'dart:io';
-// import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:flutter/material.dart';
-// import 'package:flutter_hooks/flutter_hooks.dart';
-// import 'package:hooks_riverpod/hooks_riverpod.dart';
-// import 'package:flutter_screenutil/flutter_screenutil.dart';
-// import 'package:wink_app/core/config/routes/navigation_service.dart';
-// import 'package:wink_app/core/config/theme/app_colors.dart';
-// import 'package:wink_app/core/config/theme/app_spacing.dart';
-// import 'package:wink_app/core/config/theme/app_text_style.dart';
-// import 'package:wink_app/core/utils/validators.dart';
-// import 'package:wink_app/presentation/widgets/app_snackbar.dart';
-// import 'package:wink_app/presentation/widgets/circle_avatar.dart';
-// import 'package:wink_app/presentation/widgets/elevated_button.dart';
-// import 'package:wink_app/presentation/widgets/textformfield.dart';
-// import 'package:wink_app/presentation/widgets/toogle_theme_button.dart';
-// import 'package:wink_app/viewmodels/auth_viewmodel.dart';
-// import 'package:wink_app/viewmodels/image_picker_vm.dart';
-// import 'package:wink_app/viewmodels/profile/edit_profile_vm.dart/edit_profile_vm.dart';
-// import 'package:wink_app/viewmodels/upload_vm.dart';
-
-
-// final isUsernameTakenProvider = FutureProvider.family<bool, String>((ref, username) async {
-//   if (username.isEmpty || username.length < 3) return false;
-  
-//   final querySnapshot = await FirebaseFirestore.instance
-//       .collection('users') 
-//       .where('username', isEqualTo: username.toLowerCase())
-//       .limit(1)
-//       .get();
-
-//   return querySnapshot.docs.isNotEmpty;
-// });
-
-
-// class EditProfileScreen extends HookConsumerWidget {
-//   const EditProfileScreen({super.key});
-
-//   @override
-//   Widget build(BuildContext context, WidgetRef ref) {
-//     final currentUserAsync = ref.watch(currentUserProvider);
-//     final pickedFile = ref.watch(imagePickerProvider);
-//     final uploadState = ref.watch(uploadProvider);
-//     final editState = ref.watch(editProfileViewModelProvider);
-
-//     final nameController = useTextEditingController();
-//     final usernameController = useTextEditingController();
-//     final bioController = useTextEditingController();
-//     final websiteController = useTextEditingController();
-//     final categoryController = useTextEditingController();
-//     final locationController = useTextEditingController();
-//     final descriptionController = useTextEditingController();
-//     final collaborationEmailController = useTextEditingController();
-
-//     final isDataLoaded = useState(false);
-//     final hasNameError = useState(false);
-
-//     // useEffect(() {
-//     //   currentUserAsync.whenData((user) {
-//     //     if (!isDataLoaded.value && user!= null) {
-//     //       nameController.text = user.name;
-//     //       usernameController.text = user.username?? '';
-//     //       bioController.text = user.bio?? '';
-//     //       websiteController.text = user.website?? '';
-//     //       categoryController.text = user.category?? '';
-//     //       locationController.text = user.location?? '';
-//     //       descriptionController.text = user.description?? '';
-//     //       collaborationEmailController.text = user.collaborationEmail?? '';
-//     //       isDataLoaded.value = true;
-//     //     }
-//     //   });
-//     //   return null;
-//     // }, [currentUserAsync]);
-
-
-
-// // --- New Username Check Hook States ---
-//     final debouncedUsername = useState('');
-
-//     // Setup a 500ms debounce delay so it checks Firestore only when typing stops
-//     useEffect(() {
-
-//  Timer? timer;
-
-//   void listener() {
-//     timer?.cancel();
-//     timer = Timer(const Duration(milliseconds: 500), () {
-//       debouncedUsername.value = usernameController.text.trim();
-//     });
-//   }
-
-//       // void listener() {
-//       //   debouncedUsername.value = usernameController.text.trim();
-//       // }
-      
-//       // // Delay updating the state to avoid continuous Firestore reads
-//       // final timer = TokenTimer(const Duration(milliseconds: 500), listener);
-      
-//       usernameController.addListener(listener);
-
-//       return () {
-//         usernameController.removeListener(listener);
-//         timer?.cancel();
-//       };
-//     }, [usernameController]);
-
-//     // Check if username is taken (only if it differs from current user's actual username)
-//     final currentUser = currentUserAsync.value;
-//     final isNewUsername = currentUser != null && 
-//         debouncedUsername.value.toLowerCase() != currentUser.username?.toLowerCase();
-        
-//     final usernameCheckAsync = isNewUsername 
-//         ? ref.watch(isUsernameTakenProvider(debouncedUsername.value))
-//         : const AsyncValue.data(false);
-
-//     final isUsernameTaken = usernameCheckAsync.value ?? false;
-
-//     // --- End Username Hooks ---
-//     useEffect(() {
-//       if (currentUserAsync.value != null) {
-//         final user = currentUserAsync.value!;
-//         nameController.text = user.name;
-//         usernameController.text = user.username ?? '';
-//         bioController.text = user.bio ?? '';
-//         websiteController.text = user.website ?? '';
-//         categoryController.text = user.category ?? '';
-//         locationController.text = user.location ?? '';
-//         descriptionController.text = user.description ?? '';
-//         collaborationEmailController.text = user.collaborationEmail ?? '';
-//       }
-//       return () {
-//         nameController.clear();
-//         usernameController.clear();
-//         bioController.clear();
-//         websiteController.clear();
-//         categoryController.clear();
-//         locationController.clear();
-//         descriptionController.clear();
-//         collaborationEmailController.clear();
-//       };
-//     }, [currentUserAsync.value]);
-
-
-//       void saveChanges() async {
-
-//       final user = currentUserAsync.value;
-//       if (user == null || user.userId.isEmpty) {
-//         AppSnackBar.show('Invalid User Session!');
-//         return;
-//       }
-
-//       if (nameController.text.trim().isEmpty) {
-//         hasNameError.value = true;
-//         return;
-//       }
-//       hasNameError.value = false;
-
-//       if (usernameError!= null) {
-//         AppSnackBar.show(usernameError!);
-//         return;
-//       }
-
-//       try {
-//         await ref.read(editProfileViewModelProvider.notifier).updateProfileData(
-//           uid: user.userId,
-//           username: usernameController.text.trim().toLowerCase(),
-//           bio: descriptionController.text.trim(),
-//           website: websiteController.text.trim(),
-//           displayName: nameController.text.trim(),
-//           category: categoryController.text.trim(),
-//           collaborationEmail: collaborationEmailController.text.trim(),
-//           location: locationController.text.trim(),
-//         );
-
-//         if (context.mounted) {
-//           AppSnackBar.show('Profile updated successfully');
-//           NavigationService.pop(context);
-//         }
-//       } catch (e) {
-//         if (context.mounted) {
-//           AppSnackBar.show('Error: ${e.toString().replaceAll('Exception: ', '')}');
-//         }
-//       }
-//     }
-
-//     // void saveChanges() async {
-//     //   final user = currentUserAsync.value;
-//     //   if (user == null || user.userId.isEmpty) {
-//     //     AppSnackBar.show('Invalid User Session!');
-//     //     return;
-//     //   }
-
-//     //   if (nameController.text.trim().isEmpty) {
-//     //     hasNameError.value = true;
-//     //     return;
-//     //   }
-//     //   hasNameError.value = false;
-//     //   if (isUsernameTaken) {
-//     //     AppSnackBar.show('Please change your username before saving.');
-//     //     return;
-//     //   }
-//     //   try {
-//     //     await ref
-//     //         .read(editProfileViewModelProvider.notifier)
-//     //         .updateProfileData(
-//     //           uid: user.userId,
-//     //           username: usernameController.text.trim(),
-//     //           bio: descriptionController.text.trim(),
-//     //           website: websiteController.text.trim(),
-//     //           displayName: nameController.text.trim(),
-//     //           category: categoryController.text.trim(),
-//     //           collaborationEmail: collaborationEmailController.text.trim(),
-//     //           location: locationController.text.trim(),
-//     //         );
-
-//     //     if (context.mounted) {
-//     //       AppSnackBar.show('Profile updated successfully');
-//     //       NavigationService.pop(context);
-//     //     }
-//     //   } catch (e) {
-//     //     if (context.mounted) {
-//     //       AppSnackBar.show(
-//     //         'Error: ${e.toString().replaceAll('Exception: ', '')}',
-//     //       );
-//     //     }
-//     //   }
-//     // }
-
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: Text('Edit Profile ', style: AppTextStyles.appBarTitle),
-//         leading: ThemeToggleButton(),
-//         actions: [
-//           Padding(
-//             padding: const EdgeInsets.all(8.0),
-//             child: IconButton(
-//               onPressed: 
-//               editState.isLoading ? null : saveChanges,
-//               icon: editState.isLoading
-//                   ? SizedBox(width: 20.sp,height: 20.sp,
-//                       child: CircularProgressIndicator(strokeWidth: 2),
-//                     )
-//                   : Icon(Icons.done),
-//             ),
-//           ),
-//         ],
-//       ),
-//       body: currentUserAsync.when(
-//         loading: () => const Center(child: CircularProgressIndicator()),
-//         error: (e, _) => Center(child: Text('Error: $e')),
-//         data: (user) {
-//           if (user == null) return const Center(child: Text('User not found'));
-
-//           final networkImageUrl = user.profileImageUrl != null && user.profileImageUrl!.isNotEmpty
-//               ? user.profileImageUrl
-//               : null;
-
-//           return SingleChildScrollView(
-//             padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg.w),
-//             child: Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 AppSpacing.vxl,
-//                 Center(
-//                   child: GestureDetector(
-//                     onTap: editState.isLoading || uploadState.isUploading
-//                         ? null
-//                         : () async {
-//                             await ref
-//                                 .read(imagePickerProvider.notifier)
-//                                 .pickFromGallery();
-//                             final newFile = ref.read(imagePickerProvider);
-
-//                             if (newFile != null && context.mounted) {
-//                               try {
-//                                 await ref
-//                                     .read(uploadProvider.notifier)
-//                                     .uploadProfilePic(file: newFile);
-//                                 ref.read(imagePickerProvider.notifier).clear();
-//                                 ref.invalidate(currentUserProvider);
-//                                 if (context.mounted)
-//                                   AppSnackBar.show('Profile photo updated');
-//                               } catch (e) {
-//                                 if (context.mounted)
-//                                   AppSnackBar.show('Upload failed: $e');
-//                               } finally {
-//                                 ref.read(uploadProvider.notifier).reset();
-//                               }
-//                             }
-//                           },
-//                     child: Stack(
-//                       alignment: Alignment.bottomRight,
-//                       children: [
-//                         AppProfileAvatar(
-//                           size: 80.sp,
-//                           imageSource: pickedFile?.path ?? networkImageUrl,
-//                           isNetwork: true,
-//                           radius: 40,
-//                         ),
-//                         Positioned(
-//                           bottom: 2,right: -1,
-//                           child: Container(height: 32,width: 32,
-//                             padding: EdgeInsets.all(8.w),
-//                             decoration: BoxDecoration(
-//                               color: AppColors.primaryYellow,
-//                               shape: BoxShape.circle,
-//                               border: Border.all(
-//                                 color: Theme.of(context).scaffoldBackgroundColor,
-//                                 width: 2,
-//                               ),
-//                             ),
-//                             child: Center(
-//                               child: Icon(
-//                                 Icons.camera_alt,
-//                                 size: 18.sp,
-//                                 color: Colors.white,
-//                               ),
-//                             ),
-//                           ),
-//                         ),
-//                         if (uploadState.isUploading)
-//                           Positioned.fill(
-//                             child: Container(
-//                               decoration: BoxDecoration(
-//                                 color: Colors.black54,
-//                                 shape: BoxShape.circle,
-//                               ),
-//                               child: Center(
-//                                 child: CircularProgressIndicator(
-//                                   value: uploadState.progress > 0
-//                                       ? uploadState.progress
-//                                       : null,
-//                                   strokeWidth: 3,
-//                                   color: Colors.white,
-//                                 ),
-//                               ),
-//                             ),
-//                           ),
-//                       ],
-//                     ),
-//                   ),
-                  
-//                 ),
-//                   AppSpacing.vsm,
-
-//         Center(child: Text(  "Edit Profile", style: TextStyle(fontSize: 14.sp,fontWeight: FontWeight.w400))),
-                       
-//                 AppSpacing.vxxl,
-//                 Text("NAME"),
-//                 AppSpacing.vsm,
-//                 AppTextField(
-//                   textInputAction: TextInputAction.next,
-//                   hintText: 'Your name',
-//                   controller: nameController,
-//                   errorText: hasNameError.value ? 'Name is required' : null,
-//                 ),
-//                 AppSpacing.vxxl,
-//                 Text("USERNAME"),
-//                 AppSpacing.vsm,
-//               AppTextField(
-//                   textInputAction: TextInputAction.next,
-//                   hintText: 'Your username',
-//                   controller: usernameController,
-//                   errorText: isUsernameTaken ? 'This username is already taken' : null,
-//                   // Show a loading indicator inside the input if backend verification is happening
-//                   suffixIcon: usernameCheckAsync.isLoading 
-//                       ? const SizedBox(
-//                           width: 15, 
-//                           height: 15, 
-//                           child: CircularProgressIndicator(strokeWidth: 2)
-//                         )
-//                       : isUsernameTaken 
-//                           ? const Icon(Icons.error_outline, color: Colors.red)
-//                           : usernameController.text.isNotEmpty && isNewUsername
-//                               ? const Icon(Icons.check_circle_outline, color: Colors.green)
-//                               : null,
-//                 ),
-//                 AppSpacing.vxxl,
-//                 Text("BIO"),
-//                 AppSpacing.vsm,
-//                 AppTextField(
-//                   textInputAction: TextInputAction.next,
-
-//                   maxLines: 6,
-//                   hintText: 'BIO',
-//                   controller: descriptionController,
-//                   height: 110.h,
-//                 ),
-//                 AppSpacing.vxxl,
-//                 Text("WEBSITE"),
-//                 AppSpacing.vsm,
-//                 AppTextField(
-//                   textInputAction: TextInputAction.next,
-
-//                   hintText: 'Website',
-//                   controller: websiteController,
-//                 ),
-//                 AppSpacing.vxxl,
-//                 Text("COLLABORATIONEMAIL"),
-//                 AppSpacing.vsm,
-//                 AppTextField(
-//                   textInputAction: TextInputAction.next,
-
-//                   hintText: 'collaborationEmail',
-//                   controller: collaborationEmailController,
-//                 ),
-//                 AppSpacing.vxxl,
-
-                
-//                 Text("CATEGORY"),
-//                 AppSpacing.vsm,
-//                 AppTextField(
-//                   textInputAction: TextInputAction.next,
-//                   hintText: 'category',
-//                   controller: categoryController,
-//                 ),
-//                 AppSpacing.vxxl,
-//                 Text("LOCATION"),
-//                 AppSpacing.vsm,
-//                 AppTextField(
-//                   textInputAction: TextInputAction.done,
-
-//                   hintText: 'location',
-//                   controller: locationController,
-//                 ),
-//                 AppSpacing.vxxl,
-//                 Center(
-//                   child: AppButton(
-//                     width: 240.w,
-//                     text: editState.isLoading ? 'Saving...' : 'Save Changes',
-//                     onPressed:saveChanges
-//                     // editState.isLoading ? null : saveChanges,
-//                   ),
-//                 ),
-//                 AppSpacing.vlg,
-//                 Center(
-//                   child: AppButton(
-//                     width: 240.w,
-//                     text: 'Cancel',
-//                     isGhost: true,
-//                     onPressed: editState.isLoading
-//                         ? null
-//                         : () => NavigationService.pop(context),
-//                   ),
-//                 ),
-//                 AppSpacing.vxxl,
-//               ],
-//             ),
-//           );
-//         },
-//       ),
-//     );
-//   }
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+import 'dart:async';
+import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:wink_app/core/config/routes/navigation_service.dart';
 import 'package:wink_app/core/config/theme/app_colors.dart';
 import 'package:wink_app/core/config/theme/app_spacing.dart';
 import 'package:wink_app/core/config/theme/app_text_style.dart';
-import 'package:wink_app/core/utils/validators.dart'; // IMPORT
+import 'package:wink_app/core/utils/validators.dart';
 import 'package:wink_app/presentation/widgets/app_snackbar.dart';
 import 'package:wink_app/presentation/widgets/circle_avatar.dart';
 import 'package:wink_app/presentation/widgets/elevated_button.dart';
@@ -505,12 +30,6 @@ class EditProfileScreen extends HookConsumerWidget {
     final uploadState = ref.watch(uploadProvider);
     final editState = ref.watch(editProfileViewModelProvider);
 
-    ref.listen(uploadProvider, (previous, next) {
-      if (previous?.isUploading == true && next.isUploading == false && next.error == null) {
-        ref.invalidate(currentUserProvider);
-      }
-    });
-
     final nameController = useTextEditingController();
     final usernameController = useTextEditingController();
     final bioController = useTextEditingController();
@@ -522,56 +41,74 @@ class EditProfileScreen extends HookConsumerWidget {
 
     final isDataLoaded = useState(false);
     final hasNameError = useState(false);
-    final originalUsername = useState<String>('');
 
-    final usernameInput = useState('');
+    // useEffect(() {
+    //   currentUserAsync.whenData((user) {
+    //     if (!isDataLoaded.value && user!= null) {
+    //       nameController.text = user.name;
+    //       usernameController.text = user.username?? '';
+    //       bioController.text = user.bio?? '';
+    //       websiteController.text = user.website?? '';
+    //       categoryController.text = user.category?? '';
+    //       locationController.text = user.location?? '';
+    //       descriptionController.text = user.description?? '';
+    //       collaborationEmailController.text = user.collaborationEmail?? '';
+    //       isDataLoaded.value = true;
+    //     }
+    //   });
+    //   return null;
+    // }, [currentUserAsync]);
+
+
+
+// --- New Username Check Hook States ---
+    final debouncedUsername = useState('');
+
+    // Setup a 500ms debounce delay so it checks Firestore only when typing stops
     useEffect(() {
-      void listener() => usernameInput.value = usernameController.text;
+
+ Timer? timer;
+
+  void listener() {
+    timer?.cancel();
+    timer = Timer(const Duration(milliseconds: 500), () {
+      debouncedUsername.value = usernameController.text.trim();
+    });
+  }
+
+      
+      
       usernameController.addListener(listener);
-      return () => usernameController.removeListener(listener);
+
+      return () {
+        usernameController.removeListener(listener);
+        timer?.cancel();
+      };
     }, [usernameController]);
 
-    final debouncedUsername = useDebounced(usernameInput.value, const Duration(milliseconds: 500));
+    // Check if username is taken (only if it differs from current user's actual username)
+    final currentUser = currentUserAsync.value;
+    final isNewUsername = currentUser != null && 
+        debouncedUsername.value.toLowerCase() != currentUser.username?.toLowerCase();
+        
+    final usernameCheckAsync = isNewUsername 
+        ? ref.watch(isUsernameTakenProvider(debouncedUsername.value))
+        : const AsyncValue.data(false);
 
-    final usernameCheck = ref.watch(usernameAvailableProvider((
-      username: debouncedUsername?? '',
-      uid: currentUserAsync.value?.userId?? '',
-    )));
-
-    // Use Validators.username + async exists check
-    final usernameError = useMemoized(() {
-      final val = (debouncedUsername?? '').trim();
-
-      // 1. Sync validation from Validators
-      final syncError = Validators.username(val);
-      if (syncError!= null) return syncError;
-
-      // 2. Skip async if keeping own username
-      if (val.toLowerCase() == originalUsername.value.toLowerCase()) return null;
-
-      // 3. Async exists check
-      if (usernameCheck.isLoading) return 'Checking...';
-      if (usernameCheck.hasError) return 'Error checking username';
-      if (usernameCheck.hasValue && usernameCheck.value == false) return 'Username already exists';
-
-      return null;
-    }, [debouncedUsername, originalUsername.value, usernameCheck]);
+    final isUsernameTaken = usernameCheckAsync.value ?? false;
 
     useEffect(() {
-      currentUserAsync.whenData((user) {
-        if (!isDataLoaded.value && user!= null) {
-          nameController.text = user.name;
-          usernameController.text = user.username?? '';
-          originalUsername.value = user.username?? '';
-          bioController.text = user.bio?? '';
-          websiteController.text = user.website?? '';
-          categoryController.text = user.category?? '';
-          locationController.text = user.location?? '';
-          descriptionController.text = user.description?? '';
-          collaborationEmailController.text = user.collaborationEmail?? '';
-          isDataLoaded.value = true;
-        }
-      });
+      if (currentUserAsync.value != null) {
+        final user = currentUserAsync.value!;
+        nameController.text = user.name;
+        usernameController.text = user.username ?? '';
+        bioController.text = user.bio ?? '';
+        websiteController.text = user.website ?? '';
+        categoryController.text = user.category ?? '';
+        locationController.text = user.location ?? '';
+        descriptionController.text = user.description ?? '';
+        collaborationEmailController.text = user.collaborationEmail ?? '';
+      }
       return () {
         nameController.clear();
         usernameController.clear();
@@ -582,7 +119,7 @@ class EditProfileScreen extends HookConsumerWidget {
         descriptionController.clear();
         collaborationEmailController.clear();
       };
-    }, [currentUserAsync]);
+    }, [currentUserAsync.value]);
 
     void saveChanges() async {
       final user = currentUserAsync.value;
@@ -596,23 +133,23 @@ class EditProfileScreen extends HookConsumerWidget {
         return;
       }
       hasNameError.value = false;
-
-      // if (usernameError!= null) {
-      //   AppSnackBar.show(usernameError!);
-      //   return;
-      // }
-
+if (isUsernameTaken) {
+        AppSnackBar.show('Please change your username before saving.');
+        return;
+      }
       try {
-        await ref.read(editProfileViewModelProvider.notifier).updateProfileData(
-          uid: user.userId,
-          username: usernameController.text.trim().toLowerCase(),
-          bio: descriptionController.text.trim(),
-          website: websiteController.text.trim(),
-          displayName: nameController.text.trim(),
-          category: categoryController.text.trim(),
-          collaborationEmail: collaborationEmailController.text.trim(),
-          location: locationController.text.trim(),
-        );
+        await ref
+            .read(editProfileViewModelProvider.notifier)
+            .updateProfileData(
+              uid: user.userId,
+              username: usernameController.text.trim(),
+              bio: descriptionController.text.trim(),
+              website: websiteController.text.trim(),
+              displayName: nameController.text.trim(),
+              category: categoryController.text.trim(),
+              collaborationEmail: collaborationEmailController.text.trim(),
+              location: locationController.text.trim(),
+            );
 
         if (context.mounted) {
           AppSnackBar.show('Profile updated successfully');
@@ -620,7 +157,9 @@ class EditProfileScreen extends HookConsumerWidget {
         }
       } catch (e) {
         if (context.mounted) {
-          AppSnackBar.show('Error: ${e.toString().replaceAll('Exception: ', '')}');
+          AppSnackBar.show(
+            'Error: ${e.toString().replaceAll('Exception: ', '')}',
+          );
         }
       }
     }
@@ -633,31 +172,28 @@ class EditProfileScreen extends HookConsumerWidget {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: IconButton(
-              icon:  Icon(Icons.done),
-              onPressed: (){
-                NavigationService.pop(context);
-                }
-              // editState.isLoading ? null : saveChanges,
-              //editState.isLoading || usernameError!= null? null : saveChanges,
-              // icon: editState.isLoading
-              //    ? SizedBox(
-              //         width: 20.sp,
-              //         height: 20.sp,
-              //         child: CircularProgressIndicator(strokeWidth: 2),
-              //       )
-              //     : Icon(Icons.done),
+              onPressed:
+editState.isLoading ? null : saveChanges,
+              icon: editState.isLoading
+                  ? SizedBox(
+                      width: 20.sp,
+                      height: 20.sp,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Icon(Icons.done),
             ),
           ),
         ],
       ),
       body: currentUserAsync.when(
-        loading: () =>  Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (user) {
-          if (user == null) return  Center(child: Text('User not found'));
+          if (user == null) return const Center(child: Text('User not found'));
 
-          final networkImageUrl = user.profileImageUrl!= null && user.profileImageUrl!.isNotEmpty
-             ? '${user.profileImageUrl}?v=${user.updatedAt.millisecondsSinceEpoch}'
+          final networkImageUrl =
+              user.profileImageUrl != null && user.profileImageUrl!.isNotEmpty
+              ? user.profileImageUrl
               : null;
 
           return SingleChildScrollView(
@@ -669,18 +205,25 @@ class EditProfileScreen extends HookConsumerWidget {
                 Center(
                   child: GestureDetector(
                     onTap: editState.isLoading || uploadState.isUploading
-                       ? null
+                        ? null
                         : () async {
-                            await ref.read(imagePickerProvider.notifier).pickFromGallery();
+                            await ref
+                                .read(imagePickerProvider.notifier)
+                                .pickFromGallery();
                             final newFile = ref.read(imagePickerProvider);
 
-                            if (newFile!= null && context.mounted) {
+                            if (newFile != null && context.mounted) {
                               try {
-                                await ref.read(uploadProvider.notifier).uploadProfilePic(file: newFile);
+                                await ref
+                                    .read(uploadProvider.notifier)
+                                    .uploadProfilePic(file: newFile);
                                 ref.read(imagePickerProvider.notifier).clear();
-                                if (context.mounted) AppSnackBar.show('Profile photo updated');
+                                ref.invalidate(currentUserProvider);
+                                if (context.mounted)
+                                  AppSnackBar.show('Profile photo updated');
                               } catch (e) {
-                                if (context.mounted) AppSnackBar.show('Upload failed: $e');
+                                if (context.mounted)
+                                  AppSnackBar.show('Upload failed: $e');
                               } finally {
                                 ref.read(uploadProvider.notifier).reset();
                               }
@@ -690,27 +233,30 @@ class EditProfileScreen extends HookConsumerWidget {
                       alignment: Alignment.bottomRight,
                       children: [
                         AppProfileAvatar(
-                          key: ValueKey('${pickedFile?.path}_${networkImageUrl}_${user.updatedAt.millisecondsSinceEpoch}'),
                           size: 80.sp,
-                          imageSource: pickedFile?.path?? networkImageUrl,
-                          isNetwork: pickedFile == null, 
-                          //textSize: 13.sp,
-                           radius: 30.r,
+                          imageSource: pickedFile?.path ?? networkImageUrl,
+                          isNetwork: true,
+                          radius: 40,
                         ),
-                        Container(
-                          padding: EdgeInsets.all(8.w),
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryYellow,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Theme.of(context).scaffoldBackgroundColor,
-                              width: 2,
+                        Positioned(
+                          bottom: 2,right: -1,
+                          child: Container(height: 32,width: 32,
+                            padding: EdgeInsets.all(8.w),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryYellow,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Theme.of(context).scaffoldBackgroundColor,
+                                width: 2,
+                              ),
                             ),
-                          ),
-                          child: Icon(
-                            Icons.camera_alt,
-                            size: 18.sp,
-                            color: Colors.white,
+                            child: Center(
+                              child: Icon(
+                                Icons.camera_alt,
+                                size: 18.sp,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
                         ),
                         if (uploadState.isUploading)
@@ -722,7 +268,9 @@ class EditProfileScreen extends HookConsumerWidget {
                               ),
                               child: Center(
                                 child: CircularProgressIndicator(
-                                  value: uploadState.progress > 0? uploadState.progress : null,
+                                  value: uploadState.progress > 0
+                                      ? uploadState.progress
+                                      : null,
                                   strokeWidth: 3,
                                   color: Colors.white,
                                 ),
@@ -732,39 +280,49 @@ class EditProfileScreen extends HookConsumerWidget {
                       ],
                     ),
                   ),
+                  
                 ),
+                  AppSpacing.vsm,
+
+        Center(child: Text(  "Edit Profile", style: TextStyle(fontSize: 14.sp,fontWeight: FontWeight.w400))),
+                       
                 AppSpacing.vxxl,
                 Text("NAME"),
                 AppSpacing.vsm,
                 AppTextField(
+                  textInputAction: TextInputAction.next,
                   hintText: 'Your name',
                   controller: nameController,
-                  errorText: hasNameError.value? 'Name is required' : null,
+                  errorText: hasNameError.value ? 'Name is required' : null,
                 ),
                 AppSpacing.vxxl,
                 Text("USERNAME"),
                 AppSpacing.vsm,
-                AppTextField(
+              AppTextField(
+                  textInputAction: TextInputAction.next,
                   hintText: 'Your username',
                   controller: usernameController,
-                  errorText: usernameError,
-                  suffixIcon: usernameCheck.isLoading
-                     ? Padding(
-                          padding: EdgeInsets.all(12.w),
-                          child: SizedBox(
-                            width: 16.sp,
-                            height: 16.sp,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
+                  validator: Validators.username,
+                  errorText: isUsernameTaken ? 'This username is already taken' : null,
+                  // Show a loading indicator inside the input if backend verification is happening
+                  suffixIcon: usernameCheckAsync.isLoading 
+                      ? const SizedBox(
+                          width: 15, 
+                          height: 15, 
+                          child: CircularProgressIndicator(strokeWidth: 2)
                         )
-                      : usernameError == null && (debouncedUsername?.isNotEmpty?? false)
-                         ? Icon(Icons.check_circle, color: Colors.green, size: 20.sp)
-                          : null,
+                      : isUsernameTaken 
+                          ? const Icon(Icons.error_outline, color: Colors.red)
+                          : usernameController.text.isNotEmpty && isNewUsername
+                              ? const Icon(Icons.check_circle_outline, color: Colors.green)
+                              : null,
                 ),
                 AppSpacing.vxxl,
                 Text("BIO"),
                 AppSpacing.vsm,
                 AppTextField(
+                  textInputAction: TextInputAction.next,
+
                   maxLines: 6,
                   hintText: 'BIO',
                   controller: descriptionController,
@@ -773,27 +331,46 @@ class EditProfileScreen extends HookConsumerWidget {
                 AppSpacing.vxxl,
                 Text("WEBSITE"),
                 AppSpacing.vsm,
-                AppTextField(hintText: 'Website', controller: websiteController),
+                AppTextField(
+                  textInputAction: TextInputAction.next,
+
+                  hintText: 'Website',
+                  controller: websiteController,
+                ),
                 AppSpacing.vxxl,
                 Text("COLLABORATIONEMAIL"),
                 AppSpacing.vsm,
-                AppTextField(hintText: 'collaborationEmail', controller: collaborationEmailController),
+                AppTextField(
+                  textInputAction: TextInputAction.next,
+
+                  hintText: 'collaborationEmail',
+                  controller: collaborationEmailController,
+                ),
                 AppSpacing.vxxl,
+
+                
                 Text("CATEGORY"),
                 AppSpacing.vsm,
-                AppTextField(hintText: 'category', controller: categoryController),
+                AppTextField(
+                  textInputAction: TextInputAction.next,
+                  hintText: 'category',
+                  controller: categoryController,
+                ),
                 AppSpacing.vxxl,
                 Text("LOCATION"),
                 AppSpacing.vsm,
-                AppTextField(hintText: 'location', controller: locationController),
+                AppTextField(
+                  textInputAction: TextInputAction.done,
+
+                  hintText: 'location',
+                  controller: locationController,
+                ),
                 AppSpacing.vxxl,
                 Center(
                   child: AppButton(
                     width: 240.w,
-                    text: editState.isLoading? 'Saving...' : 'Save Changes',
-                    onPressed:
-                     saveChanges
-                   // editState.isLoading || usernameError!= null? null : saveChanges,
+                    text: editState.isLoading ? 'Saving...' : 'Save Changes',
+                    onPressed: editState.isLoading ? null : saveChanges,
                   ),
                 ),
                 AppSpacing.vlg,
@@ -802,7 +379,9 @@ class EditProfileScreen extends HookConsumerWidget {
                     width: 240.w,
                     text: 'Cancel',
                     isGhost: true,
-                    onPressed: editState.isLoading? null : () => NavigationService.pop(context),
+                    onPressed: editState.isLoading
+                        ? null
+                        : () => NavigationService.pop(context),
                   ),
                 ),
                 AppSpacing.vxxl,
@@ -814,3 +393,6 @@ class EditProfileScreen extends HookConsumerWidget {
     );
   }
 }
+
+
+

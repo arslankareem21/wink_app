@@ -15,66 +15,60 @@ import 'package:wink_app/presentation/screens/splash/splash_screen.dart';
 import 'package:wink_app/presentation/screens/story/story_viewer_screen.dart';
 import 'package:wink_app/presentation/screens/successfully_post/successfully_post.dart';
 
-class AppRouter {  
-  
+class AppRouter {
   static final GoRouter router = GoRouter(
     initialLocation: AppRoutes.splash,
     routes: [
-    GoRoute(
-  path: AppRoutes.viewStoryScreen,
-  name: 'view story',
-  builder: (context, state) {
-    // 1. Ek single story ki jagah ab List<StoryModel> cast karein
-    final stories = state.extra as List<StoryModel>?;  
+      GoRoute(
+        path: AppRoutes.viewStoryScreen,
+        name: 'view story',
+        builder: (context, state) {
+          // 1. Ek single story ki jagah ab List<StoryModel> cast karein
+          final stories = state.extra as List<StoryModel>?;
 
-    if (stories == null || stories.isEmpty) {
-      return const Scaffold(
-        backgroundColor: Colors.black,
-        body: Center(
-          child: Text(
-            'Story data missing!', 
-            style: TextStyle(color: Colors.white),
-          ),
-        ),
-      );
-    }   
-    
-    // 2. Apni badli hui screen ko poori list pass kar dein
-    return ViewStoryScreen(stories: stories);
-  },
-),
-       GoRoute(
+          if (stories == null || stories.isEmpty) {
+            return const Scaffold(
+              backgroundColor: Colors.black,
+              body: Center(
+                child: Text(
+                  'Story data missing!',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            );
+          }
+
+          // 2. Apni badli hui screen ko poori list pass kar dein
+          return ViewStoryScreen(stories: stories);
+        },
+      ),
+      GoRoute(
         path: AppRoutes.createStory,
         name: 'create story',
-        builder: (context, state) => const 
-         CreateStory(),
+        builder: (context, state) => const CreateStory(),
       ),
-       GoRoute(
+      GoRoute(
         path: AppRoutes.Profile,
         name: ' profile',
-        builder: (context, state) => const 
-        ProfileScreen(),
+        builder: (context, state) => const ProfileScreen(),
       ),
-       GoRoute(
+      GoRoute(
         path: AppRoutes.editProfile,
         name: 'edit profile',
-        builder: (context, state) => const 
-        EditProfileScreen(),
+        builder: (context, state) => const EditProfileScreen(),
       ),
-       GoRoute(
+      GoRoute(
         path: AppRoutes.Settings,
         name: 'Settings',
-        builder: (context, state) => const 
-        SettingsScreen(),
+        builder: (context, state) => const SettingsScreen(),
       ),
 
       GoRoute(
         path: AppRoutes.reels,
         name: 'reels',
-        builder: (context, state) => const 
-        ReelPage(),
+        builder: (context, state) => const ReelPage(),
       ),
-        GoRoute(
+      GoRoute(
         path: AppRoutes.successfullyPost,
         name: 'successfullyPost',
         builder: (context, state) => const SuccessfullyPost(),
