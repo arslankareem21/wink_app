@@ -1,6 +1,4 @@
-
 import 'dart:io';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -62,7 +60,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     MaterialPageRoute(
                       builder: (context) => OtherProfileScreen(
                         myId: 'OfV3LuFxJPO5990Tl1knEzIBj3h1',
-                        profileId: 'OfV3LuFxJPO5990Tl1knEzIBj3h1',
+                        profileId: 'Z4DxisNaEUWNFBaxmlkrQt01sfJ2',
                         myData: {
                           'username': user.username ?? 'no_username',
                           'displayName': user.name ?? 'No Name',
@@ -120,7 +118,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           ),
                         ),
                         ProfileStats(
-                          postsCount: user.postsCount,
+                          postsCount: user.postsCount.toString(),
                           followersCount: user.followersCount.toString(),
                           followingCount: user.followingCount,
                         ),
@@ -145,6 +143,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               ? user.username
                               : 'no username',
                         ),
+
                         AppSpacing.vxl,
                         Padding(
                           padding: const EdgeInsets.symmetric(

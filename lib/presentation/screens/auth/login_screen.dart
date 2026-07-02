@@ -210,6 +210,7 @@ class LoginScreen extends HookConsumerWidget {
                                   ],
                                 ),
                                 AppSpacing.vsm,
+                                // google sign in button
                                 Center(
                                   child: AppButton(
                                     width: 240.w,

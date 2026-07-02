@@ -5,7 +5,7 @@ import 'package:wink_app/core/config/theme/app_text_style.dart';
 import 'package:wink_app/core/config/theme/app_spacing.dart';
 
 class ProfileStats extends StatelessWidget {
-  final int postsCount;
+  final String postsCount;
   final String followersCount;
   final int followingCount;
   final VoidCallback? onEditProfile;
@@ -20,9 +20,7 @@ class ProfileStats extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return 
-    
-    Column(
+    return Column(
       children: [
         AppSpacing.vxl,
 
@@ -30,14 +28,14 @@ class ProfileStats extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _buildStatItem(postsCount.toString(), 'Posts'),
+            _buildStatItem(postsCount, 'Posts'),
             _buildStatItem(followersCount, 'Followers'),
             _buildStatItem(followingCount.toString(), 'Following'),
           ],
         ),
 
         AppSpacing.vxl,
-// ProfileBio(
+        // ProfileBio(
       ],
     );
   }

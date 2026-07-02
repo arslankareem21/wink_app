@@ -97,9 +97,12 @@ class ProfileScreen extends ConsumerWidget {
                 child: ProfileHeader(name: "Alex", bio: 'Software Developer'),
               ),
               ProfileStats(
-                postsCount: 11,
-                followersCount: 120.toString(),
-                followingCount: 100,
+                // postsCount: 11.toString(),
+                // followersCount: 120.toString(),
+                // followingCount: 100,
+                   postsCount: user.postsCount.toString(),
+                          followersCount: user.followersCount.toString(),
+                          followingCount: user.followingCount,
               ),
               Expanded(child: ProfileTabsView()),
               AppProfileAvatar(

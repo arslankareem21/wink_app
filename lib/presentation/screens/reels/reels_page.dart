@@ -35,7 +35,6 @@ class _ReelPageState extends ConsumerState<ReelPage> {
 
   @override
   Widget build(BuildContext context) {
-
     final reels = ref.watch(reelsViewModelProvider);
     final viewModel = ref.read(reelsViewModelProvider.notifier);
 
@@ -48,7 +47,7 @@ class _ReelPageState extends ConsumerState<ReelPage> {
               controller: _pageController,
               itemCount: reels.length,
               onPageChanged: (index) {
-              viewModel.onPageChanged(index);
+                viewModel.onPageChanged(index);
               },
               itemBuilder: (context, index) {
                 // Key lagana zaroori hai taake Flutter widget state ko sahi se map kare
@@ -59,9 +58,9 @@ class _ReelPageState extends ConsumerState<ReelPage> {
                 );
               },
             ),
-          );
-      }
+    );
   }
+}
 
 class ReelPlayerItem extends ConsumerStatefulWidget {
   final ReelModel reel;
@@ -72,6 +71,7 @@ class ReelPlayerItem extends ConsumerStatefulWidget {
   @override
   ConsumerState<ReelPlayerItem> createState() => _ReelPlayerItemState();
 }
+
 class _ReelPlayerItemState extends ConsumerState<ReelPlayerItem>
     with SingleTickerProviderStateMixin {
   VideoPlayerController? _videoController;
@@ -81,7 +81,9 @@ class _ReelPlayerItemState extends ConsumerState<ReelPlayerItem>
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController( vsync: this, duration: const Duration(seconds: 5),
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 5),
     );
     _initializeController();
   }
@@ -109,63 +111,63 @@ class _ReelPlayerItemState extends ConsumerState<ReelPlayerItem>
   //   }
   // }
 
-// 1. Apne State variables mein yeh add karein
-bool _hasVideoError = false;
+  // 1. Apne State variables mein yeh add karein
+  bool _hasVideoError = false;
 
-Future<void> _initializeController() async {
-  final viewModel = ref.read(reelsViewModelProvider.notifier);
-  
-  try {
-    final controller = await viewModel.getController(widget.index);
-    if (!mounted) return;
+  Future<void> _initializeController() async {
+    final viewModel = ref.read(reelsViewModelProvider.notifier);
 
-    _videoController = controller;
+    try {
+      final controller = await viewModel.getController(widget.index);
+      if (!mounted) return;
 
-    // 🎯 CHECK 1: Agar controller initialization ke waqt hi video error de chuka ho
-    if (_videoController!.value.hasError) {
+      _videoController = controller;
+
+      // 🎯 CHECK 1: Agar controller initialization ke waqt hi video error de chuka ho
+      if (_videoController!.value.hasError) {
+        if (mounted) {
+          setState(() {
+            _hasVideoError = true;
+            _initialized = false;
+          });
+        }
+        return;
+      }
+
+      // 🎯 CHECK 2: Video ke status ko dynamically sunte rahein agar chalte-chalte error aaye
+      _videoController!.addListener(() {
+        if (_videoController != null && _videoController!.value.hasError) {
+          if (mounted && !_hasVideoError) {
+            setState(() {
+              _hasVideoError = true;
+            });
+          }
+        }
+      });
+
+      if (mounted) {
+        setState(() {
+          _initialized = _videoController?.value.isInitialized ?? false;
+          _hasVideoError = false;
+        });
+
+        if (widget.index == viewModel.focusedIndex) {
+          _videoController?.play();
+          _animationController.repeat();
+        } else {
+          _videoController?.pause();
+          _animationController.stop();
+        }
+      }
+    } catch (e) {
+      print("Video Init Error Caught: $e");
       if (mounted) {
         setState(() {
           _hasVideoError = true;
-          _initialized = false;
         });
       }
-      return;
-    }
-
-    // 🎯 CHECK 2: Video ke status ko dynamically sunte rahein agar chalte-chalte error aaye
-    _videoController!.addListener(() {
-      if (_videoController != null && _videoController!.value.hasError) {
-        if (mounted && !_hasVideoError) {
-          setState(() {
-            _hasVideoError = true;
-          });
-        }
-      }
-    });
-
-    if (mounted) {
-      setState(() {
-        _initialized = _videoController?.value.isInitialized ?? false;
-        _hasVideoError = false;
-      });
-
-      if (widget.index == viewModel.focusedIndex) {
-        _videoController?.play();
-        _animationController.repeat();
-      } else {
-        _videoController?.pause();
-        _animationController.stop();
-      }
-    }
-  } catch (e) {
-    print("Video Init Error Caught: $e");
-    if (mounted) {
-      setState(() {
-        _hasVideoError = true;
-      });
     }
   }
-}
 
   @override
   void dispose() {
@@ -182,10 +184,10 @@ Future<void> _initializeController() async {
     ref.listen<int>(
       reelsViewModelProvider.notifier.select((vm) => vm.focusedIndex),
       (previous, next) {
-             if (_initialized && _videoController != null) {
-             if (widget.index == next) {
-             // Agar yeh item ab focus mein aaya hai, toh play karein
-             if (!_videoController!.value.isPlaying) {
+        if (_initialized && _videoController != null) {
+          if (widget.index == next) {
+            // Agar yeh item ab focus mein aaya hai, toh play karein
+            if (!_videoController!.value.isPlaying) {
               _videoController!.play();
               _animationController.repeat();
               setState(() {});
@@ -226,28 +228,38 @@ Future<void> _initializeController() async {
           child: Container(
             color: Colors.black,
             child: Center(
-              child: 
-              _hasVideoError
-      ? Container(
-          color: Colors.black,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.video_collection_rounded, color: Colors.white.withOpacity(0.4), size: 60),
-              const SizedBox(height: 12),
-              const Text(
-                "Video unplayable on this device",
-                style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                "Resolution: ${widget.reel.caption.isNotEmpty ? 'Unsupported format' : 'Codec Error'}",
-                style: const TextStyle(color: Colors.white38, fontSize: 11),
-              ),
-            ],
-          ),
-        ):
-              _initialized && _videoController != null
+              child: _hasVideoError
+                  ? Container(
+                      color: Colors.black,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.video_collection_rounded,
+                            color: Colors.white.withOpacity(0.4),
+                            size: 60,
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            "Video unplayable on this device",
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            "Resolution: ${widget.reel.caption.isNotEmpty ? 'Unsupported format' : 'Codec Error'}",
+                            style: const TextStyle(
+                              color: Colors.white38,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : _initialized && _videoController != null
                   ? AspectRatio(
                       aspectRatio: _videoController!.value.aspectRatio == 0.0
                           ? 9 / 16
@@ -273,7 +285,9 @@ Future<void> _initializeController() async {
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
-                      Icons.play_arrow,size: 60,color: Colors.white70,
+                      Icons.play_arrow,
+                      size: 60,
+                      color: Colors.white70,
                     ),
                   ),
                 );
@@ -316,72 +330,76 @@ Future<void> _initializeController() async {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                GestureDetector(
-                  onTap: () {
-                    _videoController?.pause();
-                    _animationController.stop();
-                    userAsync.whenData((fetchedUser) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => OtherProfileScreen(
-                            myId: FirebaseAuth.instance.currentUser?.uid ?? '',
-                            profileId: widget.reel.userID.isNotEmpty
-                                ? widget.reel.userID
-                                : (fetchedUser?.uid ?? ''),
-                            myData: {
-                              'username': fetchedUser?.username ?? widget.reel.username,
-                              'displayName': fetchedUser?.name ?? 'No Name',
-                              'profileImageUrl': fetchedUser?.profileImageUrl ?? widget.reel.profileUrl,
-                            },
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        _videoController?.pause();
+                        _animationController.stop();
+                        userAsync.whenData((fetchedUser) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => OtherProfileScreen(
+                                myId:
+                                    FirebaseAuth.instance.currentUser?.uid ??
+                                    '',
+                                profileId: widget.reel.userID.isNotEmpty
+                                    ? widget.reel.userID
+                                    : (fetchedUser?.uid ?? ''),
+                                myData: {
+                                  'username':
+                                      fetchedUser?.username ??
+                                      widget.reel.username,
+                                  'displayName': fetchedUser?.name ?? 'No Name',
+                                  'profileImageUrl':
+                                      fetchedUser?.profileImageUrl ??
+                                      widget.reel.profileUrl,
+                                },
+                              ),
+                            ),
+                          );
+                        });
+                      },
+                      child: Row(
+                        children: [
+                          AppProfileAvatar(
+                            radius: 20.r,
+                            imageFile: pickedImageFile,
+                            //profileImageUrl: profileImageUrl,
+                            onChangePhoto: () {},
                           ),
-                        ),
-                      );
-                    });
-                  },
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                       AppProfileAvatar(
-          radius: 20.r,
-          imageFile: pickedImageFile,
-        //profileImageUrl: profileImageUrl,
-          onChangePhoto: () {},
-        ),
-                      // CircleAvatar(
-                      //   radius: 16,
-                      //   backgroundImage: NetworkImage(widget.reel.profileUrl),
-                      //   backgroundColor: Colors.grey[800],
-                      // ),
-                      const SizedBox(width: 8),
-                      Text(
-                        widget.reel.username,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
+                          const SizedBox(width: 8),
+                          Text(
+                            widget.reel.username,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 6),
-                      const Icon(
-                        Icons.verified,
-                        color: Colors.blueAccent,
-                        size: 16,
+                    ),
+
+
+                    const SizedBox(width: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
                       ),
-                      const SizedBox(width: 10),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.white),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text(
-                          'Follow',
-                          style: TextStyle(color: Colors.white, fontSize: 10),
-                        ),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.white),
+                        borderRadius: BorderRadius.circular(4),
                       ),
-                    ],
-                  ),
+                      child: const Text(
+                        'Follow',
+                        style: TextStyle(color: Colors.white, fontSize: 10),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -399,7 +417,10 @@ Future<void> _initializeController() async {
                       child: Text(
                         widget.reel.musicName,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                   ],
@@ -412,7 +433,9 @@ Future<void> _initializeController() async {
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildActionItem(
-                icon: widget.reel.isLiked ? Icons.favorite : Icons.favorite_border,
+                icon: widget.reel.isLiked
+                    ? Icons.favorite
+                    : Icons.favorite_border,
                 color: widget.reel.isLiked ? Colors.red : Colors.white,
                 label: _formatNumber(widget.reel.likes),
                 onTap: () => viewModel.toggleLike(widget.index),
@@ -485,8 +508,6 @@ Future<void> _initializeController() async {
     if (number >= 1000) return '${(number / 1000).toStringAsFixed(1)}k';
     return number.toString();
   }
-
-
 }
 
 

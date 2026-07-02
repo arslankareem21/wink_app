@@ -54,14 +54,14 @@ class AuthState {
 class AuthViewModel extends StateNotifier<AuthState> {
   final AuthRepository _repo;
   AuthViewModel(this._repo) : super(const AuthState());
-  
+
   // Bug 10: Signup + auto logout
   Future<void> signup(String email, String password, String name) async {
     state = state.copyWith(
       loadingType: AuthLoadingType.emailSignup,
       error: null,
       message: null,
-     // autofillEmail: null,
+      // autofillEmail: null,
     );
     try {
       await _repo.signUp(email, password, name);
@@ -85,17 +85,16 @@ class AuthViewModel extends StateNotifier<AuthState> {
       message: null,
     );
     try {
-     final result = await _repo.signIn(email, password);
+      final result = await _repo.signIn(email, password);
       state = state.copyWith(
         loadingType: AuthLoadingType.none,
         message: 'Login successful',
-        
       );
-       final token = await result.user?.getIdToken();
-         if(token !=null){
-          await  AuthHandler.ref.storeToken(token, true);
-      // await  AuthHandler.ref.setupUser(result?.user);
-       } 
+      final token = await result.user?.getIdToken();
+      if (token != null) {
+        await AuthHandler.ref.storeToken(token, true);
+        // await  AuthHandler.ref.setupUser(result?.user);
+      }
       AppSnackBar.show('login successful');
     } catch (e) {
       state = state.copyWith(
@@ -104,28 +103,27 @@ class AuthViewModel extends StateNotifier<AuthState> {
       );
     }
   }
-  
+
   Future<void> signInWithGoogle() async {
-  
     state = state.copyWith(
       loadingType: AuthLoadingType.googleSignIn,
       error: null,
       message: null,
       autofillEmail: null,
-      showPasswordDialog: false, 
+      showPasswordDialog: false,
     );
 
     try {
       final result = await _repo.signInWithGoogle();
 
-        // print("User login is: ${result?.user?.getIdToken()}");
-        final token = await result?.user?.getIdToken();
-        
-       if(token !=null){
-          await  AuthHandler.ref.storeToken(token, true);
-      // await  AuthHandler.ref.setupUser(result?.user);
-       } 
-     
+      print("User login is: ${result?.user?.getIdToken()}");
+      final token = await result?.user?.getIdToken();
+
+      if (token != null) {
+        await AuthHandler.ref.storeToken(token, true);
+        // await  AuthHandler.ref.setupUser(result?.user);
+      }
+
       if (result == null) {
         state = const AuthState();
         return;
@@ -136,53 +134,55 @@ class AuthViewModel extends StateNotifier<AuthState> {
         message: 'Login successful',
       );
     } catch (e) {
+      print("~~~~~~~~~~~~~~~~~~ Error during Google Sign-In: $e");
       final msg = _cleanError(e);
-      
+
       String? email;
       if (msg.contains('Please login with Email & Password')) {
         email = _repo.currentUser?.email;
       }
-      
+
       state = state.copyWith(
         loadingType: AuthLoadingType.none,
         error: msg,
         autofillEmail: email,
       );
+    } finally {
+      state = state.copyWith(loadingType: AuthLoadingType.none);
     }
   }
 
-
-Future<void> setupGoogleUserPassword(String newPassword) async {
-  state = state.copyWith(
-    loadingType: AuthLoadingType.passwordSetup, 
-    error: null,
-    message: null,
-  );
-
-  try {
-    final needsPassword = await _repo.needsPasswordSetup();
-    
-    if (needsPassword) {
-      await _repo.updatePassword(newPassword); 
-      state = state.copyWith(
-        loadingType: AuthLoadingType.none,
-        message: 'Password successfully set for your account!', 
-      );
-    } else {
-      state = state.copyWith(
-        loadingType: AuthLoadingType.none,
-        error: 'Password is already set for this account.',
-      );
-    }
-  } catch (e) {
+  Future<void> setupGoogleUserPassword(String newPassword) async {
     state = state.copyWith(
-      loadingType: AuthLoadingType.none,
-      error: _cleanError(e),
+      loadingType: AuthLoadingType.passwordSetup,
+      error: null,
+      message: null,
     );
-  }
-}
 
- Future<void> cancelPasswordSetup() async {
+    try {
+      final needsPassword = await _repo.needsPasswordSetup();
+
+      if (needsPassword) {
+        await _repo.updatePassword(newPassword);
+        state = state.copyWith(
+          loadingType: AuthLoadingType.none,
+          message: 'Password successfully set for your account!',
+        );
+      } else {
+        state = state.copyWith(
+          loadingType: AuthLoadingType.none,
+          error: 'Password is already set for this account.',
+        );
+      }
+    } catch (e) {
+      state = state.copyWith(
+        loadingType: AuthLoadingType.none,
+        error: _cleanError(e),
+      );
+    }
+  }
+
+  Future<void> cancelPasswordSetup() async {
     state = state.copyWith(
       loadingType: AuthLoadingType.none,
       showPasswordDialog: false,
@@ -227,22 +227,21 @@ Future<void> setupGoogleUserPassword(String newPassword) async {
   }
 }
 
-final authViewModelProvider = StateNotifierProvider<AuthViewModel, AuthState>((ref) {
+final authViewModelProvider = StateNotifierProvider<AuthViewModel, AuthState>((
+  ref,
+) {
   final repo = ref.watch(authRepositoryProvider);
   return AuthViewModel(repo);
 });
-
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository();
 });
 
-
 final currentUserIdProvider = Provider<String?>((ref) {
   final authRepo = ref.watch(authRepositoryProvider);
   return authRepo.currentUser?.uid;
 });
-
 
 final currentUserProvider = StreamProvider<UserModel?>((ref) {
   final userId = FirebaseAuth.instance.currentUser?.uid;
@@ -255,8 +254,12 @@ final currentUserProvider = StreamProvider<UserModel?>((ref) {
       .map((doc) => doc.exists ? UserModel.fromDoc(doc) : null);
 });
 
-final usernameAvailableProvider = FutureProvider.autoDispose.family<bool, ({String username, String uid})>((ref, params) async {
-  if (params.username.trim().isEmpty) return true;
-  final repo = ref.read(authRepositoryProvider);
-  return await repo.isUsernameAvailable(params.username, excludeUid: params.uid);
-});
+final usernameAvailableProvider = FutureProvider.autoDispose
+    .family<bool, ({String username, String uid})>((ref, params) async {
+      if (params.username.trim().isEmpty) return true;
+      final repo = ref.read(authRepositoryProvider);
+      return await repo.isUsernameAvailable(
+        params.username,
+        excludeUid: params.uid,
+      );
+    });

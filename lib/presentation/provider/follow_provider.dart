@@ -1,9 +1,118 @@
+
+// import 'package:flutter_riverpod/flutter_riverpod.dart';
+// import 'package:flutter_riverpod/legacy.dart';
+// import 'package:wink_app/presentation/provider/follow_list_provider.dart';
+// import 'package:wink_app/presentation/provider/user_provider.dart'; 
+// import 'package:wink_app/service/profile_service/follow_service.dart';
+
+// final followServiceProvider = Provider((ref) => FollowService());
+
+// final followProvider =
+//     StateNotifierProvider.family<FollowNotifier, bool, FollowParams>(
+//   (ref, params) => FollowNotifier(ref, params),
+// );
+
+// class FollowParams {
+//   final String me;
+//   final String other;
+//   final Map<String, dynamic> myData;
+
+//   FollowParams(this.me, this.other, this.myData);
+
+//   @override
+//   bool operator ==(Object other) =>
+//       identical(this, other) ||
+//       other is FollowParams &&
+//           runtimeType == other.runtimeType &&
+//           me == other.me &&
+//           this.other == other.other;
+
+//   @override
+//   int get hashCode => Object.hash(me, other);
+// }
+
+// //Yeh class mobile ki UI (Screen) ke sath judi hoti hai. Iska kaam hai button
+// // ka rang aur text control karna (true ya false state ke zariye) aur screen ko batana ke kab refresh hona hai.
+
+// //state: Iske paas ek variable hota hai jise state kehte hain. Agar state
+// // true ho toh screen par Following dikhta hai, agar false ho toh Follow dikhta hai.
+
+// //check(): Jaise hi kisi ki profile khulti hai, yeh notifier foran chalta
+// // hai aur FollowService ki madad se database se status mangwa kar state ko true ya false set kar deta hai.
+
+// //toggle(): Jab user button par click karta hai, toh yeh faisla leta hai ke agar 
+// //state true thi toh FollowService.unfollow() ko chalaye, aur agar false thi toh FollowService.follow() ko chalaye.
+
+// //FollowNotifier screen par click hote hi alert hota hai, woh FollowService ko aawaaz deta hai ke
+// // "Bhai jaldi se database badlo", aur jab service database badal deti hai, toh notifier state ko
+// // badal kar aur ref.invalidate chala kar mobile ki screen par naye numbers aur naya text show karwa
+// // deta hai!
+
+// class FollowNotifier extends StateNotifier<bool> {
+//   final Ref ref;
+//   final FollowParams params;
+
+//   FollowNotifier(this.ref, this.params) : super(false) {
+//     check();
+//   }
+
+//   //Database se pooch kar halat badalna (check Method):
+//   Future<void> check() async {
+//     state = await ref
+//         .read(followServiceProvider)              
+//         .isFollowing(params.me, params.other);
+//   }
+
+//   Future<void> toggle() async {
+//     final service = ref.read(followServiceProvider);
+
+//     if (state) {
+//       await service.unfollow(
+//         me: params.me,
+//         other: params.other,
+//       );
+//       state = false;
+//     } else {
+//         await service.follow(
+//         me: params.me,
+//         other: params.other,
+//         myData: params.myData,
+//       );
+//       state = true;
+//     }
+
+//     //  MAIN FIX: User data ko invalidate karein taake followers/following counts update hon
+//     ref.invalidate(userProvider(params.other)); // Jisko follow/unfollow kiya, uska data refresh hoga
+//     ref.invalidate(userProvider(params.me));    // Aapka (current user) data refresh hoga
+
+//     // Lists ko bhi refresh rakhein (taake followers/following list screen bhi update rahe)
+//     ref.invalidate(followersProvider(params.other));
+//     ref.invalidate(followingProvider(params.me));
+//   }
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:wink_app/presentation/provider/follow_list_provider.dart';
 import 'package:wink_app/presentation/provider/user_provider.dart'; 
 import 'package:wink_app/service/profile_service/follow_service.dart';
-
+import 'package:collection/collection.dart'; // Maps ko sahi compare karne ke liye
 final followServiceProvider = Provider((ref) => FollowService());
 
 final followProvider =
@@ -15,8 +124,9 @@ class FollowParams {
   final String me;
   final String other;
   final Map<String, dynamic> myData;
+final Map<String, dynamic> otherData; // 🎯 NAYA: Samne wale ka data packet
 
-  FollowParams(this.me, this.other, this.myData);
+  FollowParams(this.me, this.other, this.myData,this.otherData);
 
   @override
   bool operator ==(Object other) =>
@@ -24,10 +134,17 @@ class FollowParams {
       other is FollowParams &&
           runtimeType == other.runtimeType &&
           me == other.me &&
-          this.other == other.other;
+          this.other == other.other&&
+          const MapEquality().equals(myData, other.myData) &&
+          const MapEquality().equals(otherData, other.otherData);
 
   @override
-  int get hashCode => Object.hash(me, other);
+  int get hashCode => Object.hash(
+    me,
+   other,
+   const MapEquality().hash(myData), 
+  const MapEquality().hash(otherData),
+   );
 }
 
 //Yeh class mobile ki UI (Screen) ke sath judi hoti hai. Iska kaam hai button
@@ -75,7 +192,8 @@ class FollowNotifier extends StateNotifier<bool> {
         await service.follow(
         me: params.me,
         other: params.other,
-        myData: params.myData,
+        myData: params.myData, 
+        otherData: params.otherData,
       );
       state = true;
     }
@@ -89,6 +207,68 @@ class FollowNotifier extends StateNotifier<bool> {
     ref.invalidate(followingProvider(params.me));
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // class FollowNotifier extends StateNotifier<bool> {
@@ -149,6 +329,21 @@ class FollowNotifier extends StateNotifier<bool> {
 //     }
 //   }
 // }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // class FollowNotifier extends StateNotifier<bool> {
 //   final Ref ref;

@@ -5,13 +5,17 @@ import 'package:wink_app/service/profile_service/follow_list_service.dart';
 //instance
 final followListServiceProvider = Provider((ref) => FollowListService());
 
-final followersProvider =
-    FutureProvider.family<List<FollowUserModel>, String>((ref, uid) {
+final followersProvider = FutureProvider.family<List<FollowUserModel>, String>((
+  ref,
+  uid,
+) {
   return ref.read(followListServiceProvider).getFollowers(uid);
 });
 
-final followingProvider =
-    FutureProvider.family<List<FollowUserModel>, String>((ref, uid) {
+final followingProvider = FutureProvider.family<List<FollowUserModel>, String>((
+  ref,
+  uid,
+) {
   return ref.read(followListServiceProvider).getFollowing(uid);
 });
 
