@@ -1,8 +1,11 @@
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:wink_app/core/utils/validators.dart';
 import 'package:wink_app/models/auth/user_model.dart';
+import 'package:wink_app/service/firestore_service.dart';
 
 class AuthRepository {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -17,20 +20,20 @@ class AuthRepository {
 
   User? get currentUser => _auth.currentUser;
 
-
-
-
   /// 1. Check karega ke kya user Google se logged in hai aur uske paas pehle se password provider nahi hai
   Future<bool> needsPasswordSetup() async {
     final user = _auth.currentUser;
     if (user == null) return false;
 
     // User ke saare login providers check karein (Google, Facebook, Email, etc.)
-    final providerIds = user.providerData.map((info) => info.providerId).toList();
+    final providerIds = user.providerData
+        .map((info) => info.providerId)
+        .toList();
 
-    // Agar user ke providers mein 'google.com' hai lekin 'password' (email/password) nahi hai, 
+    // Agar user ke providers mein 'google.com' hai lekin 'password' (email/password) nahi hai,
     // toh iska matlab use password set karne ki zaroorat hai.
-    return providerIds.contains('google.com') && !providerIds.contains('password');
+    return providerIds.contains('google.com') &&
+        !providerIds.contains('password');
   }
 
   /// 2. Google user ke liye password set/link karne ka function
@@ -57,7 +60,9 @@ class AuthRepository {
     } on FirebaseException catch (e) {
       // Agar 'requires-recent-login' ka error aaye toh user ko re-authenticate karna parta hai
       if (e.code == 'requires-recent-login') {
-        throw Exception("Security sensitive operation. Please re-login and try again.");
+        throw Exception(
+          "Security sensitive operation. Please re-login and try again.",
+        );
       } else if (e.code == 'provider-already-linked') {
         throw Exception("This account is already configured with a password.");
       } else {
@@ -70,42 +75,46 @@ class AuthRepository {
 
   // Aapka current logged in user getter (agar file me pehle se na ho)
 
-
-
-
-
   Future<void> _syncUserToFirestore(
-      User user,
-      String provider, {
-        String? name,
-      }) async {
-    final docRef = _db.collection('users').doc(user.uid);
-    final doc = await docRef.get();
+    User user,
+    String provider, {
+    String? name,
+  }) async {
+    try {
+      final docRef = _db.collection('users').doc(user.uid);
+      final doc = await docRef.get();
 
-    if (!doc.exists) {
-      final uniqueUsername = await generateUniqueUsername(user.email ?? 'user');
+      if (!doc.exists) {
+        // final uniqueUsername = await generateUniqueUsername(
+        //   user.email ?? 'user',
+        // );
 
-      final newUser = UserModel(
-        userId: user.uid,
-        name: name ?? user.displayName ?? 'New User',
-        email: user.email ?? '',
-        username: '${user.email?.split('@').first ?? 'user'}_${user.uid.substring(0, 5)}',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-        authProvider: provider,
-        hasPassword: provider == 'email',
-      );
-      await docRef.set(newUser.toMap());
-    } else {
-      await docRef.update({'updatedAt': Timestamp.now()});
+        final newUser = UserModel(
+          userId: user.uid,
+          name: name ?? user.displayName ?? 'New User',
+          email: user.email ?? '',
+          username:
+              '${user.email?.split('@').first ?? 'user'}_${user.uid.substring(0, 5)}',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          authProvider: provider,
+          hasPassword: provider == 'email',
+        );
+        await docRef.set(newUser.toMap());
+      } else {
+        await docRef.update({'updatedAt': Timestamp.now()});
+      }
+    } catch (e) {
+      print("Error syncing user to Firestore: $e");
+      throw Exception("Failed to sync user data. Please try again.");
     }
   }
 
   Future<UserCredential> signUp(
-      String email,
-      String password,
-      String name,
-      ) async {
+    String email,
+    String password,
+    String name,
+  ) async {
     try {
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email.trim(),
@@ -138,7 +147,13 @@ class AuthRepository {
 
   Future<UserCredential?> signInWithGoogle() async {
     try {
-      final googleUser = await _googleSignIn.signIn();
+      final googleUser = await _googleSignIn.signIn().onError((
+        error,
+        stackTrace,
+      ) {
+        throw Exception('Google sign in failed: $error');
+      });
+
       if (googleUser == null) throw Exception('Sign in cancelled');
 
       final googleAuth = await googleUser.authentication;
@@ -153,50 +168,69 @@ class AuthRepository {
 
       try {
         final userCredential = await _auth.signInWithCredential(credential);
+        print(
+          "~~~~~~~~~~~~~~~~~~~~~~~~~User login is: ${await userCredential.user?.getIdToken()}",
+        );
         if (userCredential.user != null) {
           await _syncUserToFirestore(userCredential.user!, 'google');
         }
         return userCredential;
       } on FirebaseAuthException catch (e) {
+        print(
+          "~~~~~~~~~~~~~~~~~~ FirebaseAuthException during Google Sign-In: $e",
+        );
         if (e.code == 'account-exists-with-different-credential') {
           throw Exception(
-              'An account already exists with this email. Please login with Email & Password first.');
+            'An account already exists with this email. Please login with Email & Password first.',
+          );
         }
         throw _handleError(e, null);
       }
+    } on FirebaseException catch (e) {
+      print("~~~~~~~~~~~~~~~~~~ FirebaseException during Google Sign-In: $e");
+      throw _cleanError(e);
     } catch (e) {
+      print("~~~~~~~~~~~~~~~~~~ Error during Google Sign-In: $e");
+      _auth.signOut();
       // Catch GoogleSignIn exceptions too
       if (e is Exception) rethrow;
       throw Exception('Google sign in failed: ${e.toString()}');
     }
   }
-  
-  Future<bool> isUsernameAvailable(String username, {String? excludeUid}) async {
-  final clean = username.trim().toLowerCase();
 
-  // Use same validation as Validators.username
-  if (Validators.username(clean)!= null) return false;
+  Future<bool> isUsernameAvailable(
+    String username, {
+    String? excludeUid,
+  }) async {
+    final clean = username.trim().toLowerCase();
 
-  final query = await _db
-     .collection('users')
-     .where('username', isEqualTo: clean)
-     .limit(1)
-     .get();
+    // Use same validation as Validators.username
+    if (Validators.username(clean) != null) return false;
 
-  if (query.docs.isEmpty) return true;
-  if (excludeUid!= null && query.docs.first.id == excludeUid) return true;
+    final query = await _db
+        .collection('users')
+        .where('username', isEqualTo: clean)
+        .limit(1)
+        .get();
 
-  return false;
-}    
-      // ADD THIS: generate unique username
+    if (query.docs.isEmpty) return true;
+    if (excludeUid != null && query.docs.first.id == excludeUid) return true;
 
-     Future<String> generateUniqueUsername(String email) async {
-    String base = email.split('@').first.toLowerCase().replaceAll(RegExp(r'[^a-z0-9_]'), '');
+    return false;
+  }
+  // ADD THIS: generate unique username
+
+  Future<String> generateUniqueUsername(String email) async {
+    String base = email
+        .split('@')
+        .first
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9_]'), '');
     if (base.isEmpty) base = 'user';
-    
+
     String candidate = base;
     int counter = 0;
-    
+
     while (!(await isUsernameAvailable(candidate))) {
       counter++;
       candidate = '${base}$counter';
@@ -212,8 +246,9 @@ class AuthRepository {
     try {
       await user.reload();
 
-      final hasEmailProvider = user.providerData
-          .any((info) => info.providerId == EmailAuthProvider.PROVIDER_ID);
+      final hasEmailProvider = user.providerData.any(
+        (info) => info.providerId == EmailAuthProvider.PROVIDER_ID,
+      );
 
       if (hasEmailProvider) {
         await user.updatePassword(password);
@@ -286,14 +321,15 @@ class AuthRepository {
       });
     } on FirebaseAuthException catch (e) {
       if (e.code == 'requires-recent-login') {
-        throw Exception('Session expired. Please login again to reset password.');
+        throw Exception(
+          'Session expired. Please login again to reset password.',
+        );
       }
       throw _handleError(e, _auth.currentUser?.email);
     }
   }
 
   Future<void> signOut() async {
-
     try {
       await _googleSignIn.disconnect();
     } catch (_) {}
@@ -301,6 +337,17 @@ class AuthRepository {
       await _googleSignIn.signOut();
     } catch (_) {}
     await _auth.signOut();
+  }
+
+  // for firebase exceptions, we can map the error codes to user-friendly messages
+  Exception _cleanError(Object e) {
+    if (e is FirebaseAuthException) {
+      return _handleError(e, null);
+    } else if (e is FirebaseException) {
+      return Exception(e.message ?? 'Firebase error occurred');
+    } else {
+      return Exception('An unexpected error occurred: ${e.toString()}');
+    }
   }
 
   Exception _handleError(FirebaseAuthException e, String? email) {
@@ -318,7 +365,7 @@ class AuthRepository {
       'credential-already-in-use' => 'This account is already linked',
       'provider-already-linked' => 'Provider already linked',
       'account-exists-with-different-credential' =>
-      'Account exists with different sign-in method. Use Email & Password.',
+        'Account exists with different sign-in method. Use Email & Password.',
       'requires-recent-login' => 'Please login again to continue',
       _ => e.message ?? 'Authentication failed',
     };

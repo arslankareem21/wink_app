@@ -39,10 +39,11 @@ class Validators {
 
     final usernameRegex = RegExp(r'^[a-zA-Z0-9._]+$');
     if (!usernameRegex.hasMatch(trimmedValue)) {
+      inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))];
       return 'Only letters, numbers, underscores (_), or dots (.) allowed';
     }
 
-      inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))];
+      
 
 
     return null; 
