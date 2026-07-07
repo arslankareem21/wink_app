@@ -25,6 +25,7 @@ class AppTextField extends StatefulWidget {
   final FocusNode? focusNode;
   final double? width;
   final double? height;
+  final int? maxLength;
   final EdgeInsetsGeometry? contentPadding;
 
   const AppTextField({
@@ -49,7 +50,7 @@ class AppTextField extends StatefulWidget {
     this.focusNode,
     this.width,
     this.height,
-    this.contentPadding, String? errorText,
+    this.contentPadding, String? errorText, this.maxLength,
   });
 
   @override
@@ -118,6 +119,7 @@ class _AppTextFieldState extends State<AppTextField> {
       onChanged: widget.onChanged,
       onFieldSubmitted: widget.onFieldSubmitted,
       inputFormatters: widget.inputFormatters,
+      maxLength: widget.maxLength,
       maxLines: widget.isPassword ? 1 : widget.maxLines,
       minLines: widget.minLines,
       enabled: widget.enabled,

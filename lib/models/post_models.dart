@@ -22,6 +22,16 @@ class PostModels {
     required this.createdAt,
   });
 
+  // Helper to get first image URL safely
+  String get firstImageUrl {
+    if (media.isEmpty) return '';
+    final img = media.firstWhere(
+      (m) => m.type == 'image',
+      orElse: () => media.first,
+    );
+    return img.url;
+  }
+
   Map<String, dynamic> toMap() {
     return {
       "postId": postId,
@@ -37,20 +47,22 @@ class PostModels {
 
   factory PostModels.fromMap(Map<String, dynamic> map) {
     return PostModels(
-      postId: map["postId"] ?? "",
-      userId: map["userId"] ?? "",
-      caption: map["caption"] ?? "",
-      hashtags: List<String>.from(map["hashtags"] ?? []),
+      postId: map["postId"]?? "",
+      userId: map["userId"]?? "",
+      caption: map["caption"]?? "",
+      hashtags: List<String>.from(map["hashtags"]?? []),
       media: (map["media"] as List? ?? [])
-          .map((e) => MediaModel.fromMap(e))
+          .map((e) => MediaModel.fromMap(e as Map<String, dynamic>))
           .toList(),
-      likesCount: map["likesCount"] ?? 0,
-      commentsCount: map["commentsCount"] ?? 0,
+      likesCount: (map["likesCount"] as num?)?.toInt()?? 0,
+      commentsCount: (map["commentsCount"] as num?)?.toInt()?? 0,
       createdAt: (map["createdAt"] as Timestamp?)?.toDate(),
     );
   }
 
   factory PostModels.fromDoc(DocumentSnapshot doc) {
-    return PostModels.fromMap(doc.data() as Map<String, dynamic>);
+    final data = doc.data();
+    if (data == null) throw Exception('Post doc is null');
+    return PostModels.fromMap(data as Map<String, dynamic>);
   }
 }

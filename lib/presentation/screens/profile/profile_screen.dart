@@ -1,7 +1,3 @@
-
-import 'dart:io';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -10,170 +6,258 @@ import 'package:wink_app/core/config/routes/route_names.dart';
 import 'package:wink_app/core/config/theme/app_spacing.dart';
 import 'package:wink_app/core/config/theme/app_text_style.dart';
 import 'package:wink_app/presentation/components/profile/profileTabController/pofile_dafault_tab_controller.dart';
-import 'package:wink_app/presentation/components/profile/profile_bio.dart';
-import 'package:wink_app/presentation/components/profile/profile_status.dart';
-import 'package:wink_app/presentation/provider/user_provider.dart';
-import 'package:wink_app/presentation/screens/profile/other_user_profile_screen.dart';
-import 'package:wink_app/presentation/widgets/circle_avatar.dart';
-import 'package:wink_app/presentation/widgets/elevated_button.dart';
-import 'package:wink_app/viewmodels/image_picker_vm.dart';
+import 'package:wink_app/presentation/provider/get_profile_providers.dart';
+import 'package:wink_app/viewmodels/auth_viewmodel.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
-class ProfileScreen extends ConsumerStatefulWidget {
+class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
-  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userId = ref.watch(currentUserIdProvider);
+    
+    if (userId == null) {
+      return const Scaffold(
+        body: Center(child: Text('Not logged in')),
+      );
+    }
 
-class _ProfileScreenState extends ConsumerState<ProfileScreen> {
-  @override
-  Widget build(BuildContext context) {
-    final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
-    final userAsync = ref.watch(userProvider(currentUserId));
-    final pickedFile = ref.watch(imagePickerProvider);
+    final userAsync = ref.watch(userDataProvider(userId));
 
     return userAsync.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, _) =>
-          Scaffold(body: Center(child: Text("Error loading profile: $e"))),
-      data: (user) {
-        if (user == null) {
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stack) => Scaffold(
+        body: Center(child: Text('Error: $error')),
+      ),
+      data: (doc) {
+        if (!doc.exists || doc.data() == null) {
           return const Scaffold(
-            body: Center(child: Text("User data not found")),
+            body: Center(child: Text('User not found')),
           );
         }
 
-        final networkImageUrl =
-            user.profileImageUrl != null && user.profileImageUrl!.isNotEmpty
-            ? user.profileImageUrl
-            : null;
+        final user = doc.data()! as Map<String, dynamic>;
+        final username = user['username']?? user['userName']?? user['handle']?? '';
+        final name = user['name']?? user['displayName']?? 'No Name';
+        final postsCount = (user['postsCount'] as num?)?.toInt()?? 0;
+        final followersCount = (user['followersCount'] as num?)?.toInt()?? 0;
+        final followingCount = (user['followingCount'] as num?)?.toInt()?? 0;
+        final profileImageUrl = user['profileImageUrl']?? user['photoUrl']?? '';
+        final bio = user['bio']?? user['description']?? '';
+        final category = user['category']?? '';
+        final location = user['location']?? '';
+        final website = user['website']?? '';
 
         return Scaffold(
           appBar: AppBar(
-            title: Text('Profile Screen', style: AppTextStyles.appBarTitle),
-            leading: Padding(
-              padding: const EdgeInsets.all(8),
-              child: IconButton(
-                icon: Icon(Icons.arrow_back, size: 20.sp),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => OtherProfileScreen(
-                        myId: 'OfV3LuFxJPO5990Tl1knEzIBj3h1',
-                        profileId: 'OfV3LuFxJPO5990Tl1knEzIBj3h1',
-                        myData: {
-                          'username': user.username ?? 'no_username',
-                          'displayName': user.name ?? 'No Name',
-                          'profileImageUrl': user.profileImageUrl ?? '',
-                        },
-                      ),
-                    ),
-                  );
-                },
-              ),
+            elevation: 0,
+            centerTitle: true,
+            title: Text(
+              username.isEmpty? name : username,
+              style: AppTextStyles.appBarTitle,
             ),
             actions: [
-              Padding(
-                padding: const EdgeInsets.all(8),
-                child: IconButton(
-                  icon: Icon(Icons.settings, size: 20.sp),
-                  onPressed: () {
-                    NavigationService.push(context, AppRoutes.Settings);
-                  },
-                ),
+              IconButton(
+                icon: Icon(Icons.settings, size: 24.sp),
+                onPressed: () {
+                  NavigationService.push(context, AppRoutes.settings);
+                 // _showSettingsBottomSheet(context, ref);
+                },
               ),
             ],
           ),
-          body: NestedScrollView(
-            headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
-              return [
-                SliverOverlapAbsorber(
-                  handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
-                    context,
-                  ),
-                  sliver: SliverToBoxAdapter(
-                    child: Column(
+          body: Column(
+            children: [
+              // Profile Header Section - Not using NestedScrollView
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 15.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppSpacing.vxl,
+                    Row(
                       children: [
-                        AppProfileAvatar(
-                          size: 80.sp,
-                          imageSource:
-                              pickedFile?.path ??
-                              networkImageUrl ??
-                              'https://ui-avatars.com/api/?name=${user.name}&background=random',
-                          //imageSource: pickedFile?.path ?? networkImageUrl,
-                          isNetwork: true,
-
-                          radius: 40,
-                          imageFile: pickedFile != null
-                              ? File(pickedFile.path)
-                              : null,
-                        ),
-                        Center(
-                          child: Text(
-                            user.name.isNotEmpty ? user.name : "Alex",
-                            style: TextStyle(
-                              fontSize: 15.sp,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        Container(
+                          width: 90.w,
+                          height: 90.w,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.grey[800]!, width: 2),
+                          ),
+                          child: ClipOval(
+                            child: profileImageUrl.isNotEmpty
+                               ? CachedNetworkImage(
+                                    imageUrl: profileImageUrl,
+                                    fit: BoxFit.cover,
+                                    placeholder: (context, url) => Container(
+                                      color: Colors.grey[800],
+                                      child: Icon(Icons.person, size: 45.sp, color: Colors.grey),
+                                    ),
+                                    errorWidget: (context, url, error) => Container(
+                                      color: Colors.grey[800],
+                                      child: Icon(Icons.person, size: 45.sp, color: Colors.grey),
+                                    ),
+                                  )
+                                : Container(
+                                    color: Colors.grey[800],
+                                    child: Icon(Icons.person, size: 45.sp, color: Colors.grey),
+                                  ),
                           ),
                         ),
-                        ProfileStats(
-                          postsCount: user.postsCount,
-                          followersCount: user.followersCount.toString(),
-                          followingCount: user.followingCount,
-                        ),
-
-                        AppSpacing.vxs,
-                        ProfileBio(
-                          name: user.name.isNotEmpty ? user.name : "Alex",
-                          category: user.category.isNotEmpty
-                              ? user.category
-                              : 'Alex',
-                          description: user.bio.isNotEmpty ? user.bio : "Alex",
-                          location: user.location.isNotEmpty
-                              ? user.location
-                              : 'Los Angeles / NYC',
-                          collaborationEmail: user.collaborationEmail.isNotEmpty
-                              ? user.collaborationEmail
-                              : 'hello@wink.co',
-                          website: user.website.isNotEmpty
-                              ? user.website
-                              : 'hhssjhwsw',
-                          username: user.username.isNotEmpty
-                              ? user.username
-                              : 'no username',
-                        ),
-                        AppSpacing.vxl,
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.lg,
-                          ),
-                          child: AppButton(
-                            isGhost: true,
-                            text: 'Edit Profile',
-                            onPressed: () {
-                              NavigationService.push(
-                                context,
-                                AppRoutes.editProfile,
-                              );
-                            },
+                        
+                        Expanded(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              _buildStat('Posts', postsCount),
+                              _buildStat('Followers', followersCount),
+                              _buildStat('Following', followingCount),
+                            ],
                           ),
                         ),
-                        AppSpacing.vxl,
                       ],
                     ),
-                  ),
+                    AppSpacing.vsm,
+                    if (name.isNotEmpty)
+                      Text(name, style: AppTextStyles.appBarBrandName),
+                    if (category.isNotEmpty)...[
+                      SizedBox(height: 4.h),
+                      Text(
+                        category,
+                        style: AppTextStyles.appBarTitle.copyWith(color: Colors.grey),
+                      ),
+                    ],
+                    if (bio.isNotEmpty)...[
+                      SizedBox(height: 8.h),
+                      Text(bio, style: AppTextStyles.bodyRegular),
+                    ],
+                    if (location.isNotEmpty)...[
+                      SizedBox(height: 8.h),
+                      Row(
+                        children: [
+                          Icon(Icons.location_on, size: 14.sp, color: Colors.grey),
+                          SizedBox(width: 4.w),
+                          Expanded(
+                            child: Text(
+                              location,
+                              style: AppTextStyles.bodyRegular,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (website.isNotEmpty)...[
+                      SizedBox(height: 8.h),
+                      Row(
+                        children: [
+                          Icon(Icons.link, size: 14.sp, color: Colors.grey),
+                          SizedBox(width: 4.w),
+                          Expanded(
+                            child: Text(
+                              website,
+                              style: AppTextStyles.textLink.copyWith(color: Colors.blue),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    AppSpacing.vxl,
+                    SizedBox(
+                      width: double.infinity,
+                      height: 40.h,
+                      child: OutlinedButton(
+                        onPressed: () {
+                          NavigationService.push(context, AppRoutes.editProfile);
+                        },
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: Colors.grey[700]!),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                        ),
+                        child: Text(
+                          'Edit Profile',
+                          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                    AppSpacing.vxl,
+                  ],
                 ),
-              ];
-            },
-            body: const ProfileTabsView(
-              //currentUserId: curr,
-            ),
+              ),
+              // Tabs - Takes remaining space
+              Expanded(
+                child: ProfileTabsView(userId: userId),
+              ),
+            ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildStat(String label, int count) {
+    return Column(
+      children: [
+        Text(_formatCount(count), style: AppTextStyles.toggleLabel),
+        SizedBox(height: 2.h),
+        Text(label, style: AppTextStyles.toggleLabel),
+      ],
+    );
+  }
+
+  String _formatCount(int count) {
+    if (count >= 1000000) return '${(count / 1000000).toStringAsFixed(1)}M';
+    if (count >= 1000) return '${(count / 1000).toStringAsFixed(1)}K';
+    return count.toString();
+  }
+
+  void _pickProfileImage(BuildContext context, WidgetRef ref, String userId) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Camera'),
+              onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Gallery'),
+              onTap: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showSettingsBottomSheet(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: const Text('Logout', style: TextStyle(color: Colors.red)),
+              onTap: () async {
+                Navigator.pop(context);
+                await ref.read(authViewModelProvider.notifier).signOut();
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

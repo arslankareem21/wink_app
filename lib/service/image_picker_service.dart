@@ -1,40 +1,41 @@
 import 'dart:io';
-
-import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ImagePickerService {
   final ImagePicker _picker = ImagePicker();
-  //Gallery (Images)
+  bool _isPicking = false; // guard flag
+
+  Future<XFile?> _safePick(Future<XFile?> Function() action) async {
+    if (_isPicking) return null;
+    _isPicking = true;
+    try {
+      return await action();
+    } catch (e) {
+      print('ImagePicker error: $e');
+      return null;
+    } finally {
+      _isPicking = false;
+    }
+  }
+
   Future<XFile?> pickFromGallery() async {
-    try {
-      return await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
-    } catch (e) {
-      print('Error picking image from gallery: $e');
-      return null;
-    }
+    return _safePick(() => _picker.pickImage(
+          source: ImageSource.gallery,
+          imageQuality: 80,
+        ));
   }
 
-  //Camera (Images)
   Future<XFile?> captureWithCamera() async {
-    try {
-      return await _picker.pickImage(source: ImageSource.camera, imageQuality: 80);
-    } catch (e) {
-      print('Error capturing image with camera: $e');
-      return null;
-    }
+    return _safePick(() => _picker.pickImage(
+          source: ImageSource.camera,
+          imageQuality: 80,
+        ));
   }
 
- // Gallery (Videos)
   Future<XFile?> pickVideoFromGallery() async {
-    try {
-      return await _picker.pickVideo(
-        source: ImageSource.gallery,
-        maxDuration: const Duration(minutes: 2), // Optional: Limit length for shorts
-      );
-    } catch (e) {
-      print('Error picking video from gallery: $e');
-      return null;
-    }
+    return _safePick(() => _picker.pickVideo(
+          source: ImageSource.gallery,
+          maxDuration: const Duration(minutes: 2),
+        ));
   }
 }

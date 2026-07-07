@@ -11,5 +11,7 @@ class AppRoutes {
   static const Profile = '/ProfileScreen';
   static const createStory = '/createStory';
   static const viewStoryScreen = '/viewStoryScreen';
-  static const Settings = '/SettingsScreen';
+  static const settings = '/SettingsScreen';
+  static const videoEditor = '/videoEditor';
+
 }

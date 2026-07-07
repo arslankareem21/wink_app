@@ -2,8 +2,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
+import 'package:wink_app/core/config/theme/app_colors.dart';
 import 'package:wink_app/presentation/widgets/app_snackbar.dart';
+import 'package:wink_app/presentation/widgets/textformfield.dart';
 import 'package:wink_app/viewmodels/upload_vm.dart';
 
 class UploadDecisionScreen extends ConsumerStatefulWidget {
@@ -170,14 +173,14 @@ class _UploadDecisionScreenState extends ConsumerState<UploadDecisionScreen> {
           const SizedBox(height: 16),
           _buildCaptionField(),
           if (state.isUploading)...[
-            const SizedBox(height: 12),
+            
             _buildProgressIndicator(state),
           ],
           if (state.error!= null)...[
             const SizedBox(height: 12),
             Text(state.error!, style: const TextStyle(color: Colors.red)),
           ],
-          const SizedBox(height: 24),
+          
           _buildActionButtons(state),
         ],
       ),
@@ -214,27 +217,15 @@ class _UploadDecisionScreenState extends ConsumerState<UploadDecisionScreen> {
   }
 
   Widget _buildCaptionField() {
-    return TextField(
+    return AppTextField(
       controller: _captionController,
-      style: const TextStyle(color: Colors.white),
-      maxLength: 500,
       maxLines: 3,
-      decoration: InputDecoration(
-        hintText: 'Write a caption...',
-        hintStyle: TextStyle(color: Colors.grey[600]),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey[800]!),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Colors.blue),
-        ),
-      ),
-      inputFormatters: [
-        FilteringTextInputFormatter.deny(RegExp(r'[\u0000-\u001F]')),
-      ],
+      maxLength: 100,
+      inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'[\u0000-\u001F]'))],
+      height: 100.h,
+      keyboardType: TextInputType.text,
+      hintText: 'Write a caption...',
+      
     );
   }
 

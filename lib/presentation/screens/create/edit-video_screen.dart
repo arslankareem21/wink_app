@@ -4,6 +4,7 @@ import 'package:pro_image_editor/pro_image_editor.dart';
 import 'package:pro_video_editor/pro_video_editor.dart';
 import 'package:video_player/video_player.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:wink_app/core/config/theme/app_colors.dart';
 import 'package:wink_app/presentation/screens/create/edit_preview.dart';
 
 class VideoEditor extends StatefulWidget {
@@ -226,12 +227,12 @@ class _VideoEditorState extends State<VideoEditor> {
   Widget build(BuildContext context) {
     if (!_isInitialized) {
       return Scaffold(
-        backgroundColor: Colors.black,
+      
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const CircularProgressIndicator(color: Colors.white),
+              CircularProgressIndicator(color: AppColors.iconAccent),
               const SizedBox(height: 20),
               Text(
                 'Loading Video...',
@@ -245,53 +246,55 @@ class _VideoEditorState extends State<VideoEditor> {
       );
     }
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: ProImageEditor.video(
-        _proVideoController,
-        configs: ProImageEditorConfigs(
-          designMode: ImageEditorDesignMode.material,
-          dialogConfigs: DialogConfigs(
-            widgets: DialogWidgets(
-              loadingDialog: (message, configs) =>
-                  ExportProgressDialog(taskId: _taskId),
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: ProImageEditor.video(
+          _proVideoController,
+          configs: ProImageEditorConfigs(
+            designMode: ImageEditorDesignMode.material,
+            dialogConfigs: DialogConfigs(
+              widgets: DialogWidgets(
+                loadingDialog: (message, configs) =>
+                    ExportProgressDialog(taskId: _taskId),
+              ),
+            ),
+            imageGeneration: const ImageGenerationConfigs(
+              enableBackgroundGeneration: false,
+            ),
+            videoEditor: const VideoEditorConfigs(
+              maxTrimDuration: Duration(seconds: 30),
+              minTrimDuration: Duration(seconds: 1),
+              enableTrimBar: true,
+              enablePlayButton: true,
+              playTimeSmoothingDuration: Durations.long1,
+              initialPlay: true,
+              controlsPosition: VideoEditorControlPosition.bottom,
+              showControls: true,
+              isAudioSupported: true,
+              enableEstimatedFileSize: true,
+              style: VideoEditorStyle(playIndicatorBackground: Colors.white30),
             ),
           ),
-          imageGeneration: const ImageGenerationConfigs(
-            enableBackgroundGeneration: false,
-          ),
-          videoEditor: const VideoEditorConfigs(
-            maxTrimDuration: Duration(seconds: 30),
-            minTrimDuration: Duration(seconds: 1),
-            enableTrimBar: true,
-            enablePlayButton: true,
-            playTimeSmoothingDuration: Durations.long1,
-            initialPlay: true,
-            controlsPosition: VideoEditorControlPosition.bottom,
-            showControls: true,
-            isAudioSupported: true,
-            enableEstimatedFileSize: true,
-            style: VideoEditorStyle(playIndicatorBackground: Colors.white30),
-          ),
-        ),
-        callbacks: ProImageEditorCallbacks(
-          onCompleteWithParameters: _handleVideoExport,
-          onCloseEditor: _handleCloseEditor,
-          videoEditorCallbacks: VideoEditorCallbacks(
-            onPause: () => _videoPlayerController.pause(),
-            onPlay: () => _videoPlayerController.play(),
-            onMuteToggle: (isMuted) {
-              // FIX: isMuted = true  → user pressed mute   → silence VideoPlayer + remember muted
-              //      isMuted = false → user pressed unmute → restore volume  + remember unmuted
-              _isAudioMuted = isMuted;
-              _videoPlayerController.setVolume(isMuted ? 0.0 : 1.0);
-            },
-            onTrimSpanUpdate: (durationSpan) {
-              if (_videoPlayerController.value.isPlaying) {
-                _proVideoController.pause();
-              }
-            },
-            onTrimSpanEnd: _seekToPosition,
+          callbacks: ProImageEditorCallbacks(
+            onCompleteWithParameters: _handleVideoExport,
+            onCloseEditor: _handleCloseEditor,
+            videoEditorCallbacks: VideoEditorCallbacks(
+              onPause: () => _videoPlayerController.pause(),
+              onPlay: () => _videoPlayerController.play(),
+              onMuteToggle: (isMuted) {
+                // FIX: isMuted = true  → user pressed mute   → silence VideoPlayer + remember muted
+                //      isMuted = false → user pressed unmute → restore volume  + remember unmuted
+                _isAudioMuted = isMuted;
+                _videoPlayerController.setVolume(isMuted ? 0.0 : 1.0);
+              },
+              onTrimSpanUpdate: (durationSpan) {
+                if (_videoPlayerController.value.isPlaying) {
+                  _proVideoController.pause();
+                }
+              },
+              onTrimSpanEnd: _seekToPosition,
+            ),
           ),
         ),
       ),

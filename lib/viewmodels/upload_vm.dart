@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:wink_app/models/media_model.dart';
 import 'package:wink_app/models/media_type.dart';
 import 'package:wink_app/models/post_models.dart';
@@ -49,10 +50,19 @@ class UploadViewModel extends StateNotifier<UploadState> {
   final FirestoreService _firestore;
   final String userId;
 
-  UploadViewModel(this._cloudinary, this._firestore, this.userId) : super(const UploadState());
+  UploadViewModel(this._cloudinary, this._firestore, this.userId)
+      : super(const UploadState());
 
   Future<void> uploadPost({required File image, required String caption}) async {
-    state = state.copyWith(isUploading: true, error: null, progress: 0.0, status: 'Uploading...');
+    if (state.isUploading) return;
+    
+    state = state.copyWith(
+      isUploading: true,
+      error: null,
+      progress: 0.0,
+      status: 'Uploading image...',
+    );
+    
     try {
       final upload = await _cloudinary.uploadFile(
         file: image,
@@ -66,36 +76,90 @@ class UploadViewModel extends StateNotifier<UploadState> {
         userId: userId,
         caption: caption,
         hashtags: _extractHashtags(caption),
-        media: [MediaModel(url: upload["url"]!, publicId: upload["publicId"]!, type: MediaType.image)],
+        media: [
+          MediaModel(
+            url: upload["url"]!,
+            publicId: upload["publicId"]!,
+            type: MediaType.image,
+          )
+        ],
         likesCount: 0,
         commentsCount: 0,
         createdAt: DateTime.now(),
       );
 
+      state = state.copyWith(status: 'Saving...');
       await _firestore.savePost(post);
-      state = state.copyWith(isUploading: false, progress: 1.0, status: 'Done', message: 'Post uploaded');
+      
+      state = state.copyWith(
+        isUploading: false,
+        progress: 1.0,
+        status: 'Done',
+        message: 'Post uploaded successfully',
+      );
     } catch (e) {
-      state = state.copyWith(isUploading: false, error: e.toString().replaceAll('Exception: ', ''), status: '');
+      state = state.copyWith(
+        isUploading: false,
+        error: e.toString().replaceAll('Exception: ', ''),
+        status: '',
+      );
       rethrow;
     }
   }
 
-  Future<void> uploadShort({required File video, required String caption}) async {
-    state = state.copyWith(isUploading: true, error: null, progress: 0.0, status: 'Uploading...');
+  Future<void> uploadShort({
+    required File video,
+    required String caption,
+  }) async {
+    if (state.isUploading) return;
+    
+    state = state.copyWith(
+      isUploading: true,
+      error: null,
+      progress: 0.0,
+      status: 'Generating thumbnail...',
+    );
+    
     try {
-      final upload = await _cloudinary.uploadFile(
+      // 1. Generate thumbnail from video
+      final thumbnailPath = await VideoThumbnail.thumbnailFile(
+        video: video.path,
+        imageFormat: ImageFormat.JPEG,
+        maxWidth: 400,
+        quality: 75,
+      );
+
+      if (thumbnailPath == null) {
+        throw Exception('Failed to generate thumbnail');
+      }
+
+      // 2. Upload video
+      state = state.copyWith(status: 'Uploading video...', progress: 0.0);
+      final videoUpload = await _cloudinary.uploadFile(
         file: video,
         type: 'shorts',
         userId: userId,
-        onProgress: (p) => state = state.copyWith(progress: p),
+        onProgress: (p) => state = state.copyWith(progress: p * 0.7), // 70% for video
       );
 
+      // 3. Upload thumbnail
+      state = state.copyWith(status: 'Uploading thumbnail...', progress: 0.7);
+      final thumbnailUpload = await _cloudinary.uploadFile(
+        file: File(thumbnailPath),
+        type: 'shorts_thumbs',
+        userId: userId,
+        onProgress: (p) => state = state.copyWith(progress: 0.7 + (p * 0.3)), // 30% for thumb
+      );
+
+      // 4. Save to Firestore with thumbnailUrl
+      state = state.copyWith(status: 'Saving...', progress: 0.95);
       final short = ShortModel(
         shortId: _firestore.generateId("shorts"),
         userId: userId,
         caption: caption,
-        videoUrl: upload["url"]!,
-        publicId: upload["publicId"]!,
+        videoUrl: videoUpload["url"]!,
+        publicId: videoUpload["publicId"]!,
+        thumbnailUrl: thumbnailUpload["url"]!, // Required
         likesCount: 0,
         commentsCount: 0,
         viewsCount: 0,
@@ -103,15 +167,36 @@ class UploadViewModel extends StateNotifier<UploadState> {
       );
 
       await _firestore.saveShort(short);
-      state = state.copyWith(isUploading: false, progress: 1.0, status: 'Done', message: 'Short uploaded');
+      
+      // 5. Clean up local thumbnail file
+      await File(thumbnailPath).delete();
+      
+      state = state.copyWith(
+        isUploading: false,
+        progress: 1.0,
+        status: 'Done',
+        message: 'Short uploaded successfully',
+      );
     } catch (e) {
-      state = state.copyWith(isUploading: false, error: e.toString().replaceAll('Exception: ', ''), status: '');
+      state = state.copyWith(
+        isUploading: false,
+        error: e.toString().replaceAll('Exception: ', ''),
+        status: '',
+      );
       rethrow;
     }
   }
 
   Future<void> uploadStory({required File file, required bool isVideo}) async {
-    state = state.copyWith(isUploading: true, error: null, progress: 0.0, status: 'Uploading...');
+    if (state.isUploading) return;
+    
+    state = state.copyWith(
+      isUploading: true,
+      error: null,
+      progress: 0.0,
+      status: 'Uploading...',
+    );
+    
     try {
       final upload = await _cloudinary.uploadFile(
         file: file,
@@ -130,23 +215,42 @@ class UploadViewModel extends StateNotifier<UploadState> {
         expiresAt: DateTime.now().add(const Duration(hours: 24)),
       );
 
+      state = state.copyWith(status: 'Saving...');
       await _firestore.saveStory(story);
-      state = state.copyWith(isUploading: false, progress: 1.0, status: 'Done', message: 'Story uploaded');
+      
+      state = state.copyWith(
+        isUploading: false,
+        progress: 1.0,
+        status: 'Done',
+        message: 'Story uploaded successfully',
+      );
     } catch (e) {
-      state = state.copyWith(isUploading: false, error: e.toString().replaceAll('Exception: ', ''), status: '');
+      state = state.copyWith(
+        isUploading: false,
+        error: e.toString().replaceAll('Exception: ', ''),
+        status: '',
+      );
       rethrow;
     }
   }
 
   Future<void> uploadProfilePic({required File file}) async {
     if (state.isUploading) return;
-    
-    state = state.copyWith(isUploading: true, error: null, progress: 0.0, status: 'Uploading...');
-    
+
+    state = state.copyWith(
+      isUploading: true,
+      error: null,
+      progress: 0.0,
+      status: 'Uploading...',
+    );
+
     try {
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+      final userDoc = await FirebaseFirestore.instance
+         .collection('users')
+         .doc(userId)
+         .get();
       final oldPublicId = userDoc.data()?['profilePublicId'] as String?;
-      
+
       final upload = await _cloudinary.uploadFile(
         file: file,
         type: 'profile',
@@ -154,6 +258,7 @@ class UploadViewModel extends StateNotifier<UploadState> {
         onProgress: (p) => state = state.copyWith(progress: p, status: 'Uploading...'),
       );
 
+      // Delete old profile pic
       if (oldPublicId != null && oldPublicId.isNotEmpty) {
         try {
           await _cloudinary.deleteFile(oldPublicId);
@@ -162,18 +267,24 @@ class UploadViewModel extends StateNotifier<UploadState> {
         }
       }
 
+      state = state.copyWith(status: 'Updating profile...');
       await _firestore.updateProfileImage(
-        userId: userId, 
-        url: upload["url"]!, 
+        userId: userId,
+        url: upload["url"]!,
         publicId: upload["publicId"]!,
       );
-      
-      state = state.copyWith(isUploading: false, progress: 1.0, status: 'Done', message: 'Profile updated');
+
+      state = state.copyWith(
+        isUploading: false,
+        progress: 1.0,
+        status: 'Done',
+        message: 'Profile picture updated',
+      );
     } catch (e) {
       state = state.copyWith(
-        isUploading: false, 
-        error: e.toString().replaceAll('Exception: ', ''), 
-        status: ''
+        isUploading: false,
+        error: e.toString().replaceAll('Exception: ', ''),
+        status: '',
       );
       rethrow;
     }

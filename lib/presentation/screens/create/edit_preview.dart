@@ -20,6 +20,7 @@ class _EditedVideoPreviewScreenState extends State<EditedVideoPreviewScreen> {
     super.initState();
     _previewController = VideoPlayerController.file(widget.videoFile)
       ..initialize().then((_) {
+        if (!mounted) return;
         setState(() {
           _isPlayerInitialized = true;
         });
@@ -30,8 +31,27 @@ class _EditedVideoPreviewScreenState extends State<EditedVideoPreviewScreen> {
 
   @override
   void dispose() {
+    // ✅ Ensure playback stops and resources are released
+    if (_previewController.value.isPlaying) {
+      _previewController.pause();
+    }
     _previewController.dispose();
     super.dispose();
+  }
+
+  void _navigateToDecisionScreen() {
+    // ✅ Pause before navigation to prevent background audio
+    if (_previewController.value.isPlaying) {
+      _previewController.pause();
+    }
+
+    final file = widget.videoFile;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => UploadDecisionScreen(file: file, isVideo: true),
+      ),
+    );
   }
 
   @override
@@ -45,46 +65,39 @@ class _EditedVideoPreviewScreenState extends State<EditedVideoPreviewScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.check, color: Colors.greenAccent, size: 28),
-            onPressed: () {
-  final file = widget.videoFile;
-
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => UploadDecisionScreen(file: file, isVideo: true,),
-    ),
-  );
-}
+            onPressed: _navigateToDecisionScreen,
           )
         ],
       ),
-      body: Center(
-        child: _isPlayerInitialized
-            ? GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _previewController.value.isPlaying 
-                        ? _previewController.pause() 
-                        : _previewController.play();
-                  });
-                },
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    AspectRatio(
-                      aspectRatio: _previewController.value.aspectRatio,
-                      child: VideoPlayer(_previewController),
-                    ),
-                    if (!_previewController.value.isPlaying)
-                      const CircleAvatar(
-                        backgroundColor: Colors.black54,
-                        radius: 30,
-                        child: Icon(Icons.play_arrow, size: 40, color: Colors.white),
+      body: SafeArea(
+        child: Center(
+          child: _isPlayerInitialized
+              ? GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _previewController.value.isPlaying
+                          ? _previewController.pause()
+                          : _previewController.play();
+                    });
+                  },
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      AspectRatio(
+                        aspectRatio: _previewController.value.aspectRatio,
+                        child: VideoPlayer(_previewController),
                       ),
-                  ],
-                ),
-              )
-            : const CircularProgressIndicator(color: Colors.white),
+                      if (!_previewController.value.isPlaying)
+                        const CircleAvatar(
+                          backgroundColor: Colors.black54,
+                          radius: 30,
+                          child: Icon(Icons.play_arrow, size: 40, color: Colors.white),
+                        ),
+                    ],
+                  ),
+                )
+              : const CircularProgressIndicator(color: Colors.white),
+        ),
       ),
     );
   }

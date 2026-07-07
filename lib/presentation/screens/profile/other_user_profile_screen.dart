@@ -5,176 +5,167 @@ import 'package:wink_app/core/config/theme/app_spacing.dart';
 import 'package:wink_app/core/config/theme/app_text_style.dart';
 import 'package:wink_app/presentation/components/profile/other_profile/other_profile_bio.dart';
 import 'package:wink_app/presentation/components/profile/other_profile/other_profile_header.dart';
-import 'package:wink_app/presentation/components/profile/other_profile/other_profile_tab_controller.dart';
-import 'package:wink_app/presentation/provider/follow_provider.dart';
-import 'package:wink_app/presentation/provider/user_provider.dart';
+import 'package:wink_app/presentation/components/profile/profileTabController/pofile_dafault_tab_controller.dart';
+import 'package:wink_app/presentation/provider/get_profile_providers.dart';
 import 'package:wink_app/presentation/screens/profile/profile_screen.dart';
 import 'package:wink_app/presentation/widgets/elevated_button.dart';
+import 'package:wink_app/service/firestore_service.dart';
 
 class OtherProfileScreen extends ConsumerWidget {
   final String myId;
   final String profileId;
   final Map<String, dynamic> myData;
-  // final String userd;
 
   const OtherProfileScreen({
     super.key,
     required this.myId,
     required this.profileId,
     required this.myData,
-    // required this.userd,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // 1. Saamne wale user ka data
-    final userAsync = ref.watch(userProvider(profileId));
-
-    // 2. Aapka apna data
-    final myUserAsync = ref.watch(userProvider(myId));
-
-    // 3. Watch Follow State
-    final follow = ref.watch(
-      followProvider(FollowParams(myId, profileId, myData)),
-    );
+    final userAsync = ref.watch(userDataProvider(profileId));
+    final isSelf = myId == profileId;
 
     return userAsync.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (error, stack) =>
-          Scaffold(body: Center(child: Text('Error loading profile: $error'))),
-      data: (user) {
-        if (user == null) {
-          return const Scaffold(body: Center(child: Text('User not found')));
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stack) => Scaffold(
+        body: Center(child: Text('Error loading profile: $error')),
+      ),
+      data: (doc) {
+        if (!doc.exists || doc.data() == null) {
+          return const Scaffold(
+            body: Center(child: Text('User not found')),
+          );
         }
+
+        final user = doc.data()! as Map<String, dynamic>;
+
+        final username = user['username'] ?? user['userName'] ?? user['handle'] ?? '';
+        final name = user['name'] ?? user['displayName'] ?? 'No Name';
+        final postsCount = (user['postsCount'] as num?)?.toInt() ?? 0;
+        final followersCount = (user['followersCount'] as num?)?.toInt() ?? 0;
+        final followingCount = (user['followingCount'] as num?)?.toInt() ?? 0;
+        final profileImageUrl = user['profileImageUrl'] ?? user['photoUrl'] ?? '';
 
         return Scaffold(
           appBar: AppBar(
             elevation: 0,
             centerTitle: true,
-            title: Text(
-              user.name ?? 'Profile',
-              style: AppTextStyles.appBarTitle,
-            ),
+            title: Text(name, style: AppTextStyles.appBarTitle),
             actions: [
-              IconButton(
-                icon: Icon(Icons.settings_outlined, size: 24.sp),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ProfileScreen(),
+              if (isSelf)
+                IconButton(
+                  icon: Icon(Icons.settings_outlined, size: 24.sp),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ProfileScreen(),
+                      ),
+                    );
+                  },
+                ),
+            ],
+          ),
+          body: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 15.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppSpacing.vxl,
+                    OtherUserProfileHeader(
+                      username: username,
+                      name: name,
+                      postsCount: postsCount,
+                      followersCount: followersCount,
+                      followingCount: followingCount,
+                      profileImageUrl: profileImageUrl,
                     ),
-                  );
-                },
+                    AppSpacing.vxs,
+                    OtherUserProfileBio(
+                      
+                      category: user['category'] ?? '',
+                      description: user['bio'] ?? user['description'] ?? '',
+                      location: user['location'] ?? '',
+                      collaborationEmail: user['collaborationEmail'] ?? user['email'] ?? '',
+                      website: user['website'] ?? '',
+                    ),
+                    AppSpacing.vxl,
+                    if (!isSelf) _buildFollowButtons(ref, myId, profileId),
+                    AppSpacing.vxl,
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ProfileTabsView(userId: profileId), // ✅ corrected tabs view
               ),
             ],
           ),
-          body: NestedScrollView(
-            headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
-              return [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        AppSpacing.vxl,
-
-                        // Profile Header (Stats)
-                        myUserAsync.when(
-                          loading: () =>
-                              const Center(child: CircularProgressIndicator()),
-                          error: (_, __) => const Text('Error loading stats'),
-                          data: (myUser) {
-                            return OtherUserProfileHeader(
-                              username: user.username ?? 'no_username',
-                              name: user.name ?? 'No Name',
-                              // Firestore se agar string ya null aaye to handle ho jaye
-                              postsCount: (user.postsCount != null)
-                                  ? int.tryParse(user.postsCount.toString()) ??
-                                        0
-                                  : 0,
-                              followersCount: user.followersCount ?? 0,
-                              followingCount: user.followingCount ?? 0,
-                            );
-                          },
-                        ),
-
-                        AppSpacing.vxs,
-
-                        // Profile Bio
-                        // OtherUserProfileBio(
-                        //    name: user.name ?? 'No Name',
-                        //   category: user.category?? 'lifestyle & fashion',
-                        //   description:user.description?? 'creating daily aesthetics',
-                        //   location:user.location?? 'Los Angeles / NYC',
-                        //   collaborationEmail:user.collaborationEmail?? 'hello@wink.co',
-                        //   website:user.website ?? 'hhssjhwsw' '',
-                        // ),
-                        OtherUserProfileBio(
-                          name: user.name.isNotEmpty ? user.name : "Alex",
-                          //name: user.name ?? 'No Name',
-                          category: user.category.isNotEmpty
-                              ? user.category
-                              : 'Alex',
-                          description: user.bio.isNotEmpty ? user.bio : "Alex",
-                          //user.description?? 'creating daily aesthetics',
-                          location: user.location.isNotEmpty
-                              ? user.location
-                              : 'Los Angeles / NYC',
-                          collaborationEmail: user.collaborationEmail.isNotEmpty
-                              ? user.collaborationEmail
-                              : 'hello@wink.co',
-                          website: user.website.isNotEmpty
-                              ? user.website
-                              : 'hhssjhwsw',
-                        ),
-
-                        AppSpacing.vxl,
-
-                        // Follow / Message Buttons
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            AppButton(
-                              text: follow ? "Following" : "Follow",
-                              width: 160.w,
-                              isGhost: true,
-                              onPressed: () {
-                                ref
-                                    .read(
-                                      followProvider(
-                                        FollowParams(myId, profileId, myData),
-                                      ).notifier,
-                                    )
-                                    .toggle();
-                              },
-                            ),
-                            AppSpacing.hlg,
-                            AppButton(
-                              text: "Message",
-                              width: 160.w,
-                              isGhost: true,
-                              onPressed: () {},
-                            ),
-                          ],
-                        ),
-
-                        AppSpacing.vxl,
-                      ],
-                    ),
-                  ),
-                ),
-              ];
-            },
-            body: OtherUserProfileTabController(
-              //userModel.id,
-              targetUserId: profileId,
-            ),
-          ),
         );
       },
+    );
+  }
+
+  Widget _buildFollowButtons(WidgetRef ref, String myId, String profileId) {
+    return Row(
+      children: [
+        Expanded(
+          child: Consumer(
+            builder: (context, ref, _) {
+              final params = (currentUserId: myId, targetUserId: profileId);
+              final followAsync = ref.watch(isFollowingMergedProvider(params));
+              final isFollowing = followAsync.value ?? false;
+              final isLoading = followAsync.isLoading && followAsync.value == null;
+
+              return AppButton(
+                text: isLoading ? "..." : isFollowing ? "Following" : "Follow",
+                isGhost: !isFollowing,
+                onPressed: isLoading
+                    ? null
+                    : () async {
+                        final firestore = ref.read(firestoreServiceProvider);
+                        final optimisticNotifier = ref.read(followOptimisticProvider(params).notifier);
+                        final currentState = isFollowing;
+
+                        optimisticNotifier.state = !currentState;
+
+                        try {
+                          if (currentState) {
+                            await firestore.unfollowUser(myId, profileId);
+                          } else {
+                            await firestore.followUser(myId, profileId);
+                          }
+                          optimisticNotifier.state = null;
+                        } catch (e) {
+                          optimisticNotifier.state = currentState;
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Failed: $e')),
+                            );
+                          }
+                          await Future.delayed(const Duration(milliseconds: 300));
+                          optimisticNotifier.state = null;
+                        }
+                      },
+              );
+            },
+          ),
+        ),
+        AppSpacing.hlg,
+        Expanded(
+          child: AppButton(
+            text: "Message",
+            isGhost: true,
+            onPressed: () {},
+          ),
+        ),
+      ],
     );
   }
 }

@@ -2,56 +2,60 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:wink_app/core/config/routes/navigation_service.dart';
-import 'package:wink_app/core/config/routes/route_names.dart';
 import 'package:wink_app/core/config/theme/app_colors.dart';
 import 'package:wink_app/presentation/screens/create/decision-screen.dart';
 import 'package:wink_app/presentation/screens/create/edit-video_screen.dart';
-
 import 'package:wink_app/presentation/screens/create/edit_preview_screen.dart';
 import 'package:wink_app/presentation/widgets/create_tile.dart';
+import 'package:wink_app/viewmodels/image_picker_vm.dart';
 
 class CreateBottomSheet extends ConsumerWidget {
   const CreateBottomSheet({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final ImagePicker picker = ImagePicker();
-
     Future<void> handlePickVideo() async {
-      final XFile? file = await picker.pickVideo(source: ImageSource.gallery);
+      await ref.read(imagePickerProvider.notifier).pickVideoFromGallery();
+      final file = ref.read(imagePickerProvider);
+
       if (file == null || !context.mounted) return;
 
-      Navigator.push(
+      // ✅ Clear provider BEFORE navigation
+      ref.read(imagePickerProvider.notifier).clear();
+
+      Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (_) => VideoEditor(videoFile: File(file.path)),
-        ),
+        MaterialPageRoute(builder: (_) => VideoEditor(videoFile: file)),
       );
     }
 
     Future<void> handlePickImageForPost() async {
-      final XFile? file = await picker.pickImage(source: ImageSource.gallery);
+      await ref.read(imagePickerProvider.notifier).pickFromGallery();
+      final file = ref.read(imagePickerProvider);
+
       if (file == null || !context.mounted) return;
+
+      ref.read(imagePickerProvider.notifier).clear();
 
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (_) => EditPreviewScreen(file: File(file.path)),
-        ),
+        MaterialPageRoute(builder: (_) => EditPreviewScreen(file: file)),
       );
     }
 
     Future<void> handlePickImageForStory() async {
-      final XFile? file = await picker.pickImage(source: ImageSource.gallery);
+      await ref.read(imagePickerProvider.notifier).pickFromGallery();
+      final file = ref.read(imagePickerProvider);
+
       if (file == null || !context.mounted) return;
+
+      ref.read(imagePickerProvider.notifier).clear();
 
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => UploadDecisionScreen(
-            file: File(file.path),
+            file: file,
             isVideo: false,
             uploadType: 'story',
           ),

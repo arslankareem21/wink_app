@@ -5,6 +5,7 @@ import 'package:wink_app/models/story_model.dart';
 import 'package:wink_app/presentation/screens/auth/login_screen.dart';
 import 'package:wink_app/presentation/screens/auth/forget_password_screen.dart';
 import 'package:wink_app/presentation/screens/auth/signup-screen.dart';
+import 'package:wink_app/presentation/screens/create/edit-video_screen.dart';
 import 'package:wink_app/presentation/screens/create/story/create_story.dart';
 import 'package:wink_app/presentation/screens/home/bottom_nav_bar.dart';
 import 'package:wink_app/presentation/screens/profile/edit_profile.dart';
@@ -57,26 +58,29 @@ class AppRouter {
         name: 'edit profile',
         builder: (context, state) => const EditProfileScreen(),
       ),
-      GoRoute(
-        path: AppRoutes.Settings,
-        name: 'Settings',
-        builder: (context, state) => const SettingsScreen(),
-      ),
+       
+      
 
       GoRoute(
         path: AppRoutes.reels,
         name: 'reels',
-        builder: (context, state) => const ReelPage(),
+        builder: (context, state) => const ShortsPage(),
       ),
       GoRoute(
         path: AppRoutes.successfullyPost,
         name: 'successfullyPost',
         builder: (context, state) => const SuccessfullyPost(),
       ),
+      
       GoRoute(
         path: AppRoutes.splash,
         name: 'splash',
         builder: (context, state) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.settings,
+        name: 'settings',
+        builder: (context, state) => const SettingsScreen(),
       ),
       GoRoute(
         path: AppRoutes.login,
@@ -93,6 +97,7 @@ class AppRouter {
         name: 'forgotPassword',
         builder: (context, state) => const ForgetPasswordScreen(),
       ),
+      
       GoRoute(
         path: AppRoutes.home,
         name: 'home',
