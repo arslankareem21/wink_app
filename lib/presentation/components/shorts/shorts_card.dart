@@ -27,19 +27,14 @@ class ShortsCard extends StatelessWidget {
   });
 
   final ShortModel short;
-
   final String username;
   final String profileUrl;
-
   final bool isLiked;
   final bool isFollowing;
   final bool isCurrentUser;
-
   final bool isLoading;
   final bool hasError;
-
   final controller;
-
   final VoidCallback onVideoTap;
   final VoidCallback onLike;
   final VoidCallback onFollow;
@@ -52,19 +47,22 @@ class ShortsCard extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-
-        // Point 10: Tap to play/pause with opaque hit test
-        GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: onVideoTap,
-          onDoubleTap: onLike,
-          child: VideoPlayerWidget(
-            controller: controller,
-            isLoading: isLoading,
-            hasError: hasError,
+        // Video player (base layer)
+        VideoPlayerWidget(
+          controller: controller,
+          isLoading: isLoading,
+          hasError: hasError,
+        ),
+        // Tap zone for play/pause (only on video)
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: onVideoTap,
+            onDoubleTap: onLike,
+            child: Container(),
           ),
         ),
-
+        // Gradient overlay (non-interactive)
         IgnorePointer(
           child: Container(
             decoration: BoxDecoration(
@@ -80,7 +78,6 @@ class ShortsCard extends StatelessWidget {
             ),
           ),
         ),
-
         Positioned(
           left: 14.w,
           right: 90.w,
@@ -95,7 +92,6 @@ class ShortsCard extends StatelessWidget {
             onUserTap: onUserTap,
           ),
         ),
-
         Positioned(
           right: 12.w,
           bottom: 24.h,
@@ -128,10 +124,8 @@ class _LeftPanel extends StatelessWidget {
   final String username;
   final String caption;
   final String profileUrl;
-
   final bool isCurrentUser;
   final bool isFollowing;
-
   final VoidCallback onFollow;
   final VoidCallback onUserTap;
 
@@ -141,57 +135,38 @@ class _LeftPanel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-
         GestureDetector(
           onTap: onUserTap,
           child: Row(
             children: [
-
               CircleAvatar(
                 radius: 18.r,
                 backgroundColor: Colors.grey.shade900,
-                backgroundImage: profileUrl.isEmpty
-                   ? null
-                    : CachedNetworkImageProvider(profileUrl),
-                child: profileUrl.isEmpty
-                   ? const Icon(Icons.person)
-                    : null,
+                backgroundImage:
+                    profileUrl.isEmpty? null : CachedNetworkImageProvider(profileUrl),
+                child: profileUrl.isEmpty? const Icon(Icons.person) : null,
               ),
-
               AppSpacing.hsm,
-
               Expanded(
                 child: Text(
                   "@$username",
-                  style: AppTextStyles.shortsUsername.copyWith(
-                    color: Colors.white,
-                  ),
+                  style: AppTextStyles.shortsUsername.copyWith(color: Colors.white),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-
               if (!isCurrentUser)...[
                 AppSpacing.hsm,
-
                 GestureDetector(
                   onTap: onFollow,
                   child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 10.w,
-                      vertical: 5.h,
-                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
                     decoration: BoxDecoration(
                       border: Border.all(color: Colors.white),
                       borderRadius: BorderRadius.circular(6.r),
                     ),
                     child: Text(
-                      isFollowing
-                         ? "Following"
-                          : "Follow",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                      ),
+                      isFollowing? "Following" : "Follow",
+                      style: const TextStyle(color: Colors.white, fontSize: 11),
                     ),
                   ),
                 ),
@@ -199,16 +174,12 @@ class _LeftPanel extends StatelessWidget {
             ],
           ),
         ),
-
         AppSpacing.vmd,
-
         Text(
           caption,
           maxLines: 3,
           overflow: TextOverflow.ellipsis,
-          style: AppTextStyles.shortsCaption.copyWith(
-            color: Colors.white,
-          ),
+          style: AppTextStyles.shortsCaption.copyWith(color: Colors.white),
         ),
       ],
     );
@@ -229,9 +200,7 @@ class _RightPanel extends StatelessWidget {
   final int likes;
   final int comments;
   final int views;
-
   final bool isLiked;
-
   final VoidCallback onLike;
   final VoidCallback onComment;
   final VoidCallback onShare;
@@ -240,36 +209,21 @@ class _RightPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-
         _ActionButton(
-          icon: isLiked
-             ? Icons.favorite
-              : Icons.favorite_border,
-          color: isLiked
-             ? Colors.red
-              : Colors.white,
+          icon: isLiked? Icons.favorite : Icons.favorite_border,
+          color: isLiked? Colors.red : Colors.white,
           label: _format(likes),
           onTap: onLike,
         ),
-
         SizedBox(height: 20.h),
-
         _ActionButton(
           icon: Icons.chat_bubble_outline,
           label: _format(comments),
           onTap: onComment,
         ),
-
         SizedBox(height: 20.h),
-
-        _ActionButton(
-          icon: Icons.send_rounded,
-          label: "",
-          onTap: onShare,
-        ),
-
+        _ActionButton(icon: Icons.send_rounded, label: "", onTap: onShare),
         SizedBox(height: 20.h),
-
         _ActionButton(
           icon: Icons.remove_red_eye_outlined,
           label: _format(views),
@@ -280,14 +234,8 @@ class _RightPanel extends StatelessWidget {
   }
 
   static String _format(int value) {
-    if (value >= 1000000) {
-      return "${(value / 1000000).toStringAsFixed(1)}M";
-    }
-
-    if (value >= 1000) {
-      return "${(value / 1000).toStringAsFixed(1)}K";
-    }
-
+    if (value >= 1000000) return "${(value / 1000000).toStringAsFixed(1)}M";
+    if (value >= 1000) return "${(value / 1000).toStringAsFixed(1)}K";
     return value.toString();
   }
 }
@@ -311,21 +259,13 @@ class _ActionButton extends StatelessWidget {
       onTap: onTap,
       child: Column(
         children: [
-
-          Icon(
-            icon,
-            color: color,
-            size: 32.sp,
-          ),
-
+          Icon(icon, color: color, size: 32.sp),
           SizedBox(height: 4.h),
-
           if (label.isNotEmpty)
             Text(
               label,
-              style: AppTextStyles.shortsEngagementCount.copyWith(
-                color: Colors.white,
-              ),
+              style:
+                  AppTextStyles.shortsEngagementCount.copyWith(color: Colors.white),
             ),
         ],
       ),

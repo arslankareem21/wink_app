@@ -1,10 +1,13 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:video_player/video_player.dart';
-import 'package:wink_app/presentation/screens/reels/video_controller_manager.dart';
+import 'package:wink_app/service/reels/video_controller_manager.dart';
 import 'package:wink_app/service/reels/reels_service.dart';
+import 'package:wink_app/service/reels/controller-health-service.dart';
+import 'package:wink_app/service/reels/network-service.dart';
 
 import '../../models/short_model.dart';
 
@@ -38,15 +41,26 @@ class ShortsState {
 
 class ShortsViewModel extends StateNotifier<ShortsState> {
   ShortsViewModel(this._repo) : super(const ShortsState()) {
-    _listen();
+    _initialize();
   }
 
   final ShortsRepository _repo;
   final VideoControllerManager video = VideoControllerManager.instance;
   StreamSubscription<List<ShortModel>>? _sub;
+  final Map<String, bool> _optimisticLikes = {}; // Local state for optimistic updates
 
   String get currentUserId =>
       FirebaseAuth.instance.currentUser?.uid?? "";
+
+  void _initialize() {
+    // Start health monitoring
+    ControllerHealthService.instance.start();
+    
+    // Initialize network retry service
+    NetworkRetryService.instance.init();
+    
+    _listen();
+  }
 
   void _listen() {
     _sub?.cancel();
@@ -54,7 +68,12 @@ class ShortsViewModel extends StateNotifier<ShortsState> {
       state = state.copyWith(shorts: list, loading: false);
 
       if (list.isNotEmpty) {
-        // Point 2: Let manager handle autoplay + preload
+        // Cache URLs in health service for recovery
+        for (int i = 0; i < list.length; i++) {
+          ControllerHealthService.instance.cacheUrl(i, list[i].videoUrl);
+        }
+        
+        // Let manager handle autoplay + preload
         await video.onPageChanged(
           newIndex: 0,
           urls: list.map((e) => e.videoUrl).toList(),
@@ -73,6 +92,13 @@ class ShortsViewModel extends StateNotifier<ShortsState> {
     if (index < 0 || index >= state.shorts.length) return;
 
     state = state.copyWith(currentIndex: index);
+
+    // Cache current and nearby URLs
+    for (int i = index - 2; i <= index + 4; i++) {
+      if (i >= 0 && i < state.shorts.length) {
+        ControllerHealthService.instance.cacheUrl(i, state.shorts[i].videoUrl);
+      }
+    }
 
     // Manager handles everything now
     await video.onPageChanged(
@@ -100,10 +126,32 @@ class ShortsViewModel extends StateNotifier<ShortsState> {
 
   Future<void> like(int index) async {
     if(currentUserId.isEmpty)return;
-    await _repo.toggleLike(
-      shortId: state.shorts[index].shortId,
-      userId: currentUserId,
-    );
+    if(index < 0 || index >= state.shorts.length) return;
+    
+    final shortId = state.shorts[index].shortId;
+    
+    // Optimistic update - toggle local state immediately
+    _optimisticLikes[shortId] = !(_optimisticLikes[shortId] ?? false);
+    
+    // Update UI immediately
+    state = state.copyWith();
+    
+    // Then update Firebase in background
+    try {
+      await _repo.toggleLike(
+        shortId: shortId,
+        userId: currentUserId,
+      );
+    } catch (e) {
+      // Revert on failure
+      _optimisticLikes.remove(shortId);
+      state = state.copyWith();
+      debugPrint('Like failed: $e');
+    }
+  }
+  
+  bool isLikedOptimistic(String shortId) {
+    return _optimisticLikes[shortId] ?? false;
   }
 
   Future<void> follow(String userId) async {
@@ -119,6 +167,8 @@ class ShortsViewModel extends StateNotifier<ShortsState> {
   @override
   void dispose() {
     _sub?.cancel();
+    ControllerHealthService.instance.stop();
+    NetworkRetryService.instance.dispose();
     video.disposeAll();
     super.dispose();
   }

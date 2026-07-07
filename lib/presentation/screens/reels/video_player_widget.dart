@@ -19,88 +19,60 @@ class VideoPlayerWidget extends StatelessWidget {
       return const ColoredBox(
         color: Colors.black,
         child: Center(
-          child: Icon(
-            Icons.error_outline,
-            color: Colors.white54,
-            size: 60,
-          ),
+          child: Icon(Icons.error_outline, color: Colors.white54, size: 60),
         ),
       );
     }
 
     final videoController = controller;
 
-    if (videoController == null) {
+    if (videoController == null ||!videoController.value.isInitialized) {
       return const ColoredBox(
         color: Colors.black,
-        child: Center(
-          child: CircularProgressIndicator(color: Colors.white),
-        ),
+        child: Center(child: CircularProgressIndicator(color: Colors.white)),
       );
     }
 
-    try {
-      if (!videoController.value.isInitialized) {
-        return const ColoredBox(
-          color: Colors.black,
-          child: Center(
-            child: CircularProgressIndicator(color: Colors.white),
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Center(
+          child: FittedBox(
+            fit: BoxFit.cover,
+            child: SizedBox(
+              width: videoController.value.size.width,
+              height: videoController.value.size.height,
+              child: VideoPlayer(videoController),
+            ),
           ),
-        );
-      }
-
-      return Stack(
-        fit: StackFit.expand,
-        children: [
+        ),
+        // 5. Buffer indicator - only while buffering
+        if (videoController.value.isBuffering)
+          Container(
+            color: Colors.black26,
+            child: const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            ),
+          ),
+        // 4. Show play icon ONLY when paused (not during loading/buffering/playing)
+        if (videoController.value.isInitialized &&
+            !videoController.value.isPlaying &&
+            !videoController.value.isBuffering)
           Center(
-            child: FittedBox(
-              fit: BoxFit.cover,
-              child: SizedBox(
-                width: videoController.value.size.width,
-                height: videoController.value.size.height,
-                child: VideoPlayer(videoController),
+            child: Container(
+              padding: const EdgeInsets.all(18),
+              decoration: const BoxDecoration(
+                color: Colors.black45,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.play_arrow_rounded,
+                color: Colors.white,
+                size: 70,
               ),
             ),
           ),
-
-          // Point 5: Buffer indicator - only while buffering
-          if (videoController.value.isBuffering)
-            IgnorePointer(
-              child: Container(
-                color: Colors.black26,
-                child: const Center(
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-
-          // Point 4: Show play icon when paused
-          if (!videoController.value.isPlaying)
-            Center(
-              child: Container(
-                padding: const EdgeInsets.all(18),
-                decoration: const BoxDecoration(
-                  color: Colors.black45,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.play_arrow,
-                  color: Colors.white,
-                  size: 60,
-                ),
-              ),
-            ),
-        ],
-      );
-    } catch (_) {
-      return const ColoredBox(
-        color: Colors.black,
-        child: Center(
-          child: CircularProgressIndicator(color: Colors.white),
-        ),
-      );
-    }
+      ],
+    );
   }
 }

@@ -6,7 +6,7 @@ import 'package:wink_app/firebase_options.dart';
 import 'app.dart';
 
 
-void main() async {
+void main() async {  
   WidgetsFlutterBinding.ensureInitialized();
   
   await Firebase.initializeApp(
@@ -18,7 +18,7 @@ void main() async {
 }
 
 class MyAppRoot extends StatelessWidget {
-  const MyAppRoot({super.key});
+  const MyAppRoot({super.key}); 
   
   @override
   Widget build(BuildContext context) {

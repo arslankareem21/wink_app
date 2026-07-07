@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:video_player/video_player.dart';
+import 'package:wink_app/service/reels/preload_queue.dart';
+import 'package:wink_app/service/reels/controller-health-service.dart';
 
 class VideoControllerManager {
   VideoControllerManager._();
@@ -11,10 +13,12 @@ class VideoControllerManager {
   static const int maxRetry = 3;
   static const int keepBehind = 2;
   static const int keepAhead = 4;
+  static const Duration baseRetryDelay = Duration(seconds: 2);
 
   final Map<int, VideoPlayerController> _controllers = {};
   final Set<int> _initializing = {};
   final Set<int> _failed = {};
+  final Map<int, int> _retryAttempts = {};
   int _currentIndex = 0;
   List<String> _urls = [];
 
@@ -29,9 +33,14 @@ class VideoControllerManager {
     return _controllers[index];
   }
 
+  // Alias for preload_queue compatibility
+  VideoPlayerController? controllerFor(int index) {
+    return _controllers[index];
+  }
+
   bool isBuffering(int index) {
     final controller = _controllers[index];
-    if (controller == null) return true;
+    if (controller == null) return false;
     if (!controller.value.isInitialized) return true;
     return controller.value.isBuffering;
   }
@@ -89,12 +98,17 @@ class VideoControllerManager {
       throw Exception("Invalid video URL: $url");
     }
 
+    // Reset retry count for fresh attempts
+    _retryAttempts[index] = 0;
+
     for (int attempt = 1; attempt <= maxRetry; attempt++) {
       VideoPlayerController? controller;
+      _retryAttempts[index] = attempt;
 
       try {
         controller = VideoPlayerController.networkUrl(uri);
 
+        // Initialize with timeout
         await controller.initialize().timeout(initializeTimeout);
         await controller.setLooping(true);
         await controller.setVolume(1);
@@ -103,6 +117,7 @@ class VideoControllerManager {
           await controller.play();
         }
 
+        // Add listener for error tracking
         controller.addListener(() {
           final value = controller!.value;
           if (value.hasError) {
@@ -116,29 +131,37 @@ class VideoControllerManager {
 
         _controllers[index] = controller;
         _failed.remove(index);
+        _retryAttempts.remove(index);
 
         debugPrint("Video initialized successfully [$index]");
         return;
       } on TimeoutException catch (_) {
-        lastException = Exception("Video initialization timeout.");
+        // Handle timeout (Cloudinary slow response)
+        lastException = Exception("Video initialization timeout (attempt $attempt)");
         try {
           await controller?.dispose();
         } catch (_) {}
         debugPrint("Timeout initializing video [$index] Attempt $attempt");
       } catch (e) {
+        // Handle socket errors and other network issues
         lastException = Exception(e.toString());
         try {
           await controller?.dispose();
         } catch (_) {}
-        debugPrint("Initialization failed [$index] Attempt $attempt\n$e");
+        debugPrint("Initialization failed [$index] Attempt $attempt: $e");
       }
 
       if (attempt < maxRetry) {
-        await Future.delayed(const Duration(seconds: 3));
+        // Exponential backoff: 2s, 4s, 8s
+        final delaySeconds = (baseRetryDelay.inSeconds * (1 << (attempt - 1)));
+        final delay = Duration(seconds: delaySeconds);
+        debugPrint("Retrying in ${delay.inSeconds}s... [$index]");
+        await Future.delayed(delay);
       }
     }
 
     _failed.add(index);
+    _retryAttempts.remove(index);
     debugPrint("All retries failed for [$index]: $lastException");
   }
 
@@ -146,7 +169,12 @@ class VideoControllerManager {
     required int index,
     required String url,
   }) async {
-    await initializeVideo(index: index, url: url, autoPlay: false);
+    // Delegate to PreloadQueue for background preloading
+    PreloadQueue.instance.enqueue(
+      index: index,
+      url: url,
+      priority: 0,
+    );
   }
 
   Future<void> onPageChanged({
@@ -172,11 +200,34 @@ class VideoControllerManager {
       autoPlay: true,
     );
 
-    // Only preload 4 ahead
+    // Cache URL in health service
+    ControllerHealthService.instance.cacheUrl(newIndex, urls[newIndex]);
+
+    // Preload ahead using PreloadQueue with priority based on distance
     for (int i = newIndex + 1;
         i <= newIndex + keepAhead && i < urls.length;
         i++) {
-      unawaited(preload(index: i, url: urls[i]));
+      final distance = i - newIndex;
+      final priority = keepAhead - distance + 1; // Higher priority for closer videos
+      
+      debugPrint('[VideoManager] Queuing preload for index $i (priority: $priority)');
+      PreloadQueue.instance.enqueue(
+        index: i,
+        url: urls[i],
+        priority: priority,
+      );
+      ControllerHealthService.instance.cacheUrl(i, urls[i]);
+    }
+
+    // Also preload behind for smooth backward scrolling
+    for (int i = newIndex - 1; i >= newIndex - keepBehind && i >= 0; i--) {
+      debugPrint('[VideoManager] Queuing preload for index $i (priority: 1)');
+      PreloadQueue.instance.enqueue(
+        index: i,
+        url: urls[i],
+        priority: 1, // Lower priority
+      );
+      ControllerHealthService.instance.cacheUrl(i, urls[i]);
     }
 
     disposeUnused();
@@ -263,13 +314,22 @@ class VideoControllerManager {
     _controllers.remove(index);
     _initializing.remove(index);
     _failed.remove(index);
+    _retryAttempts.remove(index);
   }
 
   Future<void> disposeAll() async {
+    // Stop health monitoring
+    ControllerHealthService.instance.stop();
+    
+    // Clear preload queue
+    PreloadQueue.instance.clear();
+    
     final list = _controllers.values.toList();
     _controllers.clear();
     _failed.clear();
     _initializing.clear();
+    _retryAttempts.clear();
+    
     for (final controller in list) {
       try {
         await controller.dispose();
