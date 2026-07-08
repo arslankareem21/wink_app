@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:wink_app/core/config/theme/app_colors.dart';
@@ -76,6 +77,7 @@ class _SetupPasswordDialogState extends ConsumerState<SetupPasswordDialog> {
                 AppTextField(
                   controller: _passwordController,
                   hintText: 'Min 6 characters',
+                  inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
                   isPassword: true,
                   prefixIcon: Icon(Icons.lock_outline,
                       color: AppColors.primaryYellow, size: 20.sp),
@@ -87,6 +89,7 @@ class _SetupPasswordDialogState extends ConsumerState<SetupPasswordDialog> {
                 AppSpacing.vsm,
                 AppTextField(
                   controller: _confirmController,
+                  inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
                   hintText: 'Re-enter password',
                   isPassword: true,
                   prefixIcon: Icon(Icons.lock_outline,

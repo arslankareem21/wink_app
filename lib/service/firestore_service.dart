@@ -101,11 +101,17 @@ class FirestoreService {
 
   // ---------------- USER DATA ----------------
   Stream<DocumentSnapshot> getUserStream(String userId) {
+    if (userId.trim().isEmpty) {
+      return Stream.empty();
+    }
     return _firestore.collection('users').doc(userId).snapshots();
   }
 
   // Read from subcollection - this is correct since you write there
   Stream<List<PostModels>> getUserPosts(String userId) {
+    if (userId.trim().isEmpty) {
+      return Stream.value([]);
+    }
     return _firestore
         .collection('users')
         .doc(userId)
@@ -116,6 +122,9 @@ class FirestoreService {
   }
 
   Stream<List<ShortModel>> getUserShorts(String userId) {
+    if (userId.trim().isEmpty) {
+      return Stream.value([]);
+    }
     return _firestore
         .collection('users')
         .doc(userId)
@@ -127,6 +136,9 @@ class FirestoreService {
 
   // ---------------- FOLLOW/UNFOLLOW ----------------
   Stream<bool> isFollowing(String currentUserId, String targetUserId) {
+    if (currentUserId.trim().isEmpty || targetUserId.trim().isEmpty) {
+      return Stream.value(false);
+    }
     if (currentUserId == targetUserId) return Stream.value(false); // Can't follow self
     return _firestore
         .collection('users')

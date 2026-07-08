@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ import 'package:wink_app/models/auth/user_model.dart';
 import 'package:wink_app/models/post_model.dart';
 import 'package:wink_app/models/post_models.dart';
 import 'package:wink_app/models/user_model.dart';
+
 import 'package:wink_app/viewmodels/post_viewmodel.dart';
 import '../../../core/config/theme/app_colors.dart';
 
@@ -108,21 +110,15 @@ class PostCard extends ConsumerWidget {
   }
 
   Widget _buildHeader(BuildContext context, UserModel user) {
-    final hasProfilePic = user.profileImageUrl != null && user.profileImageUrl!.isNotEmpty;
-    
     return Padding(
       padding: AppSpacing.cardPadding,
       child: Row(
         children: [
           CircleAvatar(
             radius: 16.r,
-            backgroundColor: Colors.grey.shade300,
-            backgroundImage: hasProfilePic 
-                ? CachedNetworkImageProvider(user.profileImageUrl!) 
-                : null,
-            child: !hasProfilePic 
-                ? Icon(Icons.person, size: 18.sp, color: Colors.grey.shade600)
-                : null,
+            backgroundImage: CachedNetworkImageProvider(
+              user.profileImageUrl.toString(),
+            ),
           ),
           SizedBox(width: 10.w),
           Expanded(
@@ -140,57 +136,48 @@ class PostCard extends ConsumerWidget {
     );
   }
 
-  /// Dynamic IG-STYLE: 1.91:1 to 4:5, Max height 548.h
-  /// Fixed: Proper aspect ratio without FutureBuilder jank
+  /// IG-STYLE ASPECT RATIO: Min 1.91:1, Max 4:5, Max height 548.h
   Widget _buildPostImage(String imageUrl, WidgetRef ref, bool isLiked) {
     return GestureDetector(
       onDoubleTap: () => _handleLike(ref),
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: 548.h),
-        child: CachedNetworkImage(
-          imageUrl: imageUrl,
-          imageBuilder: (context, imageProvider) {
-            return LayoutBuilder(
-              builder: (context, constraints) {
-                return FutureBuilder<Size>(
-                  future: _getImageSize(imageProvider),
-                  builder: (context, snapshot) {
-                    double aspectRatio = 1; // default square while loading
-                    
-                    if (snapshot.hasData) {
-                      final size = snapshot.data!;
-                      aspectRatio = size.width / size.height;
-                      // IG clamp: min 0.8 (4:5), max 1.91
-                      aspectRatio = aspectRatio.clamp(0.8, 1.91);
-                    }
-                    
-                    return AspectRatio(
-                      aspectRatio: aspectRatio,
-                      child: Container(
-                        color: AppColors.hintLight,
-                        child: Image(
-                          image: imageProvider,
-                          fit: BoxFit.contain,
-                        ),
+        constraints: BoxConstraints(maxHeight: 548.h), // IG max height
+        child: AspectRatio(
+          aspectRatio: 1, // Default square, will adjust after load
+          child: CachedNetworkImage(
+            imageUrl: imageUrl,
+            fit: BoxFit.cover,
+            imageBuilder: (context, imageProvider) => FutureBuilder<Size>(
+              future: _getImageSize(imageProvider),
+              builder: (context, snapshot) {
+                double aspectRatio = 1; // default
+                if (snapshot.hasData) {
+                  final size = snapshot.data!;
+                  aspectRatio = size.width / size.height;
+                  // Clamp between 1.91:1 and 4:5 like IG
+                  if (aspectRatio > 1.91) aspectRatio = 1.91; // too wide
+                  if (aspectRatio < 0.8) aspectRatio = 0.8; // too tall, 4:5
+                }
+                return AspectRatio(
+                  aspectRatio: aspectRatio,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: imageProvider,
+                        fit: BoxFit.cover,
                       ),
-                    );
-                  },
+                    ),
+                  ),
                 );
               },
-            );
-          },
-          placeholder: (context, url) => AspectRatio(
-            aspectRatio: 1,
-            child: Container(
-              color: AppColors.hintLight,
+            ),
+            placeholder: (context, url) => Container(
+              color: Colors.grey.shade200,
               child: const Center(
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
             ),
-          ),
-          errorWidget: (_, __, ___) => AspectRatio(
-            aspectRatio: 1,
-            child: Container(
+            errorWidget: (_, __, ___) => Container(
               color: Colors.grey.shade200,
               child: Icon(Icons.broken_image_outlined, size: 40.sp),
             ),
@@ -203,19 +190,11 @@ class PostCard extends ConsumerWidget {
   Future<Size> _getImageSize(ImageProvider imageProvider) async {
     final completer = Completer<Size>();
     final imageStream = imageProvider.resolve(const ImageConfiguration());
-    final listener = ImageStreamListener((info, _) {
-      if (!completer.isCompleted) {
-        completer.complete(Size(
-          info.image.width.toDouble(), 
-          info.image.height.toDouble()
-        ));
-      }
-    }, onError: (exception, stackTrace) {
-      if (!completer.isCompleted) {
-        completer.complete(const Size(1, 1));
-      }
-    });
-    imageStream.addListener(listener);
+    imageStream.addListener(
+      ImageStreamListener((info, _) {
+        //completer.complete(Size(info.image.width.toDouble(), info.image.height.toDouble()));
+      }),
+    );
     return completer.future;
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class VideoPlayerWidget extends StatelessWidget {
   const VideoPlayerWidget({
@@ -7,11 +8,13 @@ class VideoPlayerWidget extends StatelessWidget {
     required this.controller,
     required this.isLoading,
     required this.hasError,
+    required this.thumbnailUrl,
   });
 
   final VideoPlayerController? controller;
   final bool isLoading;
   final bool hasError;
+  final String thumbnailUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -24,55 +27,55 @@ class VideoPlayerWidget extends StatelessWidget {
       );
     }
 
-    final videoController = controller;
-
-    if (videoController == null ||!videoController.value.isInitialized) {
-      return const ColoredBox(
-        color: Colors.black,
-        child: Center(child: CircularProgressIndicator(color: Colors.white)),
-      );
+    Widget buildPlaceholder() {
+      if (thumbnailUrl.isNotEmpty) {
+        return CachedNetworkImage(
+          imageUrl: thumbnailUrl,
+          fit: BoxFit.cover,
+          placeholder: (context, url) => const ColoredBox(color: Colors.black),
+          errorWidget: (context, url, error) => const ColoredBox(color: Colors.black),
+        );
+      }
+      return const ColoredBox(color: Colors.black);
     }
 
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Center(
-          child: FittedBox(
-            fit: BoxFit.cover,
-            child: SizedBox(
-              width: videoController.value.size.width,
-              height: videoController.value.size.height,
-              child: VideoPlayer(videoController),
-            ),
-          ),
-        ),
-        // 5. Buffer indicator - only while buffering
-        if (videoController.value.isBuffering)
-          Container(
-            color: Colors.black26,
-            child: const Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            ),
-          ),
-        // 4. Show play icon ONLY when paused (not during loading/buffering/playing)
-        if (videoController.value.isInitialized &&
-            !videoController.value.isPlaying &&
-            !videoController.value.isBuffering)
-          Center(
-            child: Container(
-              padding: const EdgeInsets.all(18),
-              decoration: const BoxDecoration(
-                color: Colors.black45,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.play_arrow_rounded,
-                color: Colors.white,
-                size: 70,
+    final videoController = controller;
+
+    if (videoController == null) {
+      return buildPlaceholder();
+    }
+
+    return ValueListenableBuilder<VideoPlayerValue>(
+      valueListenable: videoController,
+      builder: (context, value, _) {
+        if (!value.isInitialized) {
+          return buildPlaceholder();
+        }
+
+        final videoSize = value.size;
+        final videoWidth = videoSize.width > 0
+            ? videoSize.width
+            : MediaQuery.of(context).size.width;
+        final videoHeight = videoSize.height > 0
+            ? videoSize.height
+            : MediaQuery.of(context).size.height;
+
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            Center(
+              child: FittedBox(
+                fit: BoxFit.cover,
+                child: SizedBox(
+                  width: videoWidth,
+                  height: videoHeight,
+                  child: VideoPlayer(videoController),
+                ),
               ),
             ),
-          ),
-      ],
+          ],
+        );
+      },
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -18,7 +19,6 @@ import 'package:wink_app/viewmodels/auth_viewmodel.dart';
 import 'package:wink_app/viewmodels/image_picker_vm.dart';
 import 'package:wink_app/viewmodels/profile/edit_profile_vm.dart/edit_profile_vm.dart';
 import 'package:wink_app/viewmodels/upload_vm.dart';
-
 
 class EditProfileScreen extends HookConsumerWidget {
   const EditProfileScreen({super.key});
@@ -53,6 +53,7 @@ class EditProfileScreen extends HookConsumerWidget {
           debouncedUsername.value = usernameController.text.trim();
         });
       }
+
       usernameController.addListener(listener);
       return () {
         usernameController.removeListener(listener);
@@ -61,7 +62,8 @@ class EditProfileScreen extends HookConsumerWidget {
     }, [usernameController]);
 
     final currentUser = currentUserAsync.value;
-    final isNewUsername = currentUser != null &&
+    final isNewUsername =
+        currentUser != null &&
         debouncedUsername.value.toLowerCase() !=
             currentUser.username?.toLowerCase();
 
@@ -112,7 +114,9 @@ class EditProfileScreen extends HookConsumerWidget {
         return;
       }
       try {
-        await ref.read(editProfileViewModelProvider.notifier).updateProfileData(
+        await ref
+            .read(editProfileViewModelProvider.notifier)
+            .updateProfileData(
               uid: user.userId,
               username: usernameController.text.trim(),
               bio: descriptionController.text.trim(),
@@ -128,7 +132,9 @@ class EditProfileScreen extends HookConsumerWidget {
         }
       } catch (e) {
         if (context.mounted) {
-          AppSnackBar.show('Error: ${e.toString().replaceAll('Exception: ', '')}');
+          AppSnackBar.show(
+            'Error: ${e.toString().replaceAll('Exception: ', '')}',
+          );
         }
       }
     }
@@ -180,8 +186,8 @@ class EditProfileScreen extends HookConsumerWidget {
 
           final networkImageUrl =
               user.profileImageUrl != null && user.profileImageUrl!.isNotEmpty
-                  ? user.profileImageUrl
-                  : null;
+              ? user.profileImageUrl
+              : null;
 
           return SingleChildScrollView(
             padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg.w),
@@ -212,11 +218,17 @@ class EditProfileScreen extends HookConsumerWidget {
                               color: AppColors.primaryYellow,
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: Theme.of(context).scaffoldBackgroundColor,
+                                color: Theme.of(
+                                  context,
+                                ).scaffoldBackgroundColor,
                                 width: 2,
                               ),
                             ),
-                            child: const Icon(Icons.camera_alt, color: Colors.white, size: 18),
+                            child: const Icon(
+                              Icons.camera_alt,
+                              color: Colors.white,
+                              size: 18,
+                            ),
                           ),
                         ),
                         if (uploadState.isUploading)
@@ -228,7 +240,9 @@ class EditProfileScreen extends HookConsumerWidget {
                               ),
                               child: Center(
                                 child: CircularProgressIndicator(
-                                  value: uploadState.progress > 0 ? uploadState.progress : null,
+                                  value: uploadState.progress > 0
+                                      ? uploadState.progress
+                                      : null,
                                   strokeWidth: 3,
                                   color: Colors.white,
                                 ),
@@ -240,7 +254,12 @@ class EditProfileScreen extends HookConsumerWidget {
                   ),
                 ),
                 AppSpacing.vsm,
-                Center(child: Text("Edit Profile", style: TextStyle(fontSize: 14.sp))),
+                Center(
+                  child: Text(
+                    "Edit Profile",
+                    style: TextStyle(fontSize: 14.sp),
+                  ),
+                ),
                 AppSpacing.vxxl,
                 Text("NAME"),
                 AppSpacing.vsm,
@@ -258,17 +277,27 @@ class EditProfileScreen extends HookConsumerWidget {
                   hintText: 'Your username',
                   controller: usernameController,
                   validator: Validators.username,
-                  errorText: isUsernameTaken ? 'This username is already taken' : null,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.deny(RegExp(r'\s')),
+                  ],
+
+                  errorText: isUsernameTaken
+                      ? 'This username is already taken'
+                      : null,
                   suffixIcon: usernameCheckAsync.isLoading
                       ? const SizedBox(
                           width: 15,
                           height: 15,
-                          child: CircularProgressIndicator(strokeWidth: 2))
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
                       : isUsernameTaken
-                          ? const Icon(Icons.error_outline, color: Colors.red)
-                          : usernameController.text.isNotEmpty && isNewUsername
-                              ? const Icon(Icons.check_circle_outline, color: Colors.green)
-                              : null,
+                      ? const Icon(Icons.error_outline, color: Colors.red)
+                      : usernameController.text.isNotEmpty && isNewUsername
+                      ? const Icon(
+                          Icons.check_circle_outline,
+                          color: Colors.green,
+                        )
+                      : null,
                 ),
                 AppSpacing.vxxl,
                 Text("BIO"),
@@ -293,8 +322,12 @@ class EditProfileScreen extends HookConsumerWidget {
                 AppSpacing.vsm,
                 AppTextField(
                   textInputAction: TextInputAction.next,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.deny(RegExp(r'\s')),
+                  ],
                   hintText: 'collaborationEmail',
                   controller: collaborationEmailController,
+                  validator: Validators.email,
                 ),
                 AppSpacing.vxxl,
                 Text("CATEGORY"),

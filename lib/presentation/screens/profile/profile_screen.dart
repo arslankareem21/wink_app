@@ -17,7 +17,7 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final userId = ref.watch(currentUserIdProvider);
     
-    if (userId == null) {
+    if (userId == null || userId.trim().isEmpty) {
       return const Scaffold(
         body: Center(child: Text('Not logged in')),
       );
@@ -33,7 +33,7 @@ class ProfileScreen extends ConsumerWidget {
         body: Center(child: Text('Error: $error')),
       ),
       data: (doc) {
-        if (!doc.exists || doc.data() == null) {
+        if (doc == null || !doc.exists || doc.data() == null) {
           return const Scaffold(
             body: Center(child: Text('User not found')),
           );

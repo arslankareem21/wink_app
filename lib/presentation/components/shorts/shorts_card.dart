@@ -14,9 +14,11 @@ class ShortsCard extends StatelessWidget {
     required this.profileUrl,
     required this.isLiked,
     required this.isFollowing,
+    required this.isFollowingLoading,
     required this.isCurrentUser,
     required this.isLoading,
     required this.hasError,
+    required this.likesCount,
     required this.controller,
     required this.onVideoTap,
     required this.onLike,
@@ -31,9 +33,11 @@ class ShortsCard extends StatelessWidget {
   final String profileUrl;
   final bool isLiked;
   final bool isFollowing;
+  final bool isFollowingLoading;
   final bool isCurrentUser;
   final bool isLoading;
   final bool hasError;
+  final int likesCount;
   final controller;
   final VoidCallback onVideoTap;
   final VoidCallback onLike;
@@ -52,6 +56,7 @@ class ShortsCard extends StatelessWidget {
           controller: controller,
           isLoading: isLoading,
           hasError: hasError,
+          thumbnailUrl: short.thumbnailUrl,
         ),
         // Tap zone for play/pause (only on video)
         Positioned.fill(
@@ -88,6 +93,7 @@ class ShortsCard extends StatelessWidget {
             profileUrl: profileUrl,
             isCurrentUser: isCurrentUser,
             isFollowing: isFollowing,
+            isFollowingLoading: isFollowingLoading,
             onFollow: onFollow,
             onUserTap: onUserTap,
           ),
@@ -96,7 +102,7 @@ class ShortsCard extends StatelessWidget {
           right: 12.w,
           bottom: 24.h,
           child: _RightPanel(
-            likes: short.likesCount,
+            likes: likesCount,
             comments: short.commentsCount,
             views: short.viewsCount,
             isLiked: isLiked,
@@ -117,6 +123,7 @@ class _LeftPanel extends StatelessWidget {
     required this.profileUrl,
     required this.isCurrentUser,
     required this.isFollowing,
+    required this.isFollowingLoading,
     required this.onFollow,
     required this.onUserTap,
   });
@@ -126,6 +133,7 @@ class _LeftPanel extends StatelessWidget {
   final String profileUrl;
   final bool isCurrentUser;
   final bool isFollowing;
+  final bool isFollowingLoading;
   final VoidCallback onFollow;
   final VoidCallback onUserTap;
 
@@ -142,30 +150,38 @@ class _LeftPanel extends StatelessWidget {
               CircleAvatar(
                 radius: 18.r,
                 backgroundColor: Colors.grey.shade900,
-                backgroundImage:
-                    profileUrl.isEmpty? null : CachedNetworkImageProvider(profileUrl),
-                child: profileUrl.isEmpty? const Icon(Icons.person) : null,
+                backgroundImage: profileUrl.isEmpty
+                    ? null
+                    : CachedNetworkImageProvider(profileUrl),
+                child: profileUrl.isEmpty ? const Icon(Icons.person) : null,
               ),
               AppSpacing.hsm,
               Expanded(
                 child: Text(
                   "@$username",
-                  style: AppTextStyles.shortsUsername.copyWith(color: Colors.white),
+                  style: AppTextStyles.shortsUsername.copyWith(
+                    color: Colors.white,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              if (!isCurrentUser)...[
+              if (!isCurrentUser) ...[
                 AppSpacing.hsm,
                 GestureDetector(
-                  onTap: onFollow,
+                  onTap: isFollowingLoading ? null : onFollow,
                   child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.w,
+                      vertical: 5.h,
+                    ),
                     decoration: BoxDecoration(
                       border: Border.all(color: Colors.white),
                       borderRadius: BorderRadius.circular(6.r),
                     ),
                     child: Text(
-                      isFollowing? "Following" : "Follow",
+                      isFollowingLoading
+                          ? "..."
+                          : (isFollowing ? "Following" : "Follow"),
                       style: const TextStyle(color: Colors.white, fontSize: 11),
                     ),
                   ),
@@ -210,8 +226,8 @@ class _RightPanel extends StatelessWidget {
     return Column(
       children: [
         _ActionButton(
-          icon: isLiked? Icons.favorite : Icons.favorite_border,
-          color: isLiked? Colors.red : Colors.white,
+          icon: isLiked ? Icons.favorite : Icons.favorite_border,
+          color: isLiked ? Colors.red : Colors.white,
           label: _format(likes),
           onTap: onLike,
         ),
@@ -264,8 +280,9 @@ class _ActionButton extends StatelessWidget {
           if (label.isNotEmpty)
             Text(
               label,
-              style:
-                  AppTextStyles.shortsEngagementCount.copyWith(color: Colors.white),
+              style: AppTextStyles.shortsEngagementCount.copyWith(
+                color: Colors.white,
+              ),
             ),
         ],
       ),

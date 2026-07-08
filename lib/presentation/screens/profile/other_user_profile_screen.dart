@@ -25,31 +25,33 @@ class OtherProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (profileId.trim().isEmpty) {
+      return const Scaffold(body: Center(child: Text('User not found')));
+    }
+
     final userAsync = ref.watch(userDataProvider(profileId));
     final isSelf = myId == profileId;
 
     return userAsync.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
-      error: (error, stack) => Scaffold(
-        body: Center(child: Text('Error loading profile: $error')),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stack) =>
+          Scaffold(body: Center(child: Text('Error loading profile: $error'))),
       data: (doc) {
-        if (!doc.exists || doc.data() == null) {
-          return const Scaffold(
-            body: Center(child: Text('User not found')),
-          );
+        if (doc == null || !doc.exists || doc.data() == null) {
+          return const Scaffold(body: Center(child: Text('User not found')));
         }
 
         final user = doc.data()! as Map<String, dynamic>;
 
-        final username = user['username'] ?? user['userName'] ?? user['handle'] ?? '';
+        final username =
+            user['username'] ?? user['userName'] ?? user['handle'] ?? '';
         final name = user['name'] ?? user['displayName'] ?? 'No Name';
         final postsCount = (user['postsCount'] as num?)?.toInt() ?? 0;
         final followersCount = (user['followersCount'] as num?)?.toInt() ?? 0;
         final followingCount = (user['followingCount'] as num?)?.toInt() ?? 0;
-        final profileImageUrl = user['profileImageUrl'] ?? user['photoUrl'] ?? '';
+        final profileImageUrl =
+            user['profileImageUrl'] ?? user['photoUrl'] ?? '';
 
         return Scaffold(
           appBar: AppBar(
@@ -89,11 +91,11 @@ class OtherProfileScreen extends ConsumerWidget {
                     ),
                     AppSpacing.vxs,
                     OtherUserProfileBio(
-                      
                       category: user['category'] ?? '',
                       description: user['bio'] ?? user['description'] ?? '',
                       location: user['location'] ?? '',
-                      collaborationEmail: user['collaborationEmail'] ?? user['email'] ?? '',
+                      collaborationEmail:
+                          user['collaborationEmail'] ?? user['email'] ?? '',
                       website: user['website'] ?? '',
                     ),
                     AppSpacing.vxl,
@@ -103,7 +105,9 @@ class OtherProfileScreen extends ConsumerWidget {
                 ),
               ),
               Expanded(
-                child: ProfileTabsView(userId: profileId), // ✅ corrected tabs view
+                child: ProfileTabsView(
+                  userId: profileId,
+                ), // ✅ corrected tabs view
               ),
             ],
           ),
@@ -121,16 +125,23 @@ class OtherProfileScreen extends ConsumerWidget {
               final params = (currentUserId: myId, targetUserId: profileId);
               final followAsync = ref.watch(isFollowingMergedProvider(params));
               final isFollowing = followAsync.value ?? false;
-              final isLoading = followAsync.isLoading && followAsync.value == null;
+              final isLoading =
+                  followAsync.isLoading && followAsync.value == null;
 
               return AppButton(
-                text: isLoading ? "..." : isFollowing ? "Following" : "Follow",
+                text: isLoading
+                    ? "..."
+                    : isFollowing
+                    ? "Following"
+                    : "Follow",
                 isGhost: !isFollowing,
                 onPressed: isLoading
                     ? null
                     : () async {
                         final firestore = ref.read(firestoreServiceProvider);
-                        final optimisticNotifier = ref.read(followOptimisticProvider(params).notifier);
+                        final optimisticNotifier = ref.read(
+                          followOptimisticProvider(params).notifier,
+                        );
                         final currentState = isFollowing;
 
                         optimisticNotifier.state = !currentState;
@@ -149,7 +160,9 @@ class OtherProfileScreen extends ConsumerWidget {
                               SnackBar(content: Text('Failed: $e')),
                             );
                           }
-                          await Future.delayed(const Duration(milliseconds: 300));
+                          await Future.delayed(
+                            const Duration(milliseconds: 300),
+                          );
                           optimisticNotifier.state = null;
                         }
                       },
@@ -159,11 +172,7 @@ class OtherProfileScreen extends ConsumerWidget {
         ),
         AppSpacing.hlg,
         Expanded(
-          child: AppButton(
-            text: "Message",
-            isGhost: true,
-            onPressed: () {},
-          ),
+          child: AppButton(text: "Message", isGhost: true, onPressed: () {}),
         ),
       ],
     );

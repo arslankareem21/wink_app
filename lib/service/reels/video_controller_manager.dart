@@ -12,7 +12,7 @@ class VideoControllerManager {
   static const Duration initializeTimeout = Duration(seconds: 15);
   static const int maxRetry = 3;
   static const int keepBehind = 2;
-  static const int keepAhead = 4;
+  static const int keepAhead = 2;
   static const Duration baseRetryDelay = Duration(seconds: 2);
 
   final Map<int, VideoPlayerController> _controllers = {};
@@ -20,12 +20,11 @@ class VideoControllerManager {
   final Set<int> _failed = {};
   final Map<int, int> _retryAttempts = {};
   int _currentIndex = 0;
-  List<String> _urls = [];
 
   Map<int, VideoPlayerController> get controllers => _controllers;
   Set<int> get failed => _failed;
 
-  bool isReady(int index) => _controllers[index]?.value.isInitialized?? false;
+  bool isReady(int index) => _controllers[index]?.value.isInitialized ?? false;
   bool isLoading(int index) => _initializing.contains(index);
   bool hasError(int index) => _failed.contains(index);
 
@@ -46,9 +45,13 @@ class VideoControllerManager {
   }
 
   bool isPlaying(int index) {
-    final controller = _controllers[index];
-    if (controller == null) return false;
-    return controller.value.isPlaying;
+    try {
+      final controller = _controllers[index];
+      if (controller == null) return false;
+      return controller.value.isPlaying;
+    } catch (_) {
+      return false;
+    }
   }
 
   bool isInitialized(int index) {
@@ -62,21 +65,25 @@ class VideoControllerManager {
     required String url,
     bool autoPlay = false,
   }) async {
-    if (_controllers.containsKey(index)) {
-      if (autoPlay) await play(index);
-      return;
-    }
     if (_initializing.contains(index)) return;
-    if (_failed.contains(index)) return;
+
+    final existing = _controllers[index];
+    if (existing != null) {
+      if (existing.value.isInitialized) {
+        if (autoPlay) await play(index);
+        return;
+      }
+      await disposeController(index);
+    }
+
+    if (_failed.contains(index)) {
+      _failed.remove(index);
+    }
 
     _initializing.add(index);
 
     try {
-      await _initializeWithRetry(
-        index: index,
-        url: url,
-        autoPlay: autoPlay,
-      );
+      await _initializeWithRetry(index: index, url: url, autoPlay: autoPlay);
     } finally {
       _initializing.remove(index);
     }
@@ -94,7 +101,7 @@ class VideoControllerManager {
     }
 
     final uri = Uri.tryParse(url);
-    if (uri == null ||!uri.hasScheme) {
+    if (uri == null || !uri.hasScheme) {
       throw Exception("Invalid video URL: $url");
     }
 
@@ -113,7 +120,7 @@ class VideoControllerManager {
         await controller.setLooping(true);
         await controller.setVolume(1);
 
-        if (autoPlay) {
+        if (autoPlay || index == _currentIndex) {
           await controller.play();
         }
 
@@ -137,7 +144,9 @@ class VideoControllerManager {
         return;
       } on TimeoutException catch (_) {
         // Handle timeout (Cloudinary slow response)
-        lastException = Exception("Video initialization timeout (attempt $attempt)");
+        lastException = Exception(
+          "Video initialization timeout (attempt $attempt)",
+        );
         try {
           await controller?.dispose();
         } catch (_) {}
@@ -165,16 +174,9 @@ class VideoControllerManager {
     debugPrint("All retries failed for [$index]: $lastException");
   }
 
-  Future<void> preload({
-    required int index,
-    required String url,
-  }) async {
+  Future<void> preload({required int index, required String url}) async {
     // Delegate to PreloadQueue for background preloading
-    PreloadQueue.instance.enqueue(
-      index: index,
-      url: url,
-      priority: 0,
-    );
+    PreloadQueue.instance.enqueue(index: index, url: url, priority: 0);
   }
 
   Future<void> onPageChanged({
@@ -184,50 +186,29 @@ class VideoControllerManager {
     if (newIndex < 0 || newIndex >= urls.length) return;
 
     _currentIndex = newIndex;
-    _urls = urls;
 
     // Pause all except current
     for (final entry in _controllers.entries) {
-      if (entry.key!= newIndex && entry.value.value.isPlaying) {
+      if (entry.key != newIndex && entry.value.value.isPlaying) {
         await pause(entry.key);
       }
     }
 
     // Current page should autoplay
-    await initializeVideo(
-      index: newIndex,
-      url: urls[newIndex],
-      autoPlay: true,
-    );
+    await initializeVideo(index: newIndex, url: urls[newIndex], autoPlay: true);
 
     // Cache URL in health service
     ControllerHealthService.instance.cacheUrl(newIndex, urls[newIndex]);
 
-    // Preload ahead using PreloadQueue with priority based on distance
-    for (int i = newIndex + 1;
-        i <= newIndex + keepAhead && i < urls.length;
-        i++) {
-      final distance = i - newIndex;
-      final priority = keepAhead - distance + 1; // Higher priority for closer videos
-      
-      debugPrint('[VideoManager] Queuing preload for index $i (priority: $priority)');
-      PreloadQueue.instance.enqueue(
-        index: i,
-        url: urls[i],
-        priority: priority,
-      );
-      ControllerHealthService.instance.cacheUrl(i, urls[i]);
-    }
+    final windowStart = (newIndex - keepBehind).clamp(0, urls.length - 1);
+    final windowEnd = (newIndex + keepAhead).clamp(0, urls.length - 1);
 
-    // Also preload behind for smooth backward scrolling
-    for (int i = newIndex - 1; i >= newIndex - keepBehind && i >= 0; i--) {
-      debugPrint('[VideoManager] Queuing preload for index $i (priority: 1)');
-      PreloadQueue.instance.enqueue(
-        index: i,
-        url: urls[i],
-        priority: 1, // Lower priority
-      );
+    for (int i = windowStart; i <= windowEnd; i++) {
+      if (i == newIndex) continue;
+      if (_controllers.containsKey(i) || _initializing.contains(i)) continue;
+      unawaited(initializeVideo(index: i, url: urls[i], autoPlay: false));
       ControllerHealthService.instance.cacheUrl(i, urls[i]);
+      PreloadQueue.instance.enqueue(index: i, url: urls[i], priority: 1);
     }
 
     disposeUnused();
@@ -238,8 +219,8 @@ class VideoControllerManager {
     final maxKeep = _currentIndex + keepAhead;
 
     final toRemove = _controllers.keys
-       .where((index) => index < minKeep || index > maxKeep)
-       .toList();
+        .where((index) => index < minKeep || index > maxKeep)
+        .toList();
 
     for (final index in toRemove) {
       unawaited(disposeController(index));
@@ -249,31 +230,32 @@ class VideoControllerManager {
 
   Future<void> play(int index) async {
     try {
+      if (!_controllers.containsKey(index)) return;
       final controller = _controllers[index];
       if (controller == null) return;
-      if (!controller.value.isInitialized) return;
-      if (!controller.value.isPlaying) {
-        await controller.play();
-      }
+      if (!controller.value.isInitialized || controller.value.isPlaying) return;
+      await controller.play();
     } catch (e) {
-      debugPrint("Play Error: $e");
+      debugPrint("Play Error [$index]: $e");
     }
   }
 
   Future<void> pause(int index) async {
     try {
+      if (!_controllers.containsKey(index)) return;
       final controller = _controllers[index];
       if (controller == null) return;
       if (controller.value.isPlaying) {
         await controller.pause();
       }
     } catch (e) {
-      debugPrint("Pause Error: $e");
+      debugPrint("Pause Error [$index]: $e");
     }
   }
 
   Future<void> toggle(int index) async {
     try {
+      if (!_controllers.containsKey(index)) return;
       final controller = _controllers[index];
       if (controller == null) return;
       if (controller.value.isPlaying) {
@@ -282,29 +264,36 @@ class VideoControllerManager {
         await controller.play();
       }
     } catch (e) {
-      debugPrint(e.toString());
+      debugPrint("Toggle Error [$index]: $e");
     }
   }
 
   Future<void> pauseAll() async {
-    for (final controller in _controllers.values) {
+    final controllersToPause = _controllers.values.where((controller) {
       try {
-        if (controller.value.isInitialized && controller.value.isPlaying) {
-          await controller.pause();
-        }
-      } catch (_) {}
-    }
+        return controller.value.isInitialized;
+      } catch (_) {
+        return false;
+      }
+    }).toList();
+
+    if (controllersToPause.isEmpty) return;
+
+    await Future.wait(
+      controllersToPause.map((controller) => controller.pause().catchError((_) {})),
+    );
   }
 
   Future<void> resume(int index) async {
     try {
+      if (!_controllers.containsKey(index)) return;
       final controller = _controllers[index];
       if (controller == null) return;
-      if (!controller.value.isInitialized) return;
-      if (!controller.value.isPlaying) {
-        await controller.play();
-      }
-    } catch (_) {}
+      if (!controller.value.isInitialized || controller.value.isPlaying) return;
+      await controller.play();
+    } catch (e) {
+      debugPrint("Resume Error [$index]: $e");
+    }
   }
 
   Future<void> disposeController(int index) async {
@@ -320,16 +309,16 @@ class VideoControllerManager {
   Future<void> disposeAll() async {
     // Stop health monitoring
     ControllerHealthService.instance.stop();
-    
+
     // Clear preload queue
     PreloadQueue.instance.clear();
-    
+
     final list = _controllers.values.toList();
     _controllers.clear();
     _failed.clear();
     _initializing.clear();
     _retryAttempts.clear();
-    
+
     for (final controller in list) {
       try {
         await controller.dispose();

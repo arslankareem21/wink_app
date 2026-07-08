@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -147,8 +148,10 @@ class LoginScreen extends HookConsumerWidget {
                                   prefixIcon: Icon(Icons.email_outlined,
                                       color: AppColors.primaryYellow,
                                       size: 20.sp),
+                                  inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
                                   keyboardType: TextInputType.emailAddress,
                                   validator: Validators.email,
+                                  
                                 ),
                                 AppSpacing.vsm,
                                 Text("Password",
@@ -158,6 +161,9 @@ class LoginScreen extends HookConsumerWidget {
                                   controller: passwordController,
                                   focusNode: passwordFocus,
                                   hintText: 'Enter your password',
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.deny(RegExp(r'\s')), 
+                                    ],
                                   isPassword: true,
                                   prefixIcon: Icon(Icons.lock_outline,
                                       color: AppColors.primaryYellow,

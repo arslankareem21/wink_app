@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -90,6 +91,7 @@ class _ForgetPasswordScreenState extends ConsumerState<ForgetPasswordScreen> {
                                 AppTextField(
                                   controller: emailController,
                                   hintText: 'Enter your email',
+                                  inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
                                   keyboardType: TextInputType.emailAddress,
                                   prefixIcon: Icon(
                                     Icons.email_outlined,

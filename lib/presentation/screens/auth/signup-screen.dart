@@ -130,7 +130,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                 AppSpacing.vsm,
                                 AppTextField(
                                   textInputAction: TextInputAction.next,
-
+                                  inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
                                   controller: emailController,
                                   hintText: 'Enter your email',
                                   keyboardType: TextInputType.emailAddress,
@@ -140,11 +140,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                     size: 20.sp,
                                   ),
                                   validator: Validators.email,
-                                   inputFormatters: [
-                                    FilteringTextInputFormatter.deny(
-                                      RegExp(r'\s'),
-                                    ),
-                                  ],
+                                  
                                 ),
                                 AppSpacing.vsm,
                                 Text(
@@ -155,6 +151,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                 AppTextField(
                                   controller: passwordController,
                                   hintText: 'Enter your password',
+                                  inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
                                   textInputAction: TextInputAction.next,
                                   isPassword: true,
                                   prefixIcon: Icon(
@@ -163,11 +160,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                     size: 20.sp,
                                   ),
                                   validator: Validators.password,
-                                   inputFormatters: [
-                                    FilteringTextInputFormatter.deny(
-                                      RegExp(r'\s'),
-                                    ),
-                                  ],
+                                   
+                                
                                 ),
                                 AppSpacing.vsm,
                                 Text(
@@ -179,6 +173,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                   controller: confirmPasswordController,
                                   textInputAction: TextInputAction.done,
                                   hintText: 'Confirm your password',
+                                  inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
                                   isPassword: true,
                                   prefixIcon: Icon(
                                     Icons.lock_outline,
@@ -187,11 +182,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                   ),
                                   validator: (v) => Validators.confirmPassword(v,passwordController.text,
                                   ), 
-                                  inputFormatters: [
-                                    FilteringTextInputFormatter.deny(
-                                      RegExp(r'\s'),
-                                    ),
-                                  ],
+                                  
                                 ),
                                 AppSpacing.vsm,
                                 AppButton(

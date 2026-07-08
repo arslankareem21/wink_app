@@ -5,7 +5,10 @@ import 'package:wink_app/models/post_models.dart';
 import 'package:wink_app/models/short_model.dart';
 import 'package:wink_app/service/firestore_service.dart';
 
-final userDataProvider = StreamProvider.family<DocumentSnapshot, String>((ref, userId) {
+final userDataProvider = StreamProvider.family<DocumentSnapshot?, String>((ref, userId) {
+  if (userId.trim().isEmpty) {
+    return Stream.value(null);
+  }
   return ref.read(firestoreServiceProvider).getUserStream(userId);
 });
 
