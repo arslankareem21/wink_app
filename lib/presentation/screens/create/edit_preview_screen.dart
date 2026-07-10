@@ -36,47 +36,49 @@ class EditPreviewScreen extends ConsumerWidget {
           style: TextStyle(color: Colors.white),
         ),
       ),
-      body: Column(
-        children: [
-          // The Preview Area
-          Expanded(
-            child: InteractiveViewer(
-              minScale: 1.0,
-              maxScale: 3.0,
-              child: Center(child: Image.file(file, fit: BoxFit.contain)),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // The Preview Area
+            Expanded(
+              child: InteractiveViewer(
+                minScale: 1.0,
+                maxScale: 3.0,
+                child: Center(child: Image.file(file, fit: BoxFit.contain)),
+              ),
             ),
-          ),
-
-          // Action Controls
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
-            color: Colors.black,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                TextButton.icon(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close, color: Colors.white),
-                  label: const Text(
-                    "Cancel",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-                FilledButton(
-                  onPressed: () => _navigateToUploadDecision(context),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
+        
+            // Action Controls
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+              color: Colors.black,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  TextButton.icon(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    label: const Text(
+                      "Cancel",
+                      style: TextStyle(color: Colors.white),
                     ),
                   ),
-                  child: const Text("Next", style: TextStyle(fontSize: 16)),
-                ),
-              ],
+                  FilledButton(
+                    onPressed: () => _navigateToUploadDecision(context),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.blueAccent,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                    ),
+                    child: const Text("Next", style: TextStyle(fontSize: 16)),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

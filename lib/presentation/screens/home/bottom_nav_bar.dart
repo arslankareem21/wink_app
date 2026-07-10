@@ -28,26 +28,29 @@ class BottomNavScreen extends ConsumerWidget {
       top: false,
       child: Scaffold(
         body: screens[currentIndex],
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            showModalBottomSheet(
-              context: context,
-              backgroundColor: Theme.of(context).cardColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
-              ),
-              builder: (_) => const CreateBottomSheet(),
-            );
-          },
-          backgroundColor: AppColors.primaryYellow,
-          foregroundColor: AppColors.secondary,
-          elevation: 8,
-          shape: const CircleBorder(),
-          child: const Icon(Icons.add_rounded, size: 30),
+        floatingActionButton: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 12),
+          child: FloatingActionButton(
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                backgroundColor: Theme.of(context).cardColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
+                ),
+                builder: (_) => const CreateBottomSheet(),
+              );
+            },
+            backgroundColor: AppColors.primaryYellow,
+            foregroundColor: AppColors.secondary,
+            elevation: 8,
+            shape: const CircleBorder(),
+            child: const Icon(Icons.add_rounded, size: 30),
+          ),
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         bottomNavigationBar: Container(
-          // margin: EdgeInsets.only(left: 20.w, right: 20.w, bottom: 16.h),
+          //margin: EdgeInsets.only(left: 20.w, right: 20.w, bottom: 16.h),
           // padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
           decoration: BoxDecoration(
             color: navTheme.backgroundColor,
@@ -77,34 +80,43 @@ class BottomNavScreen extends ConsumerWidget {
                 icon: Icon(
                   Icons.home_outlined,
                   color: navTheme.unselectedItemColor,
+
                 ),
                 selectedIcon: Icon(
                   Icons.home_rounded,
                   color: navTheme.selectedItemColor,
                 ),
+                
                 label: 'Home',
               ),
-              NavigationDestination(
-                icon: Icon(
-                  Icons.play_circle_outline_rounded,
-                  color: navTheme.unselectedItemColor,
+              Padding(
+                padding: const EdgeInsets.only(right: 24),
+                child: NavigationDestination(
+                  icon: Icon(
+                    Icons.play_circle_outline_rounded,
+                    color: navTheme.unselectedItemColor,
+                  ),
+                  selectedIcon: Icon(
+                    Icons.play_circle_fill_rounded,
+                    color: navTheme.selectedItemColor,
+                  ),
+                  label: 'Shorts',
                 ),
-                selectedIcon: Icon(
-                  Icons.play_circle_fill_rounded,
-                  color: navTheme.selectedItemColor,
-                ),
-                label: 'Shorts',
               ),
-              NavigationDestination(
-                icon: Icon(
-                  Icons.favorite_border_rounded,
-                  color: navTheme.unselectedItemColor,
+              
+              Padding(
+                padding: const EdgeInsets.only(left: 24),
+                child: NavigationDestination(
+                  icon: Icon(
+                    Icons.favorite_border_rounded,
+                    color: navTheme.unselectedItemColor,
+                  ),
+                  selectedIcon: Icon(
+                    Icons.favorite_rounded,
+                    color: navTheme.selectedItemColor,
+                  ),
+                  label: 'Activity',
                 ),
-                selectedIcon: Icon(
-                  Icons.favorite_rounded,
-                  color: navTheme.selectedItemColor,
-                ),
-                label: 'Activity',
               ),
               NavigationDestination(
                 icon: Icon(

@@ -246,14 +246,14 @@ class _UploadDecisionScreenState extends ConsumerState<UploadDecisionScreen> {
         if (!widget.isVideo)
           _button(
             'Share to Feed',
-            Colors.blue,
+            AppColors.primaryYellow,
             disabled,
             () => _upload('post'),
           ),
         if (widget.isVideo)
           _button(
             'Share as Short',
-            Colors.red,
+            AppColors.primaryYellow,
             disabled,
             () => _upload('short'),
           ),

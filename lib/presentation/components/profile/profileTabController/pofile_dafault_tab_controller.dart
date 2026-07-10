@@ -6,6 +6,9 @@ import 'package:wink_app/core/config/theme/app_text_style.dart';
 import 'package:wink_app/presentation/components/profile/post_grid.dart';
 import 'package:wink_app/presentation/components/profile/shorts_grid.dart';
 import 'package:wink_app/presentation/provider/get_profile_providers.dart';
+import 'package:wink_app/presentation/screens/profile/posts_viewvwer.dart';
+import 'package:wink_app/presentation/screens/profile/shorts_viewer.dart';
+import 'package:wink_app/viewmodels/auth_viewmodel.dart';
 
 
 class ProfileTabsView extends ConsumerWidget {
@@ -17,6 +20,7 @@ class ProfileTabsView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final postsAsync = ref.watch(userPostsProvider(userId));
     final shortsAsync = ref.watch(userShortsProvider(userId));
+    final currentUserId = ref.watch(currentUserIdProvider) ?? '';
 
     return DefaultTabController(
       length: 2,
@@ -68,7 +72,21 @@ class ProfileTabsView extends ConsumerWidget {
                   data: (posts) => CustomScrollView(
                     key: const PageStorageKey<String>('posts_tab'),
                     slivers: [
-                      PostsGrid(posts: posts), // ✅ sliver widget
+                      PostsGrid(
+                        posts: posts,
+                        onPostTap: (index) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => PostViewer(
+                                posts: posts,
+                                initialIndex: index,
+                                currentUserId: currentUserId,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -82,7 +100,21 @@ class ProfileTabsView extends ConsumerWidget {
                   data: (shorts) => CustomScrollView(
                     key: const PageStorageKey<String>('shorts_tab'),
                     slivers: [
-                      ShortsGrid(shorts: shorts), // ✅ sliver widget
+                      ShortsGrid(
+                        shorts: shorts,
+                        onShortTap: (index) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ShortsViewer(
+                                shorts: shorts,
+                                initialIndex: index,
+                                currentUserId: currentUserId,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ),

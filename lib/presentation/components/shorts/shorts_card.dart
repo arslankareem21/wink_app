@@ -23,8 +23,8 @@ class ShortsCard extends StatelessWidget {
     required this.onVideoTap,
     required this.onLike,
     required this.onFollow,
-    required this.onComment,
-    required this.onShare,
+   this.onComment,
+   this.onShare,
     required this.onUserTap,
   });
 
@@ -42,8 +42,8 @@ class ShortsCard extends StatelessWidget {
   final VoidCallback onVideoTap;
   final VoidCallback onLike;
   final VoidCallback onFollow;
-  final VoidCallback onComment;
-  final VoidCallback onShare;
+  final VoidCallback? onComment;
+  final VoidCallback? onShare;
   final VoidCallback onUserTap;
 
   @override
@@ -103,12 +103,12 @@ class ShortsCard extends StatelessWidget {
           bottom: 24.h,
           child: _RightPanel(
             likes: likesCount,
-            comments: short.commentsCount,
+            
             views: short.viewsCount,
             isLiked: isLiked,
             onLike: onLike,
-            onComment: onComment,
-            onShare: onShare,
+            
+            
           ),
         ),
       ],
@@ -205,21 +205,21 @@ class _LeftPanel extends StatelessWidget {
 class _RightPanel extends StatelessWidget {
   const _RightPanel({
     required this.likes,
-    required this.comments,
+    
     required this.views,
     required this.isLiked,
     required this.onLike,
-    required this.onComment,
-    required this.onShare,
+    
+    
   });
 
   final int likes;
-  final int comments;
+  
   final int views;
   final bool isLiked;
   final VoidCallback onLike;
-  final VoidCallback onComment;
-  final VoidCallback onShare;
+  
+  
 
   @override
   Widget build(BuildContext context) {
@@ -232,13 +232,8 @@ class _RightPanel extends StatelessWidget {
           onTap: onLike,
         ),
         SizedBox(height: 20.h),
-        _ActionButton(
-          icon: Icons.chat_bubble_outline,
-          label: _format(comments),
-          onTap: onComment,
-        ),
-        SizedBox(height: 20.h),
-        _ActionButton(icon: Icons.send_rounded, label: "", onTap: onShare),
+        
+       
         SizedBox(height: 20.h),
         _ActionButton(
           icon: Icons.remove_red_eye_outlined,

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,19 +31,44 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
+  final nameFocus = FocusNode();
+  final emailFocus = FocusNode();
+  final passwordFocus = FocusNode();
+  final confirmPasswordFocus = FocusNode();
+
+  Timer? _emailDebounce;
+  Timer? _passwordDebounce;
+  Timer? _confirmPasswordDebounce;
+
+  bool _acceptedTerms = false;
+
   @override
   void dispose() {
+    _emailDebounce?.cancel();
+    _passwordDebounce?.cancel();
+    _confirmPasswordDebounce?.cancel();
     nameController.dispose();
     emailController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
+    nameFocus.dispose();
+    emailFocus.dispose();
+    passwordFocus.dispose();
+    confirmPasswordFocus.dispose();
     super.dispose();
+  }
+
+  String _capitalizeWords(String text) {
+    if (text.isEmpty) return text;
+    return text.split(' ').map((word) {
+      if (word.isEmpty) return word;
+      return word[0].toUpperCase() + word.substring(1);
+    }).join(' ');
   }
 
   @override
   Widget build(BuildContext context) {
     ref.listen(authViewModelProvider, (prev, next) {
-      // Fixed: Use message instead of goToLogin
       if (next.message?.contains('Account created') == true) {
         AppSnackBar.show(next.message!);
         NavigationService.go(context, AppRoutes.login);
@@ -77,8 +103,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                           padding: AppSpacing.cardPadding,
                           child: Form(
                             key: formKey,
-                            autovalidateMode: AutovalidateMode
-                                .onUserInteraction, // 🌟 Naya Addition
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -107,20 +131,33 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                 AppTextField(
                                   textInputAction: TextInputAction.next,
                                   controller: nameController,
+                                  focusNode: nameFocus,
                                   hintText: 'Enter your name',
+                                  textCapitalization: TextCapitalization.words,
                                   prefixIcon: Icon(
                                     Icons.person_outline,
                                     color: AppColors.primaryYellow,
                                     size: 20.sp,
                                   ),
-                                  validator: Validators.name,
+                                  validator: (v) => Validators.name(nameController.text),
+                                  autovalidateMode: AutovalidateMode.onUserInteraction,
                                   inputFormatters: [
-                                    //FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z ]')),
-                                    FilteringTextInputFormatter.deny(
-                                      RegExp(r'\s'),
-                                    //  Fil
-                                    ),
+                                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z ]')),
                                   ],
+                                  onChanged: (value) {
+                                    final capitalized = _capitalizeWords(value);
+                                    if (capitalized != value) {
+                                      final cursorPos = nameController.selection.baseOffset +
+                                          (capitalized.length - value.length);
+                                      nameController.value = nameController.value.copyWith(
+                                        text: capitalized,
+                                        selection: TextSelection.collapsed(
+                                          offset: cursorPos.clamp(0, capitalized.length),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  onFieldSubmitted: (_) => emailFocus.requestFocus(),
                                 ),
                                 AppSpacing.vsm,
                                 Text(
@@ -129,18 +166,39 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                 ),
                                 AppSpacing.vsm,
                                 AppTextField(
-                                  textInputAction: TextInputAction.next,
-                                  inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
                                   controller: emailController,
+                                  focusNode: emailFocus,
                                   hintText: 'Enter your email',
-                                  keyboardType: TextInputType.emailAddress,
+                                  textInputAction: TextInputAction.next,
+                                  textCapitalization: TextCapitalization.none,
                                   prefixIcon: Icon(
                                     Icons.email_outlined,
                                     color: AppColors.primaryYellow,
                                     size: 20.sp,
                                   ),
-                                  validator: Validators.email,
-                                  
+                                  keyboardType: TextInputType.emailAddress,
+                                  validator: (v) => Validators.email(emailController.text),
+                                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                                  onChanged: (value) {
+                                    _emailDebounce?.cancel();
+                                    _emailDebounce = Timer(
+                                      const Duration(milliseconds: 500),
+                                      () {
+                                        final noSpaces = value.replaceAll(RegExp(r'\s'), '');
+                                        if (noSpaces != value) {
+                                          final cursorPos = emailController.selection.baseOffset -
+                                              (value.length - noSpaces.length);
+                                          emailController.value = emailController.value.copyWith(
+                                            text: noSpaces,
+                                            selection: TextSelection.collapsed(
+                                              offset: cursorPos.clamp(0, noSpaces.length),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                    );
+                                  },
+                                  onFieldSubmitted: (_) => passwordFocus.requestFocus(),
                                 ),
                                 AppSpacing.vsm,
                                 Text(
@@ -150,8 +208,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                 AppSpacing.vsm,
                                 AppTextField(
                                   controller: passwordController,
+                                  focusNode: passwordFocus,
                                   hintText: 'Enter your password',
-                                  inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
                                   textInputAction: TextInputAction.next,
                                   isPassword: true,
                                   prefixIcon: Icon(
@@ -159,9 +217,28 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                     color: AppColors.primaryYellow,
                                     size: 20.sp,
                                   ),
-                                  validator: Validators.password,
-                                   
-                                
+                                  validator: (v) => Validators.password(passwordController.text),
+                                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                                  onChanged: (value) {
+                                    _passwordDebounce?.cancel();
+                                    _passwordDebounce = Timer(
+                                      const Duration(milliseconds: 500),
+                                      () {
+                                        final noSpaces = value.replaceAll(RegExp(r'\s'), '');
+                                        if (noSpaces != value) {
+                                          final cursorPos = passwordController.selection.baseOffset -
+                                              (value.length - noSpaces.length);
+                                          passwordController.value = passwordController.value.copyWith(
+                                            text: noSpaces,
+                                            selection: TextSelection.collapsed(
+                                              offset: cursorPos.clamp(0, noSpaces.length),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                    );
+                                  },
+                                  onFieldSubmitted: (_) => confirmPasswordFocus.requestFocus(),
                                 ),
                                 AppSpacing.vsm,
                                 Text(
@@ -171,18 +248,71 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                 AppSpacing.vsm,
                                 AppTextField(
                                   controller: confirmPasswordController,
+                                  focusNode: confirmPasswordFocus,
                                   textInputAction: TextInputAction.done,
                                   hintText: 'Confirm your password',
-                                  inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
                                   isPassword: true,
                                   prefixIcon: Icon(
                                     Icons.lock_outline,
                                     color: AppColors.primaryYellow,
                                     size: 20.sp,
                                   ),
-                                  validator: (v) => Validators.confirmPassword(v,passwordController.text,
-                                  ), 
-                                  
+                                  validator: (v) => Validators.confirmPassword(
+                                    confirmPasswordController.text,
+                                    passwordController.text,
+                                  ),
+                                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                                  onChanged: (value) {
+                                    _confirmPasswordDebounce?.cancel();
+                                    _confirmPasswordDebounce = Timer(
+                                      const Duration(milliseconds: 500),
+                                      () {
+                                        final noSpaces = value.replaceAll(RegExp(r'\s'), '');
+                                        if (noSpaces != value) {
+                                          final cursorPos = confirmPasswordController.selection.baseOffset -
+                                              (value.length - noSpaces.length);
+                                          confirmPasswordController.value = confirmPasswordController.value.copyWith(
+                                            text: noSpaces,
+                                            selection: TextSelection.collapsed(
+                                              offset: cursorPos.clamp(0, noSpaces.length),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                    );
+                                  },
+                                ),
+                                AppSpacing.vsm,
+                                Row(
+                                  children: [
+                                    Checkbox(
+                                      value: _acceptedTerms,
+                                      activeColor: AppColors.primaryYellow,
+                                      onChanged: (val) {
+                                        setState(() => _acceptedTerms = val ?? false);
+                                      },
+                                    ),
+                                    Expanded(
+                                      child: GestureDetector(
+                                        onTap: () => setState(() => _acceptedTerms = !_acceptedTerms),
+                                        child: RichText(
+                                          text: TextSpan(
+                                            style: AppTextStyles.authSubtitle.copyWith(fontSize: 12.sp),
+                                            children: [
+                                              const TextSpan(text: 'I agree to the '),
+                                              TextSpan(
+                                                text: 'Terms & Conditions',
+                                                style: AppTextStyles.textLink.copyWith(
+                                                  fontSize: 12.sp,
+                                                  color: AppColors.primaryYellow,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                                 AppSpacing.vsm,
                                 AppButton(
@@ -191,11 +321,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                       ? "Creating account..."
                                       : "Sign Up",
                                   isGhost: false,
-                                  onPressed: isLoading
+                                  onPressed: (isLoading || !_acceptedTerms)
                                       ? null
                                       : () {
-                                          if (!formKey.currentState!.validate())
-                                            return;
+                                          if (!formKey.currentState!.validate()) return;
                                           ref
                                               .read(
                                                 authViewModelProvider.notifier,
@@ -221,7 +350,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                           .copyWith(
                                             color: AppColors.primaryYellow,
                                           ),
-                                      // Fixed: Use NavigationService
                                       onPressed: () =>
                                           NavigationService.pop(context),
                                     ),

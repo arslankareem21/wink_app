@@ -18,36 +18,28 @@ class Validators {
   }
 
     static String? username(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Username is required';
-    }
-    
-    final trimmedValue = value.trim();
-
-    if (trimmedValue.length < 3) {
-      return 'Username must be at least 3 characters long';
-    }
-    
-    if (trimmedValue.length > 20) {
-      return 'Username cannot exceed 20 characters';
-    }
-
-    // Check if the first letter is a capital letter (A-Z)
-    if (!RegExp(r'^[A-Z]').hasMatch(trimmedValue)) {
-      return 'First letter of username must be a capital letter (A-Z)';
-    }
-
-    final usernameRegex = RegExp(r'^[a-zA-Z0-9._]+$');
-    if (!usernameRegex.hasMatch(trimmedValue)) {
-      inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))];
-      return 'Only letters, numbers, underscores (_), or dots (.) allowed';
-    }
-
-      
-
-
-    return null; 
+  if (value == null || value.trim().isEmpty) {
+    return 'Username is required';
   }
+  
+  final trimmedValue = value.trim();
+
+  if (trimmedValue.length < 3) {
+    return 'Username must be at least 3 characters long';
+  }
+  
+  if (trimmedValue.length > 20) {
+    return 'Username cannot exceed 20 characters';
+  }
+
+  // Fixed regex: a-z A-Z 0-9 . _
+  final usernameRegex = RegExp(r'^[a-zA-Z0-9._]+$');
+  if (!usernameRegex.hasMatch(trimmedValue)) {
+    return 'Only letters, numbers, underscores (_), or dots (.) allowed';
+  }
+
+  return null; 
+}
 
 
 void isUsernameTakenProvider = FutureProvider.family<bool, String>((ref, username) async {

@@ -4,8 +4,13 @@ import 'package:wink_app/models/short_model.dart';
 
 class ShortsGrid extends StatelessWidget {
   final List<ShortModel> shorts;
+  final Function(int index)? onShortTap; // Add this
 
-  const ShortsGrid({super.key, required this.shorts});
+  const ShortsGrid({
+    super.key,
+    required this.shorts,
+    this.onShortTap, // Add this
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -28,16 +33,13 @@ class ShortsGrid extends StatelessWidget {
           crossAxisCount: 3,
           crossAxisSpacing: 3,
           mainAxisSpacing: 3,
-          childAspectRatio: 9 / 16, // Vertical shorts
+          childAspectRatio: 9 / 16,
         ),
         delegate: SliverChildBuilderDelegate(
           (context, index) {
             final short = shorts[index];
             return GestureDetector(
-              onTap: () {
-                // TODO: Navigate to short player
-                print("Clicked Short: ${short.shortId}");
-              },
+              onTap: () => onShortTap?.call(index), // Use callback
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.grey[900],
@@ -47,7 +49,6 @@ class ShortsGrid extends StatelessWidget {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    // Use thumbnail, not video player in grid
                     Image.network(
                       short.thumbnailUrl,
                       fit: BoxFit.cover,
@@ -65,7 +66,6 @@ class ShortsGrid extends StatelessWidget {
                         child: const Icon(Icons.play_circle, color: Colors.grey),
                       ),
                     ),
-                    // Play icon overlay
                     const Align(
                       alignment: Alignment.center,
                       child: Icon(
@@ -74,7 +74,6 @@ class ShortsGrid extends StatelessWidget {
                         size: 30,
                       ),
                     ),
-                    // Views count
                     Positioned(
                       bottom: 4,
                       left: 4,

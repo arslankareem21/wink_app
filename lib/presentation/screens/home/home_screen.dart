@@ -72,17 +72,7 @@ class HomeScreen extends ConsumerWidget {
                 scrolledUnderElevation: 0.5,
                 title: SizedBox(height: 40.h, child: const SplashLogo()),
                 centerTitle: false,
-                actions: [
-                  IconButton(
-                    onPressed: () {},
-                    icon: Icon(Icons.favorite_border_rounded, size: 26.sp),
-                  ),
-                  IconButton(
-                    onPressed: () {},
-                    icon: Icon(Icons.send_outlined, size: 24.sp),
-                  ),
-                  SizedBox(width: 8.w),
-                ],
+                
               ),
               body: postsAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
@@ -291,7 +281,10 @@ class HomeScreen extends ConsumerWidget {
                               padding: EdgeInsets.only(top: 8.h, bottom: 24.h),
                               itemCount: posts.length,
                               separatorBuilder: (_, __) =>
-                                  SizedBox(height: 0), // PostCard has margin
+                                  Container(
+                                    color: AppColors.borderDark,
+                                    height: 5,
+                                  ), // PostCard has margin
                               itemBuilder: (context, index) {
                                 final post = posts[index];
                                 return PostCard(

@@ -123,14 +123,14 @@ class PostCard extends ConsumerWidget {
           SizedBox(width: 10.w),
           Expanded(
             child: GestureDetector(
-              onTap: onUserTap,
+              onTap: (){},
               child: Text(
                 user.username,
                 style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
               ),
             ),
           ),
-          Icon(Icons.more_horiz_rounded, size: 20.sp),
+          
         ],
       ),
     );
@@ -170,7 +170,7 @@ class PostCard extends ConsumerWidget {
                   ),
                 );
               },
-            ),
+            ),  
             placeholder: (context, url) => Container(
               color: Colors.grey.shade200,
               child: const Center(
@@ -216,24 +216,7 @@ class PostCard extends ConsumerWidget {
               size: 26.sp,
             ),
           ),
-          SizedBox(width: 16.w),
-          _ActionIcon(
-            onTap: onComment,
-            child: Icon(Icons.chat_bubble_outline_rounded, size: 24.sp),
-          ),
-          SizedBox(width: 16.w),
-          _ActionIcon(
-            onTap: onShare,
-            child: Icon(Icons.send_outlined, size: 24.sp),
-          ),
-          const Spacer(),
-          _ActionIcon(
-            onTap: () => _handleSave(ref),
-            child: Icon(
-              isSaved ? Icons.bookmark : Icons.bookmark_border_rounded,
-              size: 26.sp,
-            ),
-          ),
+          
         ],
       ),
     );

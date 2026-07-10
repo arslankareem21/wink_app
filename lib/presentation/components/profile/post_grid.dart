@@ -2,10 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:wink_app/models/post_models.dart';
 
+
 class PostsGrid extends StatelessWidget {
   final List<PostModels> posts;
+  final Function(int index)? onPostTap; // Add this
 
-  const PostsGrid({super.key, required this.posts});
+
+  const PostsGrid({
+    super.key,
+    required this.posts,
+    this.onPostTap, // Add this
+  });
+
 
   @override
   Widget build(BuildContext context) {
@@ -21,6 +29,7 @@ class PostsGrid extends StatelessWidget {
       );
     }
 
+
     return SliverPadding(
       padding: EdgeInsets.all(2.w),
       sliver: SliverGrid(
@@ -34,11 +43,9 @@ class PostsGrid extends StatelessWidget {
             final post = posts[index];
             final imageUrl = post.media.isNotEmpty? post.media.first.url : '';
 
+
             return GestureDetector(
-              onTap: () {
-                // TODO: Navigate to post detail
-                print("Clicked Post ID: ${post.postId}");
-              },
+              onTap: () => onPostTap?.call(index), // Use callback
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.grey[900],
@@ -46,7 +53,7 @@ class PostsGrid extends StatelessWidget {
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: imageUrl.isEmpty
-                   ? const Icon(Icons.image, color: Colors.grey)
+                  ? const Icon(Icons.image, color: Colors.grey)
                     : Image.network(
                         imageUrl,
                         fit: BoxFit.cover,

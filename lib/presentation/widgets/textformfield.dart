@@ -8,6 +8,7 @@ class AppTextField extends StatefulWidget {
   final TextEditingController? controller;
   final String? hintText;
   final Widget? prefixIcon;
+  final AutovalidateMode autovalidateMode;
   final Widget? suffixIcon;
   final bool obscureText;
   final bool isPassword;
@@ -26,6 +27,7 @@ class AppTextField extends StatefulWidget {
   final double? width;
   final double? height;
   final int? maxLength;
+  final TextCapitalization? textCapitalization;
   final EdgeInsetsGeometry? contentPadding;
 
   const AppTextField({
@@ -50,7 +52,11 @@ class AppTextField extends StatefulWidget {
     this.focusNode,
     this.width,
     this.height,
-    this.contentPadding, String? errorText, this.maxLength,
+    this.contentPadding,
+    String? errorText,
+    this.maxLength,
+    this.textCapitalization,
+    this.autovalidateMode = AutovalidateMode.disabled,
   });
 
   @override
@@ -75,8 +81,8 @@ class _AppTextFieldState extends State<AppTextField> {
           widget.suffixIcon!,
           IconButton(
             icon: Icon(
-              _obscureText 
-                  ? Icons.visibility_off_outlined 
+              _obscureText
+                  ? Icons.visibility_off_outlined
                   : Icons.visibility_outlined,
               color: AppColors.appBarDark,
               size: 20.sp,
@@ -86,13 +92,13 @@ class _AppTextFieldState extends State<AppTextField> {
         ],
       );
     }
-    
+
     // Case 2: Only password toggle
     if (widget.isPassword) {
       return IconButton(
         icon: Icon(
-          _obscureText 
-              ? Icons.visibility_off_outlined 
+          _obscureText
+              ? Icons.visibility_off_outlined
               : Icons.visibility_outlined,
           color: AppColors.primaryYellow,
           size: 20.sp,
@@ -100,7 +106,7 @@ class _AppTextFieldState extends State<AppTextField> {
         onPressed: () => setState(() => _obscureText = !_obscureText),
       );
     }
-    
+
     // Case 3: Only custom suffixIcon
     return widget.suffixIcon;
   }
@@ -108,14 +114,14 @@ class _AppTextFieldState extends State<AppTextField> {
   @override
   Widget build(BuildContext context) {
     final textField = TextFormField(
-      
       controller: widget.controller,
       obscureText: _obscureText,
-      keyboardType: widget.isPassword 
-          ? TextInputType.visiblePassword 
+      keyboardType: widget.isPassword
+          ? TextInputType.visiblePassword
           : widget.keyboardType,
       textInputAction: widget.textInputAction,
       validator: widget.validator,
+      autovalidateMode: widget.autovalidateMode, // <-- FIX: forward autovalidateMode
       onChanged: widget.onChanged,
       onFieldSubmitted: widget.onFieldSubmitted,
       inputFormatters: widget.inputFormatters,
@@ -126,6 +132,7 @@ class _AppTextFieldState extends State<AppTextField> {
       readOnly: widget.readOnly,
       onTap: widget.onTap,
       focusNode: widget.focusNode,
+      textCapitalization: widget.textCapitalization ?? TextCapitalization.none,
       style: AppTextStyles.bodyRegular.copyWith(
         fontSize: 14.sp,
         color: AppColors.textFieldTextLight,
@@ -134,7 +141,7 @@ class _AppTextFieldState extends State<AppTextField> {
         hintText: widget.hintText,
         prefixIcon: widget.prefixIcon,
         suffixIcon: _buildSuffixIcon(), // Fixed here
-        contentPadding: widget.contentPadding ?? 
+        contentPadding: widget.contentPadding ??
             EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
         hintStyle: AppTextStyles.bodyRegular.copyWith(
           fontSize: 14.sp,
@@ -143,6 +150,14 @@ class _AppTextFieldState extends State<AppTextField> {
         labelStyle: AppTextStyles.bodyRegular.copyWith(
           fontSize: 14.sp,
           color: AppColors.subtitleLight,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8.r),
+          //sborderSide: BorderSide(color: AppColors.buttonBg),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8.r),
+          borderSide: const BorderSide(color: Colors.red),
         ),
       ),
     );

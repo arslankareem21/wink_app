@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -27,6 +28,16 @@ class LoginScreen extends HookConsumerWidget {
     final passwordController = useTextEditingController();
     final formKey = useMemoized(() => GlobalKey<FormState>());
     final passwordFocus = useFocusNode();
+
+    final emailDebounce = useRef<Timer?>(null);
+    final passwordDebounce = useRef<Timer?>(null);
+
+    useEffect(() {
+      return () {
+        emailDebounce.value?.cancel();
+        passwordDebounce.value?.cancel();
+      };
+    }, []);
 
     final authState = ref.watch(authViewModelProvider);
     final isEmailLoading = authState.loadingType == AuthLoadingType.emailLogin;
@@ -122,6 +133,7 @@ class LoginScreen extends HookConsumerWidget {
                           padding: AppSpacing.cardPadding,
                           child: Form(
                             key: formKey,
+                            autovalidateMode: AutovalidateMode.onUserInteraction,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisSize: MainAxisSize.min,
@@ -142,16 +154,35 @@ class LoginScreen extends HookConsumerWidget {
                                 Text("Email Address",
                                     style: AppTextStyles.inputLabel),
                                 AppSpacing.vsm,
+
                                 AppTextField(
                                   controller: emailController,
                                   hintText: 'Enter your email',
-                                  prefixIcon: Icon(Icons.email_outlined,
-                                      color: AppColors.primaryYellow,
-                                      size: 20.sp),
-                                  inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
+                                  textCapitalization: TextCapitalization.none,
+                                  prefixIcon: Icon(
+                                    Icons.email_outlined,
+                                    color: AppColors.primaryYellow,
+                                    size: 20.sp,
+                                  ),
                                   keyboardType: TextInputType.emailAddress,
-                                  validator: Validators.email,
-                                  
+                                  validator: (v) => Validators.email(emailController.text),
+                                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                                  onChanged: (value) {
+                                    emailDebounce.value?.cancel();
+                                    emailDebounce.value = Timer(
+                                      const Duration(milliseconds: 500),
+                                      () {
+                                        final noSpaces = value.replaceAll(RegExp(r'\s'), '');
+                                        if (noSpaces != value) {
+                                          emailController.value = emailController.value.copyWith(
+                                            text: noSpaces,
+                                            selection: TextSelection.collapsed(offset: noSpaces.length),
+                                          );
+                                        }
+                                        formKey.currentState?.validate();
+                                      },
+                                    );
+                                  },
                                 ),
                                 AppSpacing.vsm,
                                 Text("Password",
@@ -161,13 +192,38 @@ class LoginScreen extends HookConsumerWidget {
                                   controller: passwordController,
                                   focusNode: passwordFocus,
                                   hintText: 'Enter your password',
-                                  inputFormatters: [
-                                    FilteringTextInputFormatter.deny(RegExp(r'\s')), 
-                                    ],
                                   isPassword: true,
-                                  prefixIcon: Icon(Icons.lock_outline,
-                                      color: AppColors.primaryYellow,
-                                      size: 20.sp),
+                                  prefixIcon: Icon(
+                                    Icons.lock_outline,
+                                    color: AppColors.primaryYellow,
+                                    size: 20.sp,
+                                  ),
+                                  // FIX: login should only check that a password was entered,
+                                  // not re-enforce full signup strength rules (uppercase/number/
+                                  // special char). Using Validators.password here would block a
+                                  // real, existing user from logging in with their correct password
+                                  // if it doesn't match today's strength policy.
+                                  validator: (v) => Validators.required(
+                                    passwordController.text,
+                                    fieldName: 'Password',
+                                  ),
+                                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                                  onChanged: (value) {
+                                    passwordDebounce.value?.cancel();
+                                    passwordDebounce.value = Timer(
+                                      const Duration(milliseconds: 500),
+                                      () {
+                                        final noSpaces = value.replaceAll(RegExp(r'\s'), '');
+                                        if (noSpaces != value) {
+                                          passwordController.value = passwordController.value.copyWith(
+                                            text: noSpaces,
+                                            selection: TextSelection.collapsed(offset: noSpaces.length),
+                                          );
+                                        }
+                                        formKey.currentState?.validate();
+                                      },
+                                    );
+                                  },
                                 ),
                                 AppSpacing.vsm,
                                 Align(
@@ -244,7 +300,7 @@ class LoginScreen extends HookConsumerWidget {
                                       textStyle:
                                       AppTextStyles.textLink.copyWith(
                                           color: AppColors.primaryYellow),
-                                      onPressed: () => 
+                                      onPressed: () =>
                                       NavigationService.push(
                                           context, AppRoutes.signup),
                                     ),

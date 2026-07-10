@@ -24,6 +24,7 @@ class ProfileScreen extends ConsumerWidget {
     }
 
     final userAsync = ref.watch(userDataProvider(userId));
+    final authState = ref.watch(authViewModelProvider);
 
     return userAsync.when(
       loading: () => const Scaffold(
@@ -61,17 +62,15 @@ class ProfileScreen extends ConsumerWidget {
             ),
             actions: [
               IconButton(
-                icon: Icon(Icons.settings, size: 24.sp),
+                icon: Icon(Icons.logout, size: 24.sp),
                 onPressed: () {
-                  NavigationService.push(context, AppRoutes.settings);
-                 // _showSettingsBottomSheet(context, ref);
+                  _showSettingsBottomSheet(context, ref);
                 },
               ),
             ],
           ),
           body: Column(
             children: [
-              // Profile Header Section - Not using NestedScrollView
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 15.w),
                 child: Column(
@@ -190,7 +189,6 @@ class ProfileScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-              // Tabs - Takes remaining space
               Expanded(
                 child: ProfileTabsView(userId: userId),
               ),
@@ -217,29 +215,6 @@ class ProfileScreen extends ConsumerWidget {
     return count.toString();
   }
 
-  void _pickProfileImage(BuildContext context, WidgetRef ref, String userId) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('Camera'),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Gallery'),
-              onTap: () => Navigator.pop(context),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   void _showSettingsBottomSheet(BuildContext context, WidgetRef ref) {
     showModalBottomSheet(
       context: context,
@@ -247,17 +222,45 @@ class ProfileScreen extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            AppSpacing.vxl,
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text('Logout', style: TextStyle(color: Colors.red)),
-              onTap: () async {
+              onTap: () {
                 Navigator.pop(context);
-                await ref.read(authViewModelProvider.notifier).signOut();
+                _showLogoutDialog(context, ref);
               },
             ),
           ],
         ),
       ),
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Logout'),
+          content: const Text('Are you sure you want to logout?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+                await ref.read(authViewModelProvider.notifier).signOut();
+                NavigationService.go(context, AppRoutes.login);
+              },
+              style: FilledButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

@@ -41,7 +41,6 @@ class NotificationScreen extends ConsumerWidget {
           // Use the clean functional model extensions for formatting groupings
           final todayList = notifications.filterToday;
           final earlierList = notifications.filterEarlier;
-
           return ListView(
             physics: const BouncingScrollPhysics(),
             children: [

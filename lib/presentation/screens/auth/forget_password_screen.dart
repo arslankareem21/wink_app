@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -25,7 +28,8 @@ class ForgetPasswordScreen extends ConsumerStatefulWidget {
 class _ForgetPasswordScreenState extends ConsumerState<ForgetPasswordScreen> {
   final emailController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-
+  Timer? _emailDebounce;
+  final emailFocus = FocusNode();
   @override
   void dispose() {
     emailController.dispose();
@@ -46,7 +50,7 @@ class _ForgetPasswordScreenState extends ConsumerState<ForgetPasswordScreen> {
 
     final authState = ref.watch(authViewModelProvider);
     final isLoading = authState.loadingType == AuthLoadingType.resetRequest;
-
+    final emailDebounce = useRef<Timer?>(null);
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: SafeArea(
@@ -90,15 +94,38 @@ class _ForgetPasswordScreenState extends ConsumerState<ForgetPasswordScreen> {
                                 AppSpacing.vsm,
                                 AppTextField(
                                   controller: emailController,
+                                  focusNode: emailFocus,
                                   hintText: 'Enter your email',
-                                  inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
-                                  keyboardType: TextInputType.emailAddress,
+                                  textInputAction: TextInputAction.next,
+                                  textCapitalization: TextCapitalization.none,
                                   prefixIcon: Icon(
                                     Icons.email_outlined,
                                     color: AppColors.primaryYellow,
                                     size: 20.sp,
                                   ),
-                                  validator: Validators.email,
+                                  keyboardType: TextInputType.emailAddress,
+                                  validator: (v) => Validators.email(emailController.text),
+                                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                                  onChanged: (value) {
+                                    _emailDebounce?.cancel();
+                                    _emailDebounce = Timer(
+                                      const Duration(milliseconds: 500),
+                                      () {
+                                        final noSpaces = value.replaceAll(RegExp(r'\s'), '');
+                                        if (noSpaces != value) {
+                                          final cursorPos = emailController.selection.baseOffset -
+                                              (value.length - noSpaces.length);
+                                          emailController.value = emailController.value.copyWith(
+                                            text: noSpaces,
+                                            selection: TextSelection.collapsed(
+                                              offset: cursorPos.clamp(0, noSpaces.length),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                    );
+                                  },
+                                  
                                 ),
                                 AppSpacing.vsm,
                                 AppButton(
