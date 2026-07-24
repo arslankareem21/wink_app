@@ -1,26 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class EditProfileState {
-  final bool isLoading;
-  final String? errorMessage;
-  final bool isSuccess;
+class EditProfileState { final bool isLoading; final String? errorMessage; final bool isSuccess;
 
-  const EditProfileState({
-    this.isLoading = false,
-    this.errorMessage,
-    this.isSuccess = false,
+  const EditProfileState({ this.isLoading = false, this.errorMessage, this.isSuccess = false,
   });
 
-  EditProfileState copyWith({
-    bool? isLoading,
-    String? errorMessage,
-    bool? isSuccess,
+  EditProfileState copyWith({ bool? isLoading,String? errorMessage,bool? isSuccess,
   }) {
-    return EditProfileState(
-      isLoading: isLoading ?? this.isLoading,
-      errorMessage: errorMessage,
-      isSuccess: isSuccess ?? this.isSuccess,
+    return EditProfileState(isLoading: isLoading ?? this.isLoading,errorMessage: errorMessage,isSuccess: isSuccess ?? this.isSuccess,
     );
   }
 }
@@ -35,16 +23,8 @@ class EditProfileViewModel extends Notifier<EditProfileState> {
     return const EditProfileState();
   }
 
-  Future<void> updateProfileData({
-    required String uid,
-    required String displayName,
-    required String username,
-    required String bio,
-    required String website,
-    required String category,
-    required String collaborationEmail,
-    required String location,
-  }) async {
+  Future<void> updateProfileData({required String uid,required String displayName,required String username,required String bio,required String website,required String category,required String collaborationEmail,required String location,}) async {
+  
     if (!ref.mounted || uid.isEmpty) {
       if (ref.mounted) {
         state = state.copyWith(
@@ -78,7 +58,7 @@ class EditProfileViewModel extends Notifier<EditProfileState> {
       await _firestore.collection('users').doc(uid).update(data);
 
       if (ref.mounted) {
-        state = state.copyWith(
+          state = state.copyWith(
           isLoading: false,
           errorMessage: null,
           isSuccess: true,

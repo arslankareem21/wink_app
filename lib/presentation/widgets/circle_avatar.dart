@@ -145,7 +145,8 @@ class AppProfileAvatar extends StatelessWidget {
       children: [
 
         GestureDetector(
-  onTap: onChangePhoto,
+  onTap: 
+  onChangePhoto,
   child: CircleAvatar(
     radius: radius,
     backgroundColor: Colors.grey[300],

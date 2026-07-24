@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:wink_app/core/config/theme/app_spacing.dart';
 import 'package:wink_app/core/config/theme/app_text_style.dart';
+import 'package:wink_app/models/auth/user_model.dart';
 import 'package:wink_app/models/short_model.dart';
 import 'package:wink_app/presentation/screens/reels/video_player_widget.dart';
 
@@ -12,7 +13,8 @@ class ShortsCard extends StatelessWidget {
     required this.short,
     required this.username,
     required this.profileUrl,
-    required this.isLiked,
+
+this.name = "", // 👈 Naya optional field name / displayName ke liye    required this.isLiked,
     required this.isFollowing,
     required this.isCurrentUser,
     required this.isLoading,
@@ -23,11 +25,12 @@ class ShortsCard extends StatelessWidget {
     required this.onFollow,
     required this.onComment,
     required this.onShare,
-    required this.onUserTap,
+    required this.onUserTap, required this.isLiked,
   });
 
   final ShortModel short;
   final String username;
+  final String name; // 👈 Add kiya
   final String profileUrl;
   final bool isLiked;
   final bool isFollowing;
@@ -83,13 +86,13 @@ class ShortsCard extends StatelessWidget {
           right: 90.w,
           bottom: 22.h,
           child: _LeftPanel(
-            username: username,
+            username: name,
             caption: short.caption,
             profileUrl: profileUrl,
             isCurrentUser: isCurrentUser,
             isFollowing: isFollowing,
             onFollow: onFollow,
-            onUserTap: onUserTap,
+            onUserTap: onUserTap, name: name,
           ),
         ),
         Positioned(
@@ -113,6 +116,7 @@ class ShortsCard extends StatelessWidget {
 class _LeftPanel extends StatelessWidget {
   const _LeftPanel({
     required this.username,
+    required this.name,
     required this.caption,
     required this.profileUrl,
     required this.isCurrentUser,
@@ -122,6 +126,7 @@ class _LeftPanel extends StatelessWidget {
   });
 
   final String username;
+  final String name;
   final String caption;
   final String profileUrl;
   final bool isCurrentUser;
@@ -147,12 +152,29 @@ class _LeftPanel extends StatelessWidget {
                 child: profileUrl.isEmpty? const Icon(Icons.person) : null,
               ),
               AppSpacing.hsm,
-              Expanded(
-                child: Text(
+              Expanded(child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+
+               // child: 
+                if (name.isNotEmpty) ...[
+                      Text(
+                        name,
+                        style: AppTextStyles.shortsUsername.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14.sp,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                Text(
                   "@$username",
                   style: AppTextStyles.shortsUsername.copyWith(color: Colors.white),
                   overflow: TextOverflow.ellipsis,
                 ),
+            ])
               ),
               if (!isCurrentUser)...[
                 AppSpacing.hsm,

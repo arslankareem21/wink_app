@@ -4,7 +4,6 @@ import 'package:wink_app/models/auth/user_model.dart';
 import 'package:wink_app/models/post_models.dart';
 import 'package:wink_app/models/short_model.dart';
 import 'package:wink_app/models/story_model.dart';
-import 'package:wink_app/models/user_model.dart';
 import 'package:wink_app/service/cloudinary_service.dart';
 import 'package:wink_app/service/firestore_service.dart';
 import 'package:wink_app/viewmodels/auth_viewmodel.dart';

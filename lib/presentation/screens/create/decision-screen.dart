@@ -75,6 +75,10 @@ class _UploadDecisionScreenState extends ConsumerState<UploadDecisionScreen> {
             video: widget.file,
             caption: _captionController.text.trim(),
           );
+          // uploadShort(
+          //   video: widget.file,
+          //   caption: _captionController.text.trim(),
+          // );
           break;
         case 'story':
           await notifier.uploadStory(
@@ -108,24 +112,24 @@ class _UploadDecisionScreenState extends ConsumerState<UploadDecisionScreen> {
     final isStoryAuto = widget.uploadType == 'story';
 
     return PopScope(
-      canPop:!state.isUploading,
+      canPop: !state.isUploading,
       child: Scaffold(
         backgroundColor: Colors.black,
         appBar: isStoryAuto
-           ? null
+            ? null
             : AppBar(
                 title: const Text('New Post'),
                 backgroundColor: Colors.black,
               ),
         body: isStoryAuto
-           ? _buildStoryUploadUI(state)
+            ? _buildStoryUploadUI(state)
             : _buildDecisionUI(state),
       ),
     );
   }
 
   Widget _buildStoryUploadUI(UploadState state) {
-    if (state.error!= null) {
+    if (state.error != null) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -172,15 +176,12 @@ class _UploadDecisionScreenState extends ConsumerState<UploadDecisionScreen> {
           _buildPreviewBox(),
           const SizedBox(height: 16),
           _buildCaptionField(),
-          if (state.isUploading)...[
-            
-            _buildProgressIndicator(state),
-          ],
-          if (state.error!= null)...[
+          if (state.isUploading) ...[_buildProgressIndicator(state)],
+          if (state.error != null) ...[
             const SizedBox(height: 12),
             Text(state.error!, style: const TextStyle(color: Colors.red)),
           ],
-          
+
           _buildActionButtons(state),
         ],
       ),
@@ -193,25 +194,25 @@ class _UploadDecisionScreenState extends ConsumerState<UploadDecisionScreen> {
       width: double.infinity,
       color: Colors.grey[900],
       child: widget.isVideo
-         ? (_videoThumbnailPath!= null
-             ? Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Image.file(
-                      File(_videoThumbnailPath!),
-                      fit: BoxFit.contain,
-                      width: double.infinity,
-                    ),
-                    const Icon(
-                      Icons.play_circle_outline,
-                      size: 80,
-                      color: Colors.white70,
-                    ),
-                  ],
-                )
-              : const Center(
-                  child: CircularProgressIndicator(color: Colors.white),
-                ))
+          ? (_videoThumbnailPath != null
+                ? Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Image.file(
+                        File(_videoThumbnailPath!),
+                        fit: BoxFit.contain,
+                        width: double.infinity,
+                      ),
+                      const Icon(
+                        Icons.play_circle_outline,
+                        size: 80,
+                        color: Colors.white70,
+                      ),
+                    ],
+                  )
+                : const Center(
+                    child: CircularProgressIndicator(color: Colors.white),
+                  ))
           : Image.file(widget.file, fit: BoxFit.contain),
     );
   }
@@ -221,11 +222,12 @@ class _UploadDecisionScreenState extends ConsumerState<UploadDecisionScreen> {
       controller: _captionController,
       maxLines: 3,
       maxLength: 100,
-      inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'[\u0000-\u001F]'))],
+      inputFormatters: [
+        FilteringTextInputFormatter.deny(RegExp(r'[\u0000-\u001F]')),
+      ],
       height: 100.h,
       keyboardType: TextInputType.text,
       hintText: 'Write a caption...',
-      
     );
   }
 
@@ -279,8 +281,8 @@ class _UploadDecisionScreenState extends ConsumerState<UploadDecisionScreen> {
     return SizedBox(
       width: double.infinity,
       child: isOutlined
-         ? OutlinedButton(
-              onPressed: disabled? null : onPressed,
+          ? OutlinedButton(
+              onPressed: disabled ? null : onPressed,
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: Colors.white),
                 foregroundColor: Colors.white,
@@ -292,7 +294,7 @@ class _UploadDecisionScreenState extends ConsumerState<UploadDecisionScreen> {
               child: Text(text),
             )
           : ElevatedButton(
-              onPressed: disabled? null : onPressed,
+              onPressed: disabled ? null : onPressed,
               style: ElevatedButton.styleFrom(
                 backgroundColor: color,
                 foregroundColor: Colors.white,

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -18,7 +17,6 @@ import 'package:wink_app/viewmodels/auth_viewmodel.dart';
 import 'package:wink_app/viewmodels/image_picker_vm.dart';
 import 'package:wink_app/viewmodels/profile/edit_profile_vm.dart/edit_profile_vm.dart';
 import 'package:wink_app/viewmodels/upload_vm.dart';
-
 
 class EditProfileScreen extends HookConsumerWidget {
   const EditProfileScreen({super.key});
@@ -53,6 +51,7 @@ class EditProfileScreen extends HookConsumerWidget {
           debouncedUsername.value = usernameController.text.trim();
         });
       }
+
       usernameController.addListener(listener);
       return () {
         usernameController.removeListener(listener);
@@ -61,7 +60,8 @@ class EditProfileScreen extends HookConsumerWidget {
     }, [usernameController]);
 
     final currentUser = currentUserAsync.value;
-    final isNewUsername = currentUser != null &&
+    final isNewUsername =
+        currentUser != null &&
         debouncedUsername.value.toLowerCase() !=
             currentUser.username?.toLowerCase();
 
@@ -98,26 +98,49 @@ class EditProfileScreen extends HookConsumerWidget {
 
     void saveChanges() async {
       final user = currentUserAsync.value;
+
       if (user == null || user.userId.isEmpty) {
         AppSnackBar.show('Invalid User Session!');
         return;
       }
-      if (nameController.text.trim().isEmpty) {
+
+      // if (nameController.text.trim().isEmpty) {
+      //   hasNameError.value = true;
+      //   return;
+      // }
+
+      // hasNameError.value = false;
+      // if (isUsernameTaken) {
+      //   AppSnackBar.show('Please change your username before saving.');
+      //   return;
+      // }
+      // 1. Name Check: Agar controller khali hai toh purana name le lo, warna controller ka text
+      final String updatedName = nameController.text.trim().isEmpty
+          ? (user.name ?? '')
+          : nameController.text.trim();
+
+      // Agar user ka purana name bhi nahi tha aur abhi bhi khali hai, tabhi block karein
+      if (updatedName.isEmpty) {
         hasNameError.value = true;
+        AppSnackBar.show('Name cannot be empty!');
         return;
       }
       hasNameError.value = false;
+
+      // 2. Username Check
       if (isUsernameTaken) {
         AppSnackBar.show('Please change your username before saving.');
         return;
       }
       try {
-        await ref.read(editProfileViewModelProvider.notifier).updateProfileData(
+        await ref
+            .read(editProfileViewModelProvider.notifier)
+            .updateProfileData(
               uid: user.userId,
               username: usernameController.text.trim(),
               bio: descriptionController.text.trim(),
               website: websiteController.text.trim(),
-              displayName: nameController.text.trim(),
+              displayName: updatedName,
               category: categoryController.text.trim(),
               collaborationEmail: collaborationEmailController.text.trim(),
               location: locationController.text.trim(),
@@ -128,7 +151,9 @@ class EditProfileScreen extends HookConsumerWidget {
         }
       } catch (e) {
         if (context.mounted) {
-          AppSnackBar.show('Error: ${e.toString().replaceAll('Exception: ', '')}');
+          AppSnackBar.show(
+            'Error: ${e.toString().replaceAll('Exception: ', '')}',
+          );
         }
       }
     }
@@ -140,16 +165,17 @@ class EditProfileScreen extends HookConsumerWidget {
       final file = ref.read(imagePickerProvider);
       if (file == null || !context.mounted) return;
 
-      try {
-        await ref.read(uploadProvider.notifier).uploadProfilePic(file: file);
-        ref.invalidate(currentUserProvider);
-        if (context.mounted) AppSnackBar.show('Profile photo updated');
-      } catch (e) {
-        if (context.mounted) AppSnackBar.show('Upload failed: $e');
-      } finally {
-        ref.read(imagePickerProvider.notifier).clear();
-        ref.read(uploadProvider.notifier).reset();
-      }
+      //   try {
+      //     await ref.read(uploadProvider.notifier)
+      //     .uploadProfilePic(file: file);
+      //     ref.invalidate(currentUserProvider);
+      //     if (context.mounted) AppSnackBar.show('Profile photo updated');
+      //   } catch (e) {
+      //     if (context.mounted) AppSnackBar.show('Upload failed: $e');
+      //   } finally {
+      //     ref.read(imagePickerProvider.notifier).clear();
+      //     ref.read(uploadProvider.notifier).reset();
+      //   }
     }
 
     return Scaffold(
@@ -180,8 +206,8 @@ class EditProfileScreen extends HookConsumerWidget {
 
           final networkImageUrl =
               user.profileImageUrl != null && user.profileImageUrl!.isNotEmpty
-                  ? user.profileImageUrl
-                  : null;
+              ? user.profileImageUrl
+              : null;
 
           return SingleChildScrollView(
             padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg.w),
@@ -195,11 +221,19 @@ class EditProfileScreen extends HookConsumerWidget {
                     child: Stack(
                       alignment: Alignment.bottomRight,
                       children: [
+                        // AppProfileAvatar(
+                        //   size: 80.sp,
+                        //   imageSource: pickedFile?.path ?? networkImageUrl,
+                        //   isNetwork: pickedFile == null,
+                        //   radius: 40,
+                        //),
+                        // EditProfileScreen.dart
                         AppProfileAvatar(
-                          size: 80.sp,
-                          imageSource: pickedFile?.path ?? networkImageUrl,
-                          isNetwork: pickedFile == null,
                           radius: 40,
+                          size: 80.sp,
+                          imageFile: pickedFile, // 👈 Gallery File pass karein
+                          imageSource:
+                              networkImageUrl, // 👈 Network URL pass karein
                         ),
                         Positioned(
                           bottom: 2,
@@ -212,11 +246,17 @@ class EditProfileScreen extends HookConsumerWidget {
                               color: AppColors.primaryYellow,
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: Theme.of(context).scaffoldBackgroundColor,
+                                color: Theme.of(
+                                  context,
+                                ).scaffoldBackgroundColor,
                                 width: 2,
                               ),
                             ),
-                            child: const Icon(Icons.camera_alt, color: Colors.white, size: 18),
+                            child: const Icon(
+                              Icons.camera_alt,
+                              color: Colors.white,
+                              size: 18,
+                            ),
                           ),
                         ),
                         if (uploadState.isUploading)
@@ -228,7 +268,9 @@ class EditProfileScreen extends HookConsumerWidget {
                               ),
                               child: Center(
                                 child: CircularProgressIndicator(
-                                  value: uploadState.progress > 0 ? uploadState.progress : null,
+                                  value: uploadState.progress > 0
+                                      ? uploadState.progress
+                                      : null,
                                   strokeWidth: 3,
                                   color: Colors.white,
                                 ),
@@ -240,7 +282,12 @@ class EditProfileScreen extends HookConsumerWidget {
                   ),
                 ),
                 AppSpacing.vsm,
-                Center(child: Text("Edit Profile", style: TextStyle(fontSize: 14.sp))),
+                Center(
+                  child: Text(
+                    "Edit Profile",
+                    style: TextStyle(fontSize: 14.sp),
+                  ),
+                ),
                 AppSpacing.vxxl,
                 Text("NAME"),
                 AppSpacing.vsm,
@@ -258,17 +305,23 @@ class EditProfileScreen extends HookConsumerWidget {
                   hintText: 'Your username',
                   controller: usernameController,
                   validator: Validators.username,
-                  errorText: isUsernameTaken ? 'This username is already taken' : null,
+                  errorText: isUsernameTaken
+                      ? 'This username is already taken'
+                      : null,
                   suffixIcon: usernameCheckAsync.isLoading
                       ? const SizedBox(
                           width: 15,
                           height: 15,
-                          child: CircularProgressIndicator(strokeWidth: 2))
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
                       : isUsernameTaken
-                          ? const Icon(Icons.error_outline, color: Colors.red)
-                          : usernameController.text.isNotEmpty && isNewUsername
-                              ? const Icon(Icons.check_circle_outline, color: Colors.green)
-                              : null,
+                      ? const Icon(Icons.error_outline, color: Colors.red)
+                      : usernameController.text.isNotEmpty && isNewUsername
+                      ? const Icon(
+                          Icons.check_circle_outline,
+                          color: Colors.green,
+                        )
+                      : null,
                 ),
                 AppSpacing.vxxl,
                 Text("BIO"),

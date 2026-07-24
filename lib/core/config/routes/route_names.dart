@@ -13,5 +13,8 @@ class AppRoutes {
   static const viewStoryScreen = '/viewStoryScreen';
   static const settings = '/SettingsScreen';
   static const videoEditor = '/videoEditor';
+  static const otherPtofile = '/otherProfile';
+    static const followFollowing = '/follow_following';
+
 
 }

@@ -29,7 +29,8 @@ class LoginScreen extends HookConsumerWidget {
 
     final authState = ref.watch(authViewModelProvider);
     final isEmailLoading = authState.loadingType == AuthLoadingType.emailLogin;
-    final isGoogleLoading = authState.loadingType == AuthLoadingType.googleSignIn;
+    final isGoogleLoading =
+        authState.loadingType == AuthLoadingType.googleSignIn;
 
     useEffect(() {
       void listener() {
@@ -50,17 +51,25 @@ class LoginScreen extends HookConsumerWidget {
             barrierDismissible: false,
             builder: (_) => const SetupPasswordDialog(),
           );
-        }
+       }
 
-        // Fixed: Navigate on 'Login successful' instead of goToHome
-        if (state.message == 'Login successful' ||
-            state.message == 'Password set successfully') {
-          NavigationService.go(context, AppRoutes.home);
-          ref.read(authViewModelProvider.notifier).clear();
-        }
+        // // Fixed: Navigate on 'Login successful' instead of goToHome
+        // if (state.message == 'Login successful' ||
+        //     state.message == 'Password set successfully') {
+        //   NavigationService.go(context, AppRoutes.home);
+        //   ref.read(authViewModelProvider.notifier).clear();
+        // }
 
-        // Error dialog for account-exists
-        if (state.error?.contains('Please login with Email & Password') == true) {
+        // Navigation trigger check updated:
+if (state.message == 'Login successful' || 
+    state.message == 'Password set successfully' ||
+    state.message == 'Google Sign In Succes Full') {
+  NavigationService.go(context, AppRoutes.home);
+  ref.read(authViewModelProvider.notifier).clear();
+}
+
+          if (state.error?.contains('Please login with Email & Password') ==
+            true) {
           showDialog(
             context: context,
             builder: (_) => AlertDialog(
@@ -90,8 +99,7 @@ class LoginScreen extends HookConsumerWidget {
           ref.read(authViewModelProvider.notifier).clear();
         }
 
-        if (state.message != null &&
-            !state.message!.contains('successful')) {
+        if (state.message != null && !state.message!.contains('successful')) {
           AppSnackBar.show(state.message!);
           ref.read(authViewModelProvider.notifier).clear();
         }
@@ -129,39 +137,51 @@ class LoginScreen extends HookConsumerWidget {
                                 const Center(child: SplashLogo()),
                                 AppSpacing.vsm,
                                 Center(
-                                  child: Text("Welcome Back!",
-                                      style: AppTextStyles.authHeadline),
+                                  child: Text(
+                                    "Welcome Back!",
+                                    style: AppTextStyles.authHeadline,
+                                  ),
                                 ),
                                 AppSpacing.vsm,
                                 Center(
-                                  child: Text("Please login to your account",
-                                      style: AppTextStyles.authSubtitle),
+                                  child: Text(
+                                    "Please login to your account",
+                                    style: AppTextStyles.authSubtitle,
+                                  ),
                                 ),
                                 AppSpacing.vsm,
-                                Text("Email Address",
-                                    style: AppTextStyles.inputLabel),
+                                Text(
+                                  "Email Address",
+                                  style: AppTextStyles.inputLabel,
+                                ),
                                 AppSpacing.vsm,
                                 AppTextField(
                                   controller: emailController,
                                   hintText: 'Enter your email',
-                                  prefixIcon: Icon(Icons.email_outlined,
-                                      color: AppColors.primaryYellow,
-                                      size: 20.sp),
+                                  prefixIcon: Icon(
+                                    Icons.email_outlined,
+                                    color: AppColors.primaryYellow,
+                                    size: 20.sp,
+                                  ),
                                   keyboardType: TextInputType.emailAddress,
                                   validator: Validators.email,
                                 ),
                                 AppSpacing.vsm,
-                                Text("Password",
-                                    style: AppTextStyles.inputLabel),
+                                Text(
+                                  "Password",
+                                  style: AppTextStyles.inputLabel,
+                                ),
                                 AppSpacing.vsm,
                                 AppTextField(
                                   controller: passwordController,
                                   focusNode: passwordFocus,
                                   hintText: 'Enter your password',
                                   isPassword: true,
-                                  prefixIcon: Icon(Icons.lock_outline,
-                                      color: AppColors.primaryYellow,
-                                      size: 20.sp),
+                                  prefixIcon: Icon(
+                                    Icons.lock_outline,
+                                    color: AppColors.primaryYellow,
+                                    size: 20.sp,
+                                  ),
                                 ),
                                 AppSpacing.vsm,
                                 Align(
@@ -170,7 +190,9 @@ class LoginScreen extends HookConsumerWidget {
                                     text: "Forgot Password?",
                                     textStyle: AppTextStyles.textLink,
                                     onPressed: () => NavigationService.push(
-                                        context, AppRoutes.forgotPassword),
+                                      context,
+                                      AppRoutes.forgotPassword,
+                                    ),
                                   ),
                                 ),
                                 AppSpacing.vsm,
@@ -183,28 +205,33 @@ class LoginScreen extends HookConsumerWidget {
                                   onPressed: isEmailLoading || isGoogleLoading
                                       ? null
                                       : () {
-                                    if (formKey.currentState!
-                                        .validate()) {
-                                      ref
-                                          .read(authViewModelProvider
-                                          .notifier)
-                                          .login(
-                                        emailController.text.trim(),
-                                        passwordController.text
-                                            .trim(),
-                                      );
-                                    }
-                                  },
+                                          if (formKey.currentState!
+                                              .validate()) {
+                                            ref
+                                                .read(
+                                                  authViewModelProvider
+                                                      .notifier,
+                                                )
+                                                .loginn(
+                                                  emailController.text.trim(),
+                                                  passwordController.text
+                                                      .trim(),
+                                                );
+                                          }
+                                        },
                                 ),
                                 AppSpacing.vsm,
                                 Row(
                                   children: [
                                     const Expanded(child: Divider()),
                                     Padding(
-                                      padding:
-                                      EdgeInsets.symmetric(horizontal: 8.w),
-                                      child: Text("or continue with",
-                                          style: AppTextStyles.authSubtitle),
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 8.w,
+                                      ),
+                                      child: Text(
+                                        "or continue with",
+                                        style: AppTextStyles.authSubtitle,
+                                      ),
                                     ),
                                     const Expanded(child: Divider()),
                                   ],
@@ -218,29 +245,35 @@ class LoginScreen extends HookConsumerWidget {
                                         : "Continue with Google",
                                     isGhost: true,
                                     icon: SvgPicture.asset(
-                                        'assets/icon/google.svg'),
+                                      'assets/icon/google.svg',
+                                    ),
                                     onPressed: isGoogleLoading || isEmailLoading
                                         ? null
                                         : () => ref
-                                        .read(authViewModelProvider
-                                        .notifier)
-                                        .signInWithGoogle(),
+                                              .read(
+                                                authViewModelProvider.notifier,
+                                              ).MyGoogleSignIn()
+                                              
                                   ),
                                 ),
                                 AppSpacing.vsm,
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Text("Don't have an account?",
-                                        style: AppTextStyles.authSubtitle),
+                                    Text(
+                                      "Don't have an account?",
+                                      style: AppTextStyles.authSubtitle,
+                                    ),
                                     AppTextButton(
                                       text: "Sign Up",
-                                      textStyle:
-                                      AppTextStyles.textLink.copyWith(
-                                          color: AppColors.primaryYellow),
-                                      onPressed: () => 
-                                      NavigationService.push(
-                                          context, AppRoutes.signup),
+                                      textStyle: AppTextStyles.textLink
+                                          .copyWith(
+                                            color: AppColors.primaryYellow,
+                                          ),
+                                      onPressed: () => NavigationService.push(
+                                        context,
+                                        AppRoutes.signup,
+                                      ),
                                     ),
                                   ],
                                 ),

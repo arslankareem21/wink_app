@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:wink_app/core/config/routes/navigation_service.dart';
+import 'package:wink_app/core/config/routes/route_names.dart';
 import 'package:wink_app/core/config/theme/app_colors.dart';
 import 'package:wink_app/core/config/theme/app_text_style.dart';
 import 'package:wink_app/core/config/theme/app_spacing.dart';
@@ -20,9 +22,7 @@ class ProfileStats extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return 
-    
-    Column(
+    return Column(
       children: [
         AppSpacing.vxl,
 
@@ -31,13 +31,22 @@ class ProfileStats extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             _buildStatItem(postsCount.toString(), 'Posts'),
-            _buildStatItem(followersCount, 'Followers'),
-            _buildStatItem(followingCount.toString(), 'Following'),
+            InkWell(
+              onTap: () {
+                NavigationService.push(context, AppRoutes.followFollowing);
+              },
+              child: _buildStatItem(followersCount, 'Followers'),
+            ),
+            InkWell(
+              onTap: (){
+            NavigationService.push(context, AppRoutes.followFollowing);
+              },
+              child: _buildStatItem(followingCount.toString(), 'Following')),
           ],
         ),
 
         AppSpacing.vxl,
-// ProfileBio(
+        // ProfileBio(
       ],
     );
   }

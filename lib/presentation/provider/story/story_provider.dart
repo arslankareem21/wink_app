@@ -1,7 +1,4 @@
-import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:wink_app/models/media_type.dart';
 import 'package:wink_app/models/story_model.dart';
 import 'package:wink_app/presentation/provider/story/story_repository.dart';

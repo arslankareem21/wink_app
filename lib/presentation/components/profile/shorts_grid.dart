@@ -17,7 +17,7 @@ class ShortsGrid extends StatelessWidget {
             "No Shorts Yet",
             style: TextStyle(color: Colors.grey, fontSize: 14),
           ),
-        ),
+        ), 
       );
     }
 

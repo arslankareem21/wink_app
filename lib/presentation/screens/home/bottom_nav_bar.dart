@@ -19,7 +19,7 @@ class BottomNavScreen extends ConsumerWidget {
 
     final screens = [
       HomeScreen(),
-      const ShortsPage(),
+      const ReelPage(),
       const NotificationScreen(),
       const ProfileScreen(),
     ];

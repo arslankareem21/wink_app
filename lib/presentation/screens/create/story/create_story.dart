@@ -1,8 +1,5 @@
-
-
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -49,24 +46,37 @@ class _CreateStoryState extends ConsumerState<CreateStory> {
                 final XFile? pickedFile = await _picker.pickImage(
                   source: ImageSource.gallery,
                 );
+
                 if (pickedFile != null && context.mounted) {
-                  // final currentUserId =
-                  //     FirebaseAuth.instance.currentUser?.uid ?? '';
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (ctx) => ProImageEditor.file(
+                      builder: (editorContext) => ProImageEditor.file(
                         File(pickedFile.path),
                         callbacks: ProImageEditorCallbacks(
                           onImageEditingComplete: (Uint8List bytes) async {
+                            // 1. Pehle byte se file banayein
                             File editedFile = await getFilePathFromBytes(
                               bytes,
                               pickedFile.name,
                             );
-                            await ref
-                                .read(uploadProvider.notifier)
-                                .uploadStory(file: editedFile, isVideo: false);
 
+                            // 2. Background Upload Trigger Karein (Non-blocking)
+                            ref
+                                .read(uploadProvider.notifier)
+                                .uploadStory(file: editedFile, isVideo: false)
+                                .catchError((e) {
+                                  if (context.mounted) {
+                                    print(e);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Upload failed: $e'),
+                                      ),
+                                    );
+                                  }
+                                });
+
+                            // 3. User ko Direct Home Screen par redirect kar dein
                             if (context.mounted) {
                               NavigationService.push(context, AppRoutes.home);
                             }
@@ -84,6 +94,112 @@ class _CreateStoryState extends ConsumerState<CreateStory> {
               ),
             ),
 
+            //             ElevatedButton.icon(
+            //   style: ElevatedButton.styleFrom(
+            //     backgroundColor: Colors.white,
+            //     foregroundColor: Colors.black,
+            //     minimumSize: const Size(250, 50),
+            //   ),
+            //   onPressed: () async {
+            //     final XFile? pickedFile = await _picker.pickImage(
+            //       source: ImageSource.gallery,
+            //     );
+
+            //     if (pickedFile != null && context.mounted) {
+            //       Navigator.push(
+            //         context,
+            //         MaterialPageRoute(
+            //           builder: (editorContext) => ProImageEditor.file(
+            //             File(pickedFile.path),
+            //             callbacks: ProImageEditorCallbacks(
+            //               onImageEditingComplete: (Uint8List bytes) async {
+            //                 // 1. Convert bytes to File
+            //                 File editedFile = await getFilePathFromBytes(
+            //                   bytes,
+            //                   pickedFile.name,
+            //                 );
+
+            //                 // 2. Close the Image Editor Screen immediately so UI doesn't hang
+            //                 if (editorContext.mounted) {
+            //                   Navigator.pop(editorContext);
+            //                 }
+
+            //                 // 3. Trigger upload with try-catch
+            //                 try {
+            //                   await ref
+            //                       .read(uploadProvider.notifier)
+            //                       .uploadStory(file: editedFile, isVideo: false);
+
+            //                   // 4. Navigate back to Home screen after successful upload
+            //                   if (context.mounted) {
+            //                     NavigationService.push(context, AppRoutes.home);
+            //                   }
+            //                 } catch (e) {
+            //                   // Show error snackbar if upload fails
+            //                   if (context.mounted) {
+            //                     ScaffoldMessenger.of(context).showSnackBar(
+            //                       SnackBar(content: Text('Upload failed: $e')),
+            //                     );
+            //                   }
+            //                 }
+            //               },
+            //             ),
+            //           ),
+            //         ),
+            //       );
+            //     }
+            //   },
+            //   icon: const Icon(Icons.image_rounded),
+            //   label: const Text(
+            //     "Choose Photo",
+            //     style: TextStyle(fontWeight: FontWeight.bold),
+            //   ),
+            // ),
+            // ElevatedButton.icon(
+            //   style: ElevatedButton.styleFrom(
+            //     backgroundColor: Colors.white,
+            //     foregroundColor: Colors.black,
+            //     minimumSize: const Size(250, 50),
+            //   ),
+            //   onPressed: () async {
+            //     final XFile? pickedFile = await _picker.pickImage(
+            //       source: ImageSource.gallery,
+            //     );
+            //     if (pickedFile != null && context.mounted) {
+            //       // final currentUserId =
+            //       //     FirebaseAuth.instance.currentUser?.uid ?? '';
+            //       Navigator.push(
+            //         context,
+
+            //         MaterialPageRoute(
+            //           builder: (ctx) => ProImageEditor.file(
+            //             File(pickedFile.path),
+            //             callbacks: ProImageEditorCallbacks(
+            //               onImageEditingComplete: (Uint8List bytes) async {
+            //                 File editedFile = await getFilePathFromBytes(
+            //                   bytes,
+            //                   pickedFile.name,
+            //                 );
+            //                 await ref
+            //                     .read(uploadProvider.notifier)
+            //                     .uploadStory(file: editedFile, isVideo: false);
+
+            //                 if (context.mounted) {
+            //                   NavigationService.push(context, AppRoutes.home);
+            //                 }
+            //               },
+            //             ),
+            //           ),
+            //         ),
+            //       );
+            //     }
+            //   },
+            //   icon: const Icon(Icons.image_rounded),
+            //   label: const Text(
+            //     "Choose Photo",
+            //     style: TextStyle(fontWeight: FontWeight.bold),
+            //   ),
+            // ),
             AppSpacing.vxxl,
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
@@ -110,9 +226,12 @@ class _CreateStoryState extends ConsumerState<CreateStory> {
                       );
 
                   // 3. Navigate back home
-                  if (context.mounted) {
-                    NavigationService.push(context, AppRoutes.home);
-                  }
+                  if (mounted)
+                    return NavigationService.push(
+                      context,
+                      //MaterialPage)
+                      AppRoutes.home,
+                    );
                 }
               },
               icon: const Icon(Icons.image_rounded),

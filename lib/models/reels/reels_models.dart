@@ -1,27 +1,28 @@
-
 class ReelModel {
   final String videoUrl;
   final String username;
   final String profileUrl;
   final String caption;
   final String musicName;
+  //final String name;
   final int likes;
   final int comments;
   final int shares;
   final bool isLiked;
-    final String userID;
-
+  final String userID;
 
   ReelModel({
     required this.videoUrl,
     required this.username,
+    //required this.name,
     this.profileUrl = 'https://ui-avatars.com/api/?name=User',
     required this.caption,
     this.musicName = 'Original Audio',
     this.likes = 0,
     this.comments = 0,
     this.shares = 0,
-    this.isLiked = false, required this.userID,
+    this.isLiked = false,
+    required this.userID,
   });
 
   String? get id => null;
@@ -29,6 +30,7 @@ class ReelModel {
   ReelModel copyWith({
     String? userID,
     String? videoUrl,
+    String? name,
     String? username,
     String? profileUrl,
     String? caption,
@@ -48,7 +50,8 @@ class ReelModel {
       comments: comments ?? this.comments,
       shares: shares ?? this.shares,
       isLiked: isLiked ?? this.isLiked,
-       userID: userID ?? this.userID,
+      userID: userID ?? this.userID,
+     // name: name ?? this.name,
     );
   }
 }

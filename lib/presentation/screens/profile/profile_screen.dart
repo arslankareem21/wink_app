@@ -1,14 +1,20 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:wink_app/core/config/routes/navigation_service.dart';
 import 'package:wink_app/core/config/routes/route_names.dart';
 import 'package:wink_app/core/config/theme/app_spacing.dart';
 import 'package:wink_app/core/config/theme/app_text_style.dart';
 import 'package:wink_app/presentation/components/profile/profileTabController/pofile_dafault_tab_controller.dart';
+import 'package:wink_app/presentation/components/profile/profile_status.dart';
 import 'package:wink_app/presentation/provider/get_profile_providers.dart';
+import 'package:wink_app/presentation/screens/profile/follow/following/follow/following.dart';
+import 'package:wink_app/presentation/widgets/circle_avatar.dart';
 import 'package:wink_app/viewmodels/auth_viewmodel.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:wink_app/viewmodels/image_picker_vm.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -16,55 +22,67 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userId = ref.watch(currentUserIdProvider);
-    
+
     if (userId == null) {
-      return const Scaffold(
-        body: Center(child: Text('Not logged in')),
-      );
+      return const Scaffold(body: Center(child: Text('Not logged in')));
     }
+    ;
+
+    //final uccrentt UserId  String currefffntUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final pickedFile = ref.watch(imagePickerProvider);
 
     final userAsync = ref.watch(userDataProvider(userId));
 
+    ///  biscuit hy ya kuch or??
     return userAsync.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
-      error: (error, stack) => Scaffold(
-        body: Center(child: Text('Error: $error')),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stack) =>
+          Scaffold(body: Center(child: Text('Error: $error'))),
       data: (doc) {
         if (!doc.exists || doc.data() == null) {
-          return const Scaffold(
-            body: Center(child: Text('User not found')),
-          );
+          return const Scaffold(body: Center(child: Text('User not found')));
         }
 
         final user = doc.data()! as Map<String, dynamic>;
-        final username = user['username']?? user['userName']?? user['handle']?? '';
-        final name = user['name']?? user['displayName']?? 'No Name';
-        final postsCount = (user['postsCount'] as num?)?.toInt()?? 0;
-        final followersCount = (user['followersCount'] as num?)?.toInt()?? 0;
-        final followingCount = (user['followingCount'] as num?)?.toInt()?? 0;
-        final profileImageUrl = user['profileImageUrl']?? user['photoUrl']?? '';
-        final bio = user['bio']?? user['description']?? '';
-        final category = user['category']?? '';
-        final location = user['location']?? '';
-        final website = user['website']?? '';
+        final username =
+            user['username'] ?? user['userName'] ?? user['handle'] ?? '';
+        final name = user['name'] ?? user['displayName'] ?? 'No Name';
+        final postsCount = (user['postsCount'] as num?)?.toInt() ?? 0;
+        final followersCount = (user['followersCount'] as num?)?.toInt() ?? 0;
+        final followingCount = (user['followingCount'] as num?)?.toInt() ?? 0;
+        final profileImageUrl =
+            user['profileImageUrl'] ?? user['photoUrl'] ?? '';
+        final bio = user['bio'] ?? user['description'] ?? '';
+        final category = user['category'] ?? '';
+        final location = user['location'] ?? '';
+        final website = user['website'] ?? '';
+
+        // final networkImageUrl =
+        //     user.profileImageUrl != null && user.profileImageUrl!.isNotEmpty
+        //     ? user.
+        //     : null;
 
         return Scaffold(
           appBar: AppBar(
             elevation: 0,
             centerTitle: true,
             title: Text(
-              username.isEmpty? name : username,
+              username.isEmpty ? name : username,
               style: AppTextStyles.appBarTitle,
+            ),
+            leading: IconButton(
+              onPressed: () {
+                NavigationService.push(context, AppRoutes.otherPtofile);
+              },
+              icon: Icon(Icons.add),
             ),
             actions: [
               IconButton(
                 icon: Icon(Icons.settings, size: 24.sp),
                 onPressed: () {
                   NavigationService.push(context, AppRoutes.settings);
-                 // _showSettingsBottomSheet(context, ref);
+                  // _showSettingsBottomSheet(context, ref);
                 },
               ),
             ],
@@ -80,41 +98,104 @@ class ProfileScreen extends ConsumerWidget {
                     AppSpacing.vxl,
                     Row(
                       children: [
-                        Container(
-                          width: 90.w,
-                          height: 90.w,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.grey[800]!, width: 2),
-                          ),
-                          child: ClipOval(
-                            child: profileImageUrl.isNotEmpty
-                               ? CachedNetworkImage(
-                                    imageUrl: profileImageUrl,
-                                    fit: BoxFit.cover,
-                                    placeholder: (context, url) => Container(
-                                      color: Colors.grey[800],
-                                      child: Icon(Icons.person, size: 45.sp, color: Colors.grey),
-                                    ),
-                                    errorWidget: (context, url, error) => Container(
-                                      color: Colors.grey[800],
-                                      child: Icon(Icons.person, size: 45.sp, color: Colors.grey),
-                                    ),
-                                  )
-                                : Container(
-                                    color: Colors.grey[800],
-                                    child: Icon(Icons.person, size: 45.sp, color: Colors.grey),
-                                  ),
-                          ),
+                        AppProfileAvatar(
+                          radius: 40,
+                          size: 80.sp,
+                          imageFile: pickedFile, // 👈 Gallery File pass karein
+                          imageSource: profileImageUrl.isNotEmpty
+                              ? profileImageUrl
+                              : null,
+                          // networkImageUrl, // 👈 Network URL pass karein
                         ),
-                        
+                        // Container(
+                        //   width: 90.w,
+                        //   height: 90.w,
+                        //   decoration: BoxDecoration(
+                        //     shape: BoxShape.circle,
+                        //     border: Border.all(
+                        //       color: Colors.grey[800]!,
+                        //       width: 2,
+                        //     ),
+                        //   ),
+                        //   child: ClipOval(
+                        //     child: profileImageUrl.isNotEmpty
+                        //         ? CachedNetworkImage(
+                        //             imageUrl: profileImageUrl,
+                        //             fit: BoxFit.cover,
+                        //             placeholder: (context, url) => Container(
+                        //               color: Colors.grey[800],
+                        //               child: Icon(
+                        //                 Icons.person,
+                        //                 size: 45.sp,
+                        //                 color: Colors.grey,
+                        //               ),
+                        //             ),
+                        //             errorWidget: (context, url, error) =>
+                        //                 Container(
+                        //                   color: Colors.grey[800],
+                        //                   child: Icon(
+                        //                     Icons.person,
+                        //                     size: 45.sp,
+                        //                     color: Colors.grey,
+                        //                   ),
+                        //                 ),
+                        //           )
+                        //         : Container(
+                        //             color: Colors.grey[800],
+                        //             child: Icon(
+                        //               Icons.person,
+                        //               size: 45.sp,
+                        //               color: Colors.grey,
+                        //             ),
+                        //           ),
+                        //   ),
+                        // ),
+
+                        //  ProfileStats(
+                        //   postsCount: postsCount,
+                        //   followersCount: followersCount,
+                        //    followingCount: followingCount)
                         Expanded(
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
                               _buildStat('Posts', postsCount),
-                              _buildStat('Followers', followersCount),
-                              _buildStat('Following', followingCount),
+                              InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => FollowFollowingScreen(
+                                        userId: userId,
+                                        initialIndex: 0,
+                                        //targetUserId: '', // Opens Followers Tab directly
+                                      ),
+                                    ),
+                                  );
+                                  // context.pushNamed(
+                                  //   'follow followings',
+                                  //   extra: {'targetUserId': userId,
+                                  //   'initialIndex': 0},
+                                  // );
+                                },
+                                child: _buildStat('Followers', followersCount),
+                              ),
+
+                              InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => FollowFollowingScreen(
+                                        userId: userId,
+                                        initialIndex: 1,
+                                        //targetUserId: '', // Opens Followers Tab directly
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: _buildStat('Following', followingCount),
+                              ),
                             ],
                           ),
                         ),
@@ -123,22 +204,28 @@ class ProfileScreen extends ConsumerWidget {
                     AppSpacing.vsm,
                     if (name.isNotEmpty)
                       Text(name, style: AppTextStyles.appBarBrandName),
-                    if (category.isNotEmpty)...[
+                    if (category.isNotEmpty) ...[
                       SizedBox(height: 4.h),
                       Text(
                         category,
-                        style: AppTextStyles.appBarTitle.copyWith(color: Colors.grey),
+                        style: AppTextStyles.appBarTitle.copyWith(
+                          color: Colors.grey,
+                        ),
                       ),
                     ],
-                    if (bio.isNotEmpty)...[
+                    if (bio.isNotEmpty) ...[
                       SizedBox(height: 8.h),
                       Text(bio, style: AppTextStyles.bodyRegular),
                     ],
-                    if (location.isNotEmpty)...[
+                    if (location.isNotEmpty) ...[
                       SizedBox(height: 8.h),
                       Row(
                         children: [
-                          Icon(Icons.location_on, size: 14.sp, color: Colors.grey),
+                          Icon(
+                            Icons.location_on,
+                            size: 14.sp,
+                            color: Colors.grey,
+                          ),
                           SizedBox(width: 4.w),
                           Expanded(
                             child: Text(
@@ -150,7 +237,7 @@ class ProfileScreen extends ConsumerWidget {
                         ],
                       ),
                     ],
-                    if (website.isNotEmpty)...[
+                    if (website.isNotEmpty) ...[
                       SizedBox(height: 8.h),
                       Row(
                         children: [
@@ -159,7 +246,9 @@ class ProfileScreen extends ConsumerWidget {
                           Expanded(
                             child: Text(
                               website,
-                              style: AppTextStyles.textLink.copyWith(color: Colors.blue),
+                              style: AppTextStyles.textLink.copyWith(
+                                color: Colors.blue,
+                              ),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -172,7 +261,10 @@ class ProfileScreen extends ConsumerWidget {
                       height: 40.h,
                       child: OutlinedButton(
                         onPressed: () {
-                          NavigationService.push(context, AppRoutes.editProfile);
+                          NavigationService.push(
+                            context,
+                            AppRoutes.editProfile,
+                          );
                         },
                         style: OutlinedButton.styleFrom(
                           side: BorderSide(color: Colors.grey[700]!),
@@ -182,7 +274,10 @@ class ProfileScreen extends ConsumerWidget {
                         ),
                         child: Text(
                           'Edit Profile',
-                          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
@@ -191,9 +286,7 @@ class ProfileScreen extends ConsumerWidget {
                 ),
               ),
               // Tabs - Takes remaining space
-              Expanded(
-                child: ProfileTabsView(userId: userId),
-              ),
+              Expanded(child: ProfileTabsView(userId: userId)),
             ],
           ),
         );

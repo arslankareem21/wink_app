@@ -109,7 +109,7 @@ class _ForgetPasswordScreenState extends ConsumerState<ForgetPasswordScreen> {
                                           if (_formKey.currentState!.validate()) {
                                             ref
                                                 .read(authViewModelProvider.notifier)
-                                                .sendResetLink(
+                                                .sendResendPassLink(
                                                     emailController.text.trim());
                                           }
                                         },

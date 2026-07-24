@@ -1,11 +1,9 @@
-import 'dart:math';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:wink_app/core/utils/validators.dart';
 import 'package:wink_app/models/auth/user_model.dart';
-import 'package:wink_app/service/firestore_service.dart';
 
 class AuthRepository {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -47,14 +45,14 @@ class AuthRepository {
       throw Exception("User email not found.");
     }
 
-    // 🌟 Step A: User ke current email aur naye password se credential banayein
+    // Step A: User ke current email aur naye password se credential banayein
     AuthCredential credential = EmailAuthProvider.credential(
       email: user.email!,
       password: password,
     );
 
     try {
-      // 🌟 Step B: Is credential ko current Google account ke sath link kar dein
+      //  Step B: Is credential ko current Google account ke sath link kar dein
       // Is se user next time isi email aur password se bhi login kar sakega
       await user.linkWithCredential(credential);
     } on FirebaseException catch (e) {
@@ -74,7 +72,6 @@ class AuthRepository {
   }
 
   // Aapka current logged in user getter (agar file me pehle se na ho)
-
   Future<void> _syncUserToFirestore(
     User user,
     String provider, {
@@ -85,10 +82,6 @@ class AuthRepository {
       final doc = await docRef.get();
 
       if (!doc.exists) {
-        // final uniqueUsername = await generateUniqueUsername(
-        //   user.email ?? 'user',
-        // );
-
         final newUser = UserModel(
           userId: user.uid,
           name: name ?? user.displayName ?? 'New User',
@@ -110,40 +103,85 @@ class AuthRepository {
     }
   }
 
-  Future<UserCredential> signUp(
-    String email,
-    String password,
-    String name,
-  ) async {
+  // Future<UserCredential> signUp(
+  //   String email,
+  //   String password,
+  //   String name,
+  // ) async {
+  //   //create account
+  //   try {
+  //     final credential = await _auth.createUserWithEmailAndPassword(
+  //       email: email.trim(),
+  //       password: password,
+  //     );
+
+  //     final user = credential.user;
+  //     if (user != null) {
+  //       //set name
+  //       await user.updateDisplayName(name);
+  //       //firebase document create
+  //       await _syncUserToFirestore(user, 'email', name: name);
+  //     }
+  //     return credential;
+  //   } on FirebaseAuthException catch (e) {
+  //     throw _handleError(e, email);
+  //   }
+  // }
+
+  Future signUpp(String email, String password, String name) async {
     try {
-      final credential = await _auth.createUserWithEmailAndPassword(
-        email: email.trim(),
-        password: password,
-      );
+      final credential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: email, password: password);
 
       final user = credential.user;
+
       if (user != null) {
-        await user.updateDisplayName(name);
-        await _syncUserToFirestore(user, 'email', name: name);
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'userId': user.uid,
+          'name': name,
+          'email': email,
+          'createAt': DateTime.now(),
+        });
+        //.get();
+        return credential;
       }
-      return credential;
-    } on FirebaseAuthException catch (e) {
-      throw _handleError(e, email);
+    } catch (e) {
+      throw Exception("Sign up failed: $e");
     }
   }
 
-  Future<UserCredential> signIn(String email, String password) async {
+  Future<UserCredential?> signInn(String email, String password) async {
     try {
-      final cred = await _auth.signInWithEmailAndPassword(
-        email: email.trim(),
+      final cred = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
         password: password,
       );
-      await _syncUserToFirestore(cred.user!, 'email');
-      return cred;
-    } on FirebaseAuthException catch (e) {
-      throw _handleError(e, email);
+
+      final user = cred.user;
+
+      if (user != null) {
+        print('LOGIN');
+      }
+    } catch (e) {
+      rethrow;
     }
   }
+
+  // Future<UserCredential> signIn(String email, String password) async {
+  //   try {
+  //     final cred = await _auth.signInWithEmailAndPassword(
+  //       email: email.trim(),
+  //       password: password,
+  //     );
+
+  //     await _syncUserToFirestore(cred.user!, 'email');
+  //     return cred;
+  //   } on FirebaseAuthException catch (e) {
+  //     throw _handleError(e, email);
+  //   }
+  // }
+
+  
 
   Future<UserCredential?> signInWithGoogle() async {
     try {
@@ -157,10 +195,11 @@ class AuthRepository {
       if (googleUser == null) throw Exception('Sign in cancelled');
 
       final googleAuth = await googleUser.authentication;
+
       if (googleAuth.accessToken == null || googleAuth.idToken == null) {
         throw Exception('Google sign in failed. Try again.');
       }
-
+      //for firebase
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
@@ -190,11 +229,48 @@ class AuthRepository {
       print("~~~~~~~~~~~~~~~~~~ FirebaseException during Google Sign-In: $e");
       throw _cleanError(e);
     } catch (e) {
-      print("~~~~~~~~~~~~~~~~~~ Error during Google Sign-In: $e");
+      print("~~~~~~~~~~~~~~~~~Error during Google Sign-In: $e");
       _auth.signOut();
       // Catch GoogleSignIn exceptions too
       if (e is Exception) rethrow;
       throw Exception('Google sign in failed: ${e.toString()}');
+    }
+  }
+
+  Future<UserCredential?> myGoogleSignin() async {
+    try {
+      final googleUser = await _googleSignIn.signIn();
+
+      if (googleUser == null) {
+        throw 'sign in fail';
+      }
+
+      final googleAuth = await googleUser.authentication;
+
+      final firebaseCredential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      final userCredential = await FirebaseAuth.instance.signInWithCredential(
+        firebaseCredential,
+      );
+
+      if (userCredential.user != null) {
+        _syncUserToFirestore(userCredential.user!, 'google');
+
+        // FirebaseFirestore.instance.collection('users').doc(uid).set({
+        //   'uid': user.uid,
+        //   'email':user.email,
+        //   'displayName': user.displayName,
+        //   'photoURL': user.photoURL,
+        //    // 'provider': provider,
+        //     'lastLogin': FieldValue.serverTimestamp(),
+        // });
+      }
+      return userCredential;
+    } catch (e) {
+      print("Error syncing user to Firestore: $e");
+      throw Exception("Failed to sync user data. Please try again.");
     }
   }
 
@@ -300,11 +376,19 @@ class AuthRepository {
   //   }
   // }
 
-  Future<void> sendResetLink(String email) async {
+  // Future<void> sendResetLink(String email) async {
+  //   try {
+  //     await _auth.sendPasswordResetEmail(email: email.trim());
+  //   } on FirebaseAuthException catch (e) {
+  //     throw _handleError(e, email);
+  //   }
+  // }
+
+  Future<void> sendRequestLinkk(String email) async {
     try {
-      await _auth.sendPasswordResetEmail(email: email.trim());
-    } on FirebaseAuthException catch (e) {
-      throw _handleError(e, email);
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email.trim());
+    } catch (e) {
+      throw Exception(e);
     }
   }
 

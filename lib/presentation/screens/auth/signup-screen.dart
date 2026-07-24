@@ -13,7 +13,6 @@ import 'package:wink_app/presentation/widgets/app_snackbar.dart';
 import 'package:wink_app/presentation/widgets/elevated_button.dart';
 import 'package:wink_app/presentation/widgets/text_button.dart';
 import 'package:wink_app/presentation/widgets/textformfield.dart';
-
 import 'package:wink_app/viewmodels/auth_viewmodel.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
@@ -209,11 +208,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                               .read(
                                                 authViewModelProvider.notifier,
                                               )
-                                              .signup(
-                                                emailController.text.trim(),
-                                                passwordController.text.trim(),
-                                                nameController.text.trim(),
-                                              );
+                                              .signnupp(emailController.text.trim(),
+                                               nameController.text.trim(),
+                                               passwordController.text.trim());
+                                              
                                         },
                                 ),
                                 AppSpacing.vsm,
